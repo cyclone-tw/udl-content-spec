@@ -5,10 +5,13 @@ import { readFile, writeFile, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 
+// 以 code point 排序，不隨使用者 locale 變動，避免不同機器產生無意義 diff。
+const byCodePoint = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
 async function listFiles(root, rel = "") {
   const out = [];
   const entries = await readdir(path.join(root, rel), { withFileTypes: true });
-  for (const e of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const e of entries.sort((a, b) => byCodePoint(a.name, b.name))) {
     const r = rel ? `${rel}/${e.name}` : e.name;
     if (e.name.startsWith(".")) continue;
     if (e.isDirectory()) out.push(...(await listFiles(root, r)));
@@ -23,7 +26,17 @@ if (!dir) {
   process.exit(2);
 }
 const packPath = path.join(dir, "pack.json");
-const pack = JSON.parse(await readFile(packPath, "utf8"));
+let pack;
+try {
+  pack = JSON.parse(await readFile(packPath, "utf8"));
+} catch (err) {
+  console.error(`${packPath}: 無法讀取或不是合法 JSON（${err.message}）`);
+  process.exit(1);
+}
+if (pack === null || typeof pack !== "object" || Array.isArray(pack)) {
+  console.error(`${packPath}: 不是 JSON 物件`);
+  process.exit(1);
+}
 const files = [];
 for (const rel of await listFiles(dir)) {
   const buf = await readFile(path.join(dir, rel));

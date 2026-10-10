@@ -4,7 +4,7 @@ import { mkdtemp, cp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { validatePack, validateScopeFile, loadValidators } from "../conformance/validate.mjs";
+import { validatePack, validateScopeFile, loadValidators, resolveInside } from "../conformance/validate.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = path.join(here, "..", "examples", "minimal");
@@ -19,6 +19,14 @@ async function editJson(dir, rel, mutate) {
   const obj = JSON.parse(await readFile(p, "utf8"));
   mutate(obj);
   await writeFile(p, JSON.stringify(obj, null, 2));
+}
+// 改過檔案後重算 pack.json files 的 sha256（與 update-files 同邏輯，只重算已列的路徑）。
+async function rehash(dir) {
+  const { createHash } = await import("node:crypto");
+  const p = path.join(dir, "pack.json");
+  const pack = JSON.parse(await readFile(p, "utf8"));
+  for (const f of pack.files) f.sha256 = createHash("sha256").update(await readFile(path.join(dir, f.path))).digest("hex");
+  await writeFile(p, JSON.stringify(pack, null, 2));
 }
 // 在暫存副本上做一次驗證，結束後清掉。
 async function withCopy(fn) {
@@ -36,12 +44,25 @@ test("所有 schema 可在 ajv strict 模式編譯", async () => {
   for (const name of ["pack", "unit", "material", "item", "pool", "scope"]) assert.ok(v[name], `${name} 未編譯`);
 });
 
+test("resolveInside 只接受 pack 目錄內的合法相對路徑", () => {
+  const root = path.resolve("/tmp/pack-root");
+  assert.equal(resolveInside(root, "items/a.json"), path.join(root, "items", "a.json"));
+  assert.equal(resolveInside(root, "../x.json"), null);
+  assert.equal(resolveInside(root, "items/../../x.json"), null);
+  assert.equal(resolveInside(root, "/etc/passwd"), null);
+  assert.equal(resolveInside(root, "."), null);
+  assert.equal(resolveInside(root, ""), null);
+  assert.equal(resolveInside(root, "items\\a.json"), null);
+  assert.equal(resolveInside(root, 42), null);
+});
+
 test("最小範例通過（只有語音槽與跨科警告）", async () => {
   const r = await validatePack(EXAMPLE);
   assert.deepEqual(r.errors, []);
   assert.ok(r.ok);
   assert.equal(r.counts.units, 2);
   assert.equal(r.counts.items, 5);
+  assert.equal(r.counts.pools, 1);
   assert.ok(r.warnings.every((w) => w.includes("語音槽") || w.includes("subject")), r.warnings.join("\n"));
 });
 
@@ -50,6 +71,23 @@ test("--strict 時語音槽 null 算失敗", async () => {
   assert.equal(r.ok, false);
   assert.deepEqual(r.errors, []);
 });
+
+test("同一個池可被兩個單元共用", () =>
+  withCopy(async (dir) => {
+    await editJson(dir, "units/u02-add-2digit.json", (o) => { o.pools = ["p-semantic-01"]; });
+    await rehash(dir);
+    const r = await validatePack(dir);
+    assert.deepEqual(r.errors, []);
+    assert.equal(r.counts.pools, 1);
+  }));
+
+test("單元或題目引用不在 pack.pools 的池會報錯", () =>
+  withCopy(async (dir) => {
+    await editJson(dir, "pack.json", (o) => { o.pools = []; });
+    const r = await validatePack(dir);
+    assert.ok(has(r.errors, "units/u01-stream-bridge.json", "p-semantic-01 不在 pack.json pools"), r.errors.join("\n"));
+    assert.ok(has(r.errors, "items/i-choice-01.json", "distractor_pool p-semantic-01 不在 pack.json pools"), r.errors.join("\n"));
+  }));
 
 test("hash 不符會報錯並指出檔案", () =>
   withCopy(async (dir) => {
@@ -72,13 +110,6 @@ test("選擇題正解不在選項裡；選項 id 重複", () =>
     const r = await validatePack(dir);
     assert.ok(has(r.errors, "answer zz 不在 options"), r.errors.join("\n"));
     assert.ok(has(r.errors, "i-choice-01", "options id 重複"), r.errors.join("\n"));
-  }));
-
-test("distractor_pool 不在單元 pools", () =>
-  withCopy(async (dir) => {
-    await editJson(dir, "units/u01-stream-bridge.json", (o) => { o.pools = []; });
-    const r = await validatePack(dir);
-    assert.ok(has(r.errors, "distractor_pool p-semantic-01 未列在單元 pools"), r.errors.join("\n"));
   }));
 
 test("generated 題不得帶 stem；fixed 題不得帶 generator", () =>
@@ -125,6 +156,26 @@ test("pack.json 不合格時回傳錯誤物件、不拋例外、不做後續檢�
     assert.deepEqual(r.counts, { units: 0, materials: 0, items: 0, pools: 0 });
   }));
 
+test("pack.json 是 false／0 之類的非物件時要有錯誤訊息，不能靜默失敗", () =>
+  withCopy(async (dir) => {
+    await writeFile(path.join(dir, "pack.json"), "false");
+    const r = await validatePack(dir);
+    assert.equal(r.ok, false);
+    assert.ok(r.errors.length > 0 && r.errors[0].startsWith("pack.json"), r.errors.join("\n"));
+  }));
+
+test("單元或教材 schema 不合格時不拋例外，也不做該檔的後續檢查", () =>
+  withCopy(async (dir) => {
+    await editJson(dir, "units/u01-stream-bridge.json", (o) => { o.pools = {}; o.items = "i-choice-01"; });
+    await editJson(dir, "materials/m-add-demo.json", (o) => { o.blocks = "abc"; });
+    await editJson(dir, "items/i-choice-01.json", (o) => { o.options = "nope"; });
+    const r = await validatePack(dir);
+    assert.equal(r.ok, false);
+    assert.ok(r.errors.some((e) => e.startsWith("units/u01-stream-bridge.json/pools")), r.errors.join("\n"));
+    assert.ok(r.errors.some((e) => e.startsWith("materials/m-add-demo.json/blocks")), r.errors.join("\n"));
+    assert.ok(!r.errors.some((e) => e.includes("TypeError")), r.errors.join("\n"));
+  }));
+
 test("files 路徑跳出 pack 目錄：schema 擋下，且不讀檔", () =>
   withCopy(async (dir) => {
     await editJson(dir, "pack.json", (o) => { o.files.push({ path: "../../etc/passwd", sha256: "0".repeat(64) }); });
@@ -136,7 +187,6 @@ test("files 路徑跳出 pack 目錄：schema 擋下，且不讀檔", () =>
 
 test("units 的 id 跳出目錄時不讀檔", () =>
   withCopy(async (dir) => {
-    // units 的 id 受 schema pattern 限制，但驗證器仍要自己把關。
     const p = path.join(dir, "pack.json");
     const o = JSON.parse(await readFile(p, "utf8"));
     o.units.push("../pack");

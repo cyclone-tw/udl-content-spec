@@ -41,6 +41,13 @@
       "minItems": 1,
       "uniqueItems": true
     },
+    "pools": {
+      "type": "array",
+      "description": "包層級的干擾項池清單；池可被多個單元共用，單元的 pools 與題目的 distractor_pool 只能引用這裡列出的池。",
+      "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+      "uniqueItems": true,
+      "default": []
+    },
     "files": {
       "type": "array",
       "description": "包內除 pack.json 以外的每個檔案與 sha256；用 update-files 產生。",

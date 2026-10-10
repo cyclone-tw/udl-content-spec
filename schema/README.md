@@ -5,8 +5,8 @@
 | 檔案 | 定義 |
 | --- | --- |
 | `common.schema.json` | 共用型別：`id`（kebab-case）、`semver`、`ref`（`pack@version#id`）、`relative_path`、**`spoken_text`**（`text`＋語音槽 `audio`）、`ladder_id`／`curriculum_code`、三層 `hints`、`feedback`、`difficulty`、`subject` |
-| `pack.schema.json` | `pack.json`：`format_version`、`id`、`version`、`title`、`subject`、`language`、`license`、`source`、`audio.default_voice`、`units`、`files`（路徑＋sha256） |
-| `unit.schema.json` | 單元：對齊資訊、`ladder_ids`／`curriculum_codes`、`materials`／`items`／`pools` 引用 |
+| `pack.schema.json` | `pack.json`：`format_version`、`id`、`version`、`title`、`subject`、`language`、`license`、`source`、`audio.default_voice`、`units`、`pools`（包層級，可跨單元共用）、`files`（路徑＋sha256） |
+| `unit.schema.json` | 單元：對齊資訊、`ladder_ids`／`curriculum_codes`、`materials`／`items` 引用、`pools`（本單元用到的池，須在 pack.pools） |
 | `material.schema.json` | 教材：`kind`（lesson／simplified／demo／dialogue）、`zhuyin_map`、`vocab`（`【詞|key】` 標記的 key）、`blocks`（text／image／audio／dialogue／math-demo／check） |
 | `item.schema.json` | 題目：共用欄位＋`kind`（fixed／generated）＋`type`（choice／true-false／match／numeric）的條件欄位；generated 只帶 `generator`、`generator_version`、`params`、`count` |
 | `pool.schema.json` | 干擾項池 |

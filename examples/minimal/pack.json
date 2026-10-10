@@ -19,6 +19,9 @@
     "u01-stream-bridge",
     "u02-add-2digit"
   ],
+  "pools": [
+    "p-semantic-01"
+  ],
   "files": [
     {
       "path": "items/i-choice-01.json",
