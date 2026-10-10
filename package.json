@@ -1,0 +1,20 @@
+{
+  "name": "udl-content-spec",
+  "version": "0.1.0",
+  "description": "Content spec for the UDL learning family: pack manifest, content JSON Schema, validator.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "validate": "node conformance/validate.mjs",
+    "update-files": "node conformance/update-files.mjs",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  }
+}

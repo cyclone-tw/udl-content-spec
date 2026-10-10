@@ -1,0 +1,26 @@
+{
+  "format_version": 1,
+  "id": "m-add-demo",
+  "unit": "u02-add-2digit",
+  "kind": "demo",
+  "title": { "text": "橋邊的果籃", "audio": null },
+  "estimated_minutes": 3,
+  "curriculum_codes": ["N-2-2"],
+  "blocks": [
+    {
+      "type": "dialogue",
+      "lines": [
+        { "speaker": "merchant", "line": { "text": "籃子裡有 27 顆蘋果，我再放進 15 顆。", "audio": null } },
+        { "speaker": "hero", "line": { "text": "先算個位：7 加 5 是 12，寫 2 進 1。", "audio": null } }
+      ]
+    },
+    {
+      "type": "math-demo",
+      "steps": [
+        { "text": { "text": "個位：7 加 5 等於 12，寫 2，向十位進 1。", "audio": null }, "expression": "7 + 5 = 12" },
+        { "text": { "text": "十位：2 加 1 再加進位的 1，等於 4。", "audio": null }, "expression": "2 + 1 + 1 = 4" },
+        { "text": { "text": "所以一共有 42 顆蘋果。", "audio": null }, "expression": "27 + 15 = 42" }
+      ]
+    }
+  ]
+}

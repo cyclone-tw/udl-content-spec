@@ -1,0 +1,27 @@
+{
+  "format_version": 1,
+  "id": "i-numeric-01",
+  "unit": "u02-add-2digit",
+  "type": "numeric",
+  "kind": "fixed",
+  "skill": "計算",
+  "difficulty": 1,
+  "ladder_ids": ["n-II-2#b@1"],
+  "curriculum_codes": ["N-2-2"],
+  "stem": {
+    "text": { "text": "籃子裡有 27 顆蘋果，再放進 15 顆，一共有幾顆？", "audio": null }
+  },
+  "answer": 42,
+  "tolerance": { "type": "nominal", "value": 0 },
+  "unit_label": "顆",
+  "input": { "min": 0, "max": 999, "decimals": 0 },
+  "hints": [
+    { "text": "先算個位：7 加 5。", "audio": null },
+    { "text": "7 加 5 是 12，個位寫 2，記得進 1。", "audio": null },
+    { "text": "十位：2 加 1 再加 1，答案是 4 十幾。", "audio": null }
+  ],
+  "feedback": {
+    "correct": { "text": "答對了！27 加 15 等於 42。", "audio": null },
+    "retry": { "text": "再算一次個位有沒有進位。", "audio": null }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "format_version": 1,
+  "id": "first-lesson-test",
+  "title": "第一課測驗：只從第一課出題",
+  "include": [
+    { "pack": "sample-willow", "version": "0.1.0", "units": ["u01-stream-bridge"] }
+  ]
+}

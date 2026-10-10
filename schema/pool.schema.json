@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:pool",
+  "title": "Pool 干擾項池",
+  "description": "跨單元共用的錯誤選項來源；池越大，選擇題越「隨機」。",
+  "type": "object",
+  "required": ["format_version", "id", "kind", "entries"],
+  "properties": {
+    "format_version": { "const": 1 },
+    "id": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+    "kind": {
+      "type": "string",
+      "minLength": 1,
+      "description": "已知值：形近字、音近字、語意混淆、數值；可自訂。"
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" },
+          "note": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

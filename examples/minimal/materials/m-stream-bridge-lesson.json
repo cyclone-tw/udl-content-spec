@@ -1,0 +1,45 @@
+{
+  "format_version": 1,
+  "id": "m-stream-bridge-lesson",
+  "unit": "u01-stream-bridge",
+  "kind": "lesson",
+  "title": { "text": "溪橋旁的小鎮", "audio": null },
+  "estimated_minutes": 5,
+  "curriculum_codes": ["5-Ⅲ-2"],
+  "zhuyin_map": {
+    "溪": "ㄒㄧ",
+    "橋": "ㄑㄧㄠˊ",
+    "鎮": "ㄓㄣˋ"
+  },
+  "vocab": {
+    "luoyi": {
+      "word": "絡繹不絕",
+      "zhuyin": "ㄌㄨㄛˋ ㄧˋ ㄅㄨˋ ㄐㄩㄝˊ",
+      "meaning": { "text": "人、車來來往往，接連不斷。", "audio": null },
+      "example": { "text": "假日的溪橋上，遊客絡繹不絕。", "audio": null }
+    },
+    "qingche": {
+      "word": "清澈",
+      "zhuyin": "ㄑㄧㄥ ㄔㄜˋ",
+      "meaning": { "text": "水很乾淨，看得見底。", "audio": null }
+    }
+  },
+  "blocks": [
+    {
+      "type": "text",
+      "content": { "text": "小鎮的入口有一座石橋，橋下的溪水【清澈|qingche】見底。每到假日，橋上的遊客【絡繹不絕|luoyi】。", "audio": null },
+      "zhuyin": "auto"
+    },
+    {
+      "type": "dialogue",
+      "lines": [
+        { "speaker": "guide", "line": { "text": "你看，橋下的小魚在石頭間穿來穿去。", "audio": null } },
+        { "speaker": "hero", "line": { "text": "溪水真的很清澈，連石頭的顏色都看得見。", "audio": null } }
+      ]
+    },
+    {
+      "type": "check",
+      "item": "i-choice-01"
+    }
+  ]
+}

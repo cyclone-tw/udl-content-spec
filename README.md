@@ -7,20 +7,20 @@ UDL 教學家族（udl-learning、udl-classroom、各教材 repo）共用的**�
 ## 授權
 
 - 程式、schema、測試：**MIT**（見 `LICENSE`）。
-- `examples/` 的合成課文與題目：**CC-BY 4.0**（見 `LICENSE-CONTENT.md`），引用時標「udl-content-spec examples」。
+- `examples/` 的合成課文與題目：**CC-BY 4.0**（見 `LICENSE-CONTENT.md`），引用時標「udl-content-spec examples, cyclone-tw, CC BY 4.0」。
 - 本 repo 只借用前例（H5P、Perseus、Oppia、Numbas、Moodle、CASE、ink）的設計邏輯，不引入它們的程式碼或素材。
 
 ## 預定結構（v1）
 
 | 目錄 | 內容 | 狀態 |
 | --- | --- | --- |
-| `schema/` | `pack.json`、Unit／Material／Item／Pool／Scope 的 JSON Schema | 待做 |
+| `schema/` | `pack.json`、Unit／Material／Item／Pool／Scope 的 JSON Schema | v1（#3） |
 | `question-types/` | 題型登錄表：每題型一個資料夾（schema、`score()` 純函式、renderer 契約、版本與升版轉換）；v1：choice、true-false、match、numeric | 待做 |
 | `generators/` | 數學參數化產生器（變數、條件重抽、種子、容差）；內容包只帶參數 | 待做 |
 | `events/` | Attempt event 契約（xAPI 2.0 子集）與 `udl-lesson-attempt/v1` 轉接器 | 待做 |
 | `runner/` | 獨立執行器：載入內容包、出題、判定、提示、下載事件檔；無登入、無後端 | 待做 |
-| `conformance/` | 一致性測試、lint、隱私掃描；`pnpm run conformance` 本機執行 | 待做 |
-| `examples/` | 合成範例：國語一課、數學一小單元 | 待做 |
+| `conformance/` | 驗證器（schema＋引用＋hash）；lint 與隱私掃描待補；本機執行 | 驗證器 v1（#3） |
+| `examples/` | 合成範例：國語一課、數學一小單元（最小版） | 最小版（#3） |
 | `docs/` | 本 repo 的設計決定索引（連回正本，不複製） | 本 PR |
 
 ## 原則
@@ -34,8 +34,8 @@ UDL 教學家族（udl-learning、udl-classroom、各教材 repo）共用的**�
 ## 使用方式（預定）
 
 ```sh
-pnpm add -D github:cyclone-tw/udl-content-spec#v1.0.0   # 教材 repo 或平台相依規格
-pnpm run conformance path/to/pack                       # 驗證內容包
+pnpm add -D github:cyclone-tw/udl-content-spec#v1.0.0   # 教材 repo 或平台相依規格（tag 建立後）
+pnpm exec udl-validate path/to/pack                     # 預定：套件化後的驗證指令
 ```
 
-版本 tag 建立後才可用；目前尚無 v1.0.0。
+目前尚無 v1.0.0 tag；在本 repo 內用 `pnpm run validate <pack-dir>`（見 `conformance/README.md`）。

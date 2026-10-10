@@ -1,0 +1,14 @@
+{
+  "format_version": 1,
+  "id": "u02-add-2digit",
+  "title": "二位數加法",
+  "subject": "math",
+  "grade": 2,
+  "semester": "上",
+  "curriculum_codes": ["N-2-2"],
+  "ladder_ids": ["n-II-2#b@1"],
+  "estimated_minutes": 10,
+  "materials": ["m-add-demo"],
+  "items": ["i-numeric-01", "i-gen-add-carry"],
+  "pools": []
+}

@@ -1,0 +1,28 @@
+{
+  "format_version": 1,
+  "id": "i-match-01",
+  "unit": "u01-stream-bridge",
+  "type": "match",
+  "kind": "fixed",
+  "skill": "詞語理解",
+  "difficulty": 2,
+  "ladder_ids": ["c-III-2#a@1"],
+  "curriculum_codes": ["5-Ⅲ-2"],
+  "stem": {
+    "text": { "text": "把詞語和它的意思連起來。", "audio": null }
+  },
+  "pairs": [
+    { "id": "p1", "left": { "text": "絡繹不絕", "audio": null }, "right": { "text": "人來人往，接連不斷", "audio": null } },
+    { "id": "p2", "left": { "text": "清澈", "audio": null }, "right": { "text": "水很乾淨，看得見底", "audio": null } }
+  ],
+  "shuffle": true,
+  "hints": [
+    { "text": "先找你最有把握的一組。", "audio": null },
+    { "text": "「清澈」是在說水。", "audio": null },
+    { "text": "「絡繹不絕」是在說人很多。", "audio": null }
+  ],
+  "feedback": {
+    "correct": { "text": "全部連對了！", "audio": null },
+    "retry": { "text": "有一組還沒對，再試一次。", "audio": null }
+  }
+}

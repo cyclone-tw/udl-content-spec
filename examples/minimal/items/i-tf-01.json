@@ -1,0 +1,24 @@
+{
+  "format_version": 1,
+  "id": "i-tf-01",
+  "unit": "u01-stream-bridge",
+  "type": "true-false",
+  "kind": "fixed",
+  "skill": "閱讀理解",
+  "difficulty": 1,
+  "ladder_ids": ["c-III-2#a@1"],
+  "curriculum_codes": ["5-Ⅲ-2"],
+  "stem": {
+    "text": { "text": "小鎮入口的石橋下，溪水混濁看不見底。", "audio": null }
+  },
+  "answer": false,
+  "hints": [
+    { "text": "回到課文找「溪水」那一句。", "audio": null },
+    { "text": "課文說溪水是「清澈見底」還是「混濁」？", "audio": null },
+    { "text": "清澈見底的意思是看得見底，所以這句話不對。", "audio": null }
+  ],
+  "feedback": {
+    "correct": { "text": "答對了！課文說溪水清澈見底。", "audio": null },
+    "retry": { "text": "再看一次：課文裡的溪水是清澈的。", "audio": null }
+  }
+}

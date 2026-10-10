@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:material",
+  "title": "Material 教材",
+  "description": "給學生「學」的東西：課文朗讀頁、簡化版、數學情境示範、角色對話。由朗讀器、RPG 對話框或獨立執行器呈現。",
+  "type": "object",
+  "required": [
+    "format_version",
+    "id",
+    "unit",
+    "kind",
+    "title",
+    "blocks"
+  ],
+  "properties": {
+    "format_version": {
+      "const": 1
+    },
+    "id": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+    },
+    "unit": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "lesson",
+        "simplified",
+        "demo",
+        "dialogue"
+      ],
+      "description": "lesson 原文；simplified 簡化版；demo 情境示範（數學等）；dialogue 角色對話腳本。"
+    },
+    "title": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+    },
+    "estimated_minutes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "ladder_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id"
+      },
+      "uniqueItems": true
+    },
+    "curriculum_codes": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/curriculum_code"
+      },
+      "uniqueItems": true
+    },
+    "zhuyin_map": {
+      "type": "object",
+      "description": "逐字注音表（沿朗讀器 zhuyin.json）：鍵為單一漢字（一個 code point），值為注音符號字串。",
+      "propertyNames": {
+        "minLength": 1,
+        "maxLength": 1
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "vocab": {
+      "type": "object",
+      "description": "詞語／生字卡：鍵為 text 內 【詞|key】 標記的 key。",
+      "propertyNames": {
+        "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "word",
+          "meaning"
+        ],
+        "properties": {
+          "word": {
+            "type": "string",
+            "minLength": 1
+          },
+          "zhuyin": {
+            "type": "string"
+          },
+          "meaning": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+          },
+          "example": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "blocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/block"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "block": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "image",
+            "audio",
+            "dialogue",
+            "math-demo",
+            "check"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "text"
+            },
+            "content": {
+              "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text",
+              "description": "text 可含 【詞|key】 標記，key 須在 vocab。"
+            },
+            "zhuyin": {
+              "type": "string",
+              "enum": [
+                "auto",
+                "none"
+              ],
+              "default": "auto"
+            }
+          },
+          "required": [
+            "type",
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "image"
+            },
+            "src": {
+              "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path"
+            },
+            "alt": {
+              "type": "string",
+              "minLength": 1
+            },
+            "caption": {
+              "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+            }
+          },
+          "required": [
+            "type",
+            "src",
+            "alt"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "audio"
+            },
+            "src": {
+              "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path"
+            },
+            "transcript": {
+              "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+            }
+          },
+          "required": [
+            "type",
+            "src"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "dialogue"
+            },
+            "lines": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "speaker",
+                  "line"
+                ],
+                "properties": {
+                  "speaker": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "角色 id 或名稱；殼決定頭像與位置。"
+                  },
+                  "line": {
+                    "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "type",
+            "lines"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "math-demo"
+            },
+            "steps": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "text"
+                ],
+                "properties": {
+                  "text": {
+                    "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+                  },
+                  "expression": {
+                    "type": "string",
+                    "description": "顯示用算式，例如 23 + 19 = 42。"
+                  },
+                  "image": {
+                    "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "type",
+            "steps"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "check"
+            },
+            "item": {
+              "$ref": "urn:udl-content-spec:v1:common#/$defs/id",
+              "description": "提取練習：引用同單元的 item。"
+            }
+          },
+          "required": [
+            "type",
+            "item"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}
