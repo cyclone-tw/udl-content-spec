@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:common",
+  "title": "共用定義",
+  "description": "所有 schema 共用的型別。面向學生的文字一律是 spoken_text：text 加語音槽 audio。",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "kebab-case 識別字，在同一個內容包內唯一。"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}@((0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|latest)#[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "跨包引用：pack@version#id，version 可為 latest。"
+    },
+    "relative_path": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$",
+      "description": "內容包內的相對路徑；不可絕對、不可含 ..。"
+    },
+    "spoken_text": {
+      "type": "object",
+      "description": "面向學生的文字。audio 是語音槽：相對路徑的音檔；null 表示尚未預錄（lint 警告，不阻擋）。",
+      "required": ["text"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "audio": { "oneOf": [ { "$ref": "#/$defs/relative_path" }, { "type": "null" } ] },
+        "voice": { "type": "string", "minLength": 1, "description": "覆寫 pack 預設聲音；省略即用預設。" }
+      },
+      "additionalProperties": false
+    },
+    "curriculum_code": {
+      "type": "string",
+      "minLength": 1,
+      "description": "課綱學習表現／學習內容代碼，例如 5-Ⅲ-2；正本在 kit／sped-knowledge。"
+    },
+    "ladder_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "能力階梯 id，例如 n-I-1#a@1；正本在 kit。"
+    },
+    "code_tags": {
+      "type": "object",
+      "properties": {
+        "ladder_ids": { "type": "array", "items": { "$ref": "#/$defs/ladder_id" }, "uniqueItems": true },
+        "curriculum_codes": { "type": "array", "items": { "$ref": "#/$defs/curriculum_code" }, "uniqueItems": true }
+      }
+    },
+    "hints": {
+      "type": "array",
+      "description": "固定三層：輕推 → 縮範圍 → 近答案。",
+      "items": { "$ref": "#/$defs/spoken_text" },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "feedback": {
+      "type": "object",
+      "required": ["correct", "retry"],
+      "properties": {
+        "correct": { "$ref": "#/$defs/spoken_text" },
+        "retry": { "$ref": "#/$defs/spoken_text" }
+      },
+      "additionalProperties": false
+    },
+    "difficulty": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "description": "科目代碼。已知值：chinese、math；其他科目可直接使用新代碼，不需升版 schema。"
+    }
+  }
+}

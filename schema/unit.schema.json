@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:unit",
+  "title": "Unit 單元",
+  "description": "對齊教科書或課綱的一段內容（一課、一小單元）。只放對齊資訊與引用，不放教材本文。",
+  "type": "object",
+  "required": ["format_version", "id", "title", "subject", "grade", "materials", "items"],
+  "properties": {
+    "format_version": { "const": 1 },
+    "id": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+    "title": { "type": "string", "minLength": 1 },
+    "subject": { "$ref": "urn:udl-content-spec:v1:common#/$defs/subject" },
+    "grade": { "type": "integer", "minimum": 1, "maximum": 12 },
+    "semester": { "type": "string", "enum": ["上", "下"] },
+    "alignment": {
+      "type": "object",
+      "description": "教科書對齊；文本仍須原創，只對齊進度。",
+      "properties": {
+        "publisher": { "type": "string", "minLength": 1 },
+        "lesson": { "type": "integer", "minimum": 1 },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ladder_ids": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id" }, "uniqueItems": true },
+    "curriculum_codes": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/curriculum_code" }, "uniqueItems": true },
+    "estimated_minutes": { "type": "integer", "minimum": 1 },
+    "materials": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
+    "items": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
+    "pools": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true }
+  },
+  "additionalProperties": false
+}

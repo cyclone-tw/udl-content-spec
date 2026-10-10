@@ -1,0 +1,10 @@
+{
+  "format_version": 1,
+  "id": "p-semantic-01",
+  "kind": "語意混淆",
+  "entries": [
+    { "text": { "text": "香味很濃，飄得很遠", "audio": null }, "note": "描述氣味，不是人潮" },
+    { "text": { "text": "拿不定主意", "audio": null }, "note": "描述心情" },
+    { "text": { "text": "慢慢地走", "audio": null }, "note": "描述速度" }
+  ]
+}

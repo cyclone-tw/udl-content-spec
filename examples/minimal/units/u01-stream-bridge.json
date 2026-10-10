@@ -1,0 +1,19 @@
+{
+  "format_version": 1,
+  "id": "u01-stream-bridge",
+  "title": "溪橋旁的小鎮",
+  "subject": "chinese",
+  "grade": 6,
+  "semester": "上",
+  "alignment": {
+    "publisher": "南一",
+    "lesson": 1,
+    "note": "只對齊進度，文本原創（合成範例）。"
+  },
+  "curriculum_codes": ["5-Ⅲ-2", "4-Ⅲ-1"],
+  "ladder_ids": ["c-III-2#a@1"],
+  "estimated_minutes": 15,
+  "materials": ["m-stream-bridge-lesson"],
+  "items": ["i-choice-01", "i-tf-01", "i-match-01"],
+  "pools": ["p-semantic-01"]
+}

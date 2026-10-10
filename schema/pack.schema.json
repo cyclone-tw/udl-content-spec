@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:pack",
+  "title": "pack.json 內容包名片",
+  "description": "一個內容包的根檔。目錄慣例：units/<id>.json、materials/<id>.json、items/<id>.json、pools/<id>.json，媒體放 audio/、images/。",
+  "type": "object",
+  "required": ["format_version", "id", "version", "title", "subject", "language", "license", "source", "units", "files"],
+  "properties": {
+    "format_version": { "const": 1 },
+    "id": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+    "version": { "$ref": "urn:udl-content-spec:v1:common#/$defs/semver" },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "subject": { "$ref": "urn:udl-content-spec:v1:common#/$defs/subject" },
+    "language": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$", "description": "例如 zh-TW。" },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "description": "內容授權，例如 CC-BY-4.0；含課文原句的包須標 proprietary 且不可公開。"
+    },
+    "source": {
+      "type": "object",
+      "required": ["generated_by", "date"],
+      "properties": {
+        "generated_by": { "type": "string", "minLength": 1, "description": "產生者：agent 名稱或人。" },
+        "date": { "type": "string", "format": "date" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "audio": {
+      "type": "object",
+      "properties": {
+        "default_voice": { "type": "string", "minLength": 1, "description": "預設 zh-TW-HsiaoChenNeural。" }
+      },
+      "additionalProperties": false
+    },
+    "units": {
+      "type": "array",
+      "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "files": {
+      "type": "array",
+      "description": "包內除 pack.json 以外的每個檔案與 sha256；用 update-files 產生。",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

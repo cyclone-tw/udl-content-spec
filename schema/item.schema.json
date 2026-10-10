@@ -1,0 +1,443 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:item",
+  "title": "Item 題目",
+  "description": "給學生「作答」的東西。kind=fixed 寫死題幹與答案；kind=generated 只寫產生器與參數，由規格 repo 的產生器在執行時出題。題型專屬欄位在此只有最小定義，計分函式在 question-types/。",
+  "type": "object",
+  "required": [
+    "format_version",
+    "id",
+    "unit",
+    "type",
+    "kind",
+    "skill",
+    "difficulty",
+    "hints",
+    "feedback"
+  ],
+  "properties": {
+    "format_version": {
+      "const": 1
+    },
+    "id": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+    },
+    "unit": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "choice",
+        "true-false",
+        "match",
+        "numeric"
+      ]
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "generated"
+      ]
+    },
+    "skill": {
+      "type": "string",
+      "minLength": 1,
+      "description": "報表顯示用分類（例如 詞語理解、計算）；對接 kit 用 ladder_ids／curriculum_codes。"
+    },
+    "difficulty": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/difficulty"
+    },
+    "ladder_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id"
+      },
+      "uniqueItems": true
+    },
+    "curriculum_codes": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/curriculum_code"
+      },
+      "uniqueItems": true
+    },
+    "strategy": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "hints": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/hints"
+    },
+    "feedback": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/feedback"
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "reviewed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "stem": {
+      "$ref": "#/$defs/stem"
+    },
+    "options": {
+      "$ref": "#/$defs/options"
+    },
+    "answer": {},
+    "shuffle": {
+      "type": "boolean"
+    },
+    "distractor_pool": {
+      "$ref": "#/$defs/distractor_pool"
+    },
+    "pairs": {
+      "$ref": "#/$defs/pairs"
+    },
+    "tolerance": {
+      "$ref": "#/$defs/tolerance"
+    },
+    "unit_label": {
+      "type": "string",
+      "description": "數值答案的單位顯示，例如 顆。"
+    },
+    "input": {
+      "$ref": "#/$defs/numeric_input"
+    },
+    "generator": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$",
+      "description": "產生器 id，例如 math.add-2digit-carry。"
+    },
+    "generator_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "params": {
+      "type": "object"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "抽題時此產生器視為幾題。"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "generated"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "required": [
+          "generator",
+          "generator_version",
+          "params",
+          "count"
+        ],
+        "properties": {
+          "stem": false,
+          "options": false,
+          "answer": false,
+          "pairs": false,
+          "distractor_pool": false,
+          "shuffle": false,
+          "tolerance": false,
+          "input": false,
+          "unit_label": false
+        }
+      },
+      "else": {
+        "type": "object",
+        "required": [
+          "stem"
+        ],
+        "properties": {
+          "generator": false,
+          "generator_version": false,
+          "params": false,
+          "count": false
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "fixed"
+          },
+          "type": {
+            "const": "choice"
+          }
+        },
+        "required": [
+          "kind",
+          "type"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "required": [
+          "options",
+          "answer"
+        ],
+        "properties": {
+          "answer": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id",
+            "description": "正解的 option id。"
+          },
+          "pairs": false,
+          "tolerance": false,
+          "input": false,
+          "unit_label": false
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "fixed"
+          },
+          "type": {
+            "const": "true-false"
+          }
+        },
+        "required": [
+          "kind",
+          "type"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "properties": {
+          "answer": {
+            "type": "boolean"
+          },
+          "options": false,
+          "pairs": false,
+          "distractor_pool": false,
+          "shuffle": false,
+          "tolerance": false,
+          "input": false,
+          "unit_label": false
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "fixed"
+          },
+          "type": {
+            "const": "match"
+          }
+        },
+        "required": [
+          "kind",
+          "type"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "required": [
+          "pairs"
+        ],
+        "properties": {
+          "options": false,
+          "answer": false,
+          "distractor_pool": false,
+          "tolerance": false,
+          "input": false,
+          "unit_label": false
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "fixed"
+          },
+          "type": {
+            "const": "numeric"
+          }
+        },
+        "required": [
+          "kind",
+          "type"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "properties": {
+          "answer": {
+            "type": "number"
+          },
+          "options": false,
+          "pairs": false,
+          "distractor_pool": false,
+          "shuffle": false
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "stem": {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "text": {
+          "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+        },
+        "image": {
+          "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path"
+        },
+        "alt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "text": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+          },
+          "image": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "distractor_pool": {
+      "type": "object",
+      "description": "正解固定，從池抽 pick 個干擾項補足選項。",
+      "required": [
+        "pool",
+        "pick"
+      ],
+      "properties": {
+        "pool": {
+          "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+        },
+        "pick": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      },
+      "additionalProperties": false
+    },
+    "pairs": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "left",
+          "right"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "left": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+          },
+          "right": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "tolerance": {
+      "type": "object",
+      "description": "數值答案容差：nominal 固定寬 |dx| ≤ value；relative |dx|/x ≤ value；geometric x/(1+value) ≤ x+dx ≤ x(1+value)。省略即為 nominal 0。",
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "nominal",
+            "relative",
+            "geometric"
+          ]
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "numeric_input": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "decimals": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

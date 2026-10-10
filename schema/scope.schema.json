@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:scope",
+  "title": "Scope 範圍",
+  "description": "一組內容的選擇器；教師的「開放」與「指派」都指向 Scope。v1：include 各條件取聯集，exclude 從中剔除。沒列 units／materials／items／標籤時表示整個包。",
+  "type": "object",
+  "required": ["format_version", "include"],
+  "properties": {
+    "format_version": { "const": 1 },
+    "id": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+    "title": { "type": "string" },
+    "include": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/selector" } },
+    "exclude": { "type": "array", "items": { "$ref": "#/$defs/selector" } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "selector": {
+      "type": "object",
+      "required": ["pack", "version"],
+      "properties": {
+        "pack": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+        "version": {
+          "oneOf": [ { "$ref": "urn:udl-content-spec:v1:common#/$defs/semver" }, { "const": "latest" } ],
+          "description": "指派時應凍結成明確版本，學生進行中不換題。"
+        },
+        "units": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
+        "materials": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
+        "items": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
+        "ladder_ids": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id" }, "uniqueItems": true },
+        "curriculum_codes": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/curriculum_code" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    }
+  }
+}

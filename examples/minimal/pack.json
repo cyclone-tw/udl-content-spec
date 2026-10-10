@@ -1,0 +1,64 @@
+{
+  "format_version": 1,
+  "id": "sample-willow",
+  "version": "0.1.0",
+  "title": "示範：溪橋旁的小鎮",
+  "description": "合成範例內容包：一個國語單元（原創短文、四種題型）與一個數學小單元（固定題與參數化題）。不含課文原句、不含學生資料。",
+  "subject": "chinese",
+  "language": "zh-TW",
+  "license": "CC-BY-4.0",
+  "source": {
+    "generated_by": "claude-code",
+    "date": "2026-10-10",
+    "notes": "udl-content-spec examples；文本原創。"
+  },
+  "audio": {
+    "default_voice": "zh-TW-HsiaoChenNeural"
+  },
+  "units": [
+    "u01-stream-bridge",
+    "u02-add-2digit"
+  ],
+  "files": [
+    {
+      "path": "items/i-choice-01.json",
+      "sha256": "5367343df5d83bcbbd18c77974315958f7f57da1c33bd10be8cda83a9011543f"
+    },
+    {
+      "path": "items/i-gen-add-carry.json",
+      "sha256": "4c6711dae1622d1562a0e4640de8d7b42c21dbc0f5ae9210d6bde4fda2ab962b"
+    },
+    {
+      "path": "items/i-match-01.json",
+      "sha256": "eb7439a868358d43e878300c60d72f5efdea77ae3f867b232dcc6b8bc0ffa61a"
+    },
+    {
+      "path": "items/i-numeric-01.json",
+      "sha256": "0b782b57ed10445462a308e29ba812f29dbcf62d7f48f81a7175575906df1768"
+    },
+    {
+      "path": "items/i-tf-01.json",
+      "sha256": "287653defdea9b23d1928666b0ea1f58b7a6e3898c8d8e6935365798da8708a6"
+    },
+    {
+      "path": "materials/m-add-demo.json",
+      "sha256": "355e025a1ab107070a73df542d536f777c121a82c8164d870969bbf8466cce9a"
+    },
+    {
+      "path": "materials/m-stream-bridge-lesson.json",
+      "sha256": "22ad102fff61ff815276b513ddaf59dc7ffbe5b00d75a29362d2ba1dd35f1dca"
+    },
+    {
+      "path": "pools/p-semantic-01.json",
+      "sha256": "3d2e8054ad39a421f2c29e64a1f4974348c832229d645e1c522dcb1d3e4d772d"
+    },
+    {
+      "path": "units/u01-stream-bridge.json",
+      "sha256": "3b23a46099558d43b112054f94a02f793b9b2758c33d0954e6d8b4f4412f15b5"
+    },
+    {
+      "path": "units/u02-add-2digit.json",
+      "sha256": "bd52fbae2ae3460a60432b62138830d6a3e529a86a22cf11bc58f27eead54331"
+    }
+  ]
+}
