@@ -1,2 +1,41 @@
 # udl-content-spec
-Content spec for the UDL learning family: pack format, question types and scoring, parameterized math generators, curriculum-code tags, attempt events, standalone runner, conformance tests (code MIT, synthetic examples CC-BY 4.0)
+
+UDL 教學家族（udl-learning、udl-classroom、各教材 repo）共用的**內容規格**：內容包格式、題型與計分、數學參數化出題、課綱碼標籤、作答事件契約、獨立執行器、一致性測試。教材 repo 與平台都以 git tag 版本相依這個 repo；規格本身不含任何教材正本、不含學生資料。
+
+正本決策在 [udl-learning 總規劃 v1.1](https://github.com/cyclone-tw/udl-learning/blob/main/docs/plans/2026-10-10-material-factory-master-plan.md)（§3 概念模型、§4.4 多教材 repo、§6 呈現契約、§7 kit 接口）；前例研究在 [content-spec prior-art](https://github.com/cyclone-tw/udl-learning/blob/main/docs/research/2026-10-10-content-spec-prior-art.md)。工程 ledger：[udl-learning#67](https://github.com/cyclone-tw/udl-learning/issues/67)。
+
+## 授權
+
+- 程式、schema、測試：**MIT**（見 `LICENSE`）。
+- `examples/` 的合成課文與題目：**CC-BY 4.0**（見 `LICENSE-CONTENT.md`），引用時標「udl-content-spec examples」。
+- 本 repo 只借用前例（H5P、Perseus、Oppia、Numbas、Moodle、CASE、ink）的設計邏輯，不引入它們的程式碼或素材。
+
+## 預定結構（v1）
+
+| 目錄 | 內容 | 狀態 |
+| --- | --- | --- |
+| `schema/` | `pack.json`、Unit／Material／Item／Pool／Scope 的 JSON Schema | 待做 |
+| `question-types/` | 題型登錄表：每題型一個資料夾（schema、`score()` 純函式、renderer 契約、版本與升版轉換）；v1：choice、true-false、match、numeric | 待做 |
+| `generators/` | 數學參數化產生器（變數、條件重抽、種子、容差）；內容包只帶參數 | 待做 |
+| `events/` | Attempt event 契約（xAPI 2.0 子集）與 `udl-lesson-attempt/v1` 轉接器 | 待做 |
+| `runner/` | 獨立執行器：載入內容包、出題、判定、提示、下載事件檔；無登入、無後端 | 待做 |
+| `conformance/` | 一致性測試、lint、隱私掃描；`pnpm run conformance` 本機執行 | 待做 |
+| `examples/` | 合成範例：國語一課、數學一小單元 | 待做 |
+| `docs/` | 本 repo 的設計決定索引（連回正本，不複製） | 本 PR |
+
+## 原則
+
+1. 內容不含學生：任何學生差異由平台的開放／指派／處方處理。
+2. 殼不判答案：判定只在題型的 `score()` 純函式，平台與獨立執行器用同一個函式。
+3. 事件只有一種格式：送去哪裡（D1、下載檔、Drive）由宿主決定。
+4. 破壞相容要升主版本並附轉換程式；內容包記格式版本，可鎖舊版。
+5. 發佈與重測試在本機跑並附證據，不靠 GitHub Actions。
+
+## 使用方式（預定）
+
+```sh
+pnpm add -D github:cyclone-tw/udl-content-spec#v1.0.0   # 教材 repo 或平台相依規格
+pnpm run conformance path/to/pack                       # 驗證內容包
+```
+
+版本 tag 建立後才可用；目前尚無 v1.0.0。
