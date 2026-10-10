@@ -55,10 +55,10 @@
     },
     "zhuyin_map": {
       "type": "object",
-      "description": "逐字注音表（沿朗讀器 zhuyin.json）：鍵為單一漢字，值為注音符號字串。",
+      "description": "逐字注音表（沿朗讀器 zhuyin.json）：鍵為單一漢字（一個 code point），值為注音符號字串。",
       "propertyNames": {
         "minLength": 1,
-        "maxLength": 2
+        "maxLength": 1
       },
       "additionalProperties": {
         "type": "string",
