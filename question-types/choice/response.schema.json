@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:question-types/choice/response",
+  "title": "選擇題作答",
+  "description": "學生選的那個選項的 id（item.options[].id）。v1 只有單選。",
+  "type": "object",
+  "required": ["option"],
+  "properties": {
+    "option": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }
+  },
+  "additionalProperties": false
+}

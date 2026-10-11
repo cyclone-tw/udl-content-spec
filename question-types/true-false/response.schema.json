@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:question-types/true-false/response",
+  "title": "是非題作答",
+  "description": "學生判斷的結果：true 是、false 非。",
+  "type": "object",
+  "required": ["value"],
+  "properties": {
+    "value": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}
