@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:question-types/classify/response",
+  "title": "classify 作答",
+  "type": "object",
+  "required": [
+    "bins"
+  ],
+  "properties": {
+    "bins": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

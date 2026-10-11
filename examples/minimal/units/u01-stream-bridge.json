@@ -14,6 +14,6 @@
   "ladder_ids": ["c-III-2#a@1"],
   "estimated_minutes": 15,
   "materials": ["m-stream-bridge-lesson"],
-  "items": ["i-choice-01", "i-tf-01", "i-match-01", "i-blanks-chinese-01"],
+  "items": ["i-choice-01", "i-tf-01", "i-match-01", "i-blanks-chinese-01", "i-ordering-01", "i-classify-01"],
   "pools": ["p-semantic-01"]
 }

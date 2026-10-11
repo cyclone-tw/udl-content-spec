@@ -11,8 +11,8 @@
 | `match` | 配對題 | 1 | `{ "pairs": { "<左 id>": "<右 id>" } }` | correct／partial／incorrect／invalid | v1 |
 | `numeric` | 計算題（直接輸入數字，不呈現選項） | 1 | `{ "value": <number> }` | correct／incorrect／invalid | v1 |
 | `blanks` | 多格填空（含單格填字） | 1 | `{ "blanks": { "<slot id>": <number\|string> } }` | correct／partial／incorrect／invalid | v1 |
-| `ordering` | 排序 | — | 草案見路線圖 | — | v2 候選 |
-| `classify` | 拖拉分類 | — | 草案見路線圖 | — | v2 候選 |
+| `ordering` | 排序 | 1 | `{ "order": ["<id>", …] }` | correct／partial／incorrect／invalid | v1 |
+| `classify` | 拖拉分類 | 1 | `{ "bins": { "<bin id>": ["<object id>", …] } }` | correct／partial／incorrect／invalid | v1 |
 | `drawing` | 畫圖 | — | 草案見路線圖 | pending-review | v3 保留 |
 | `speaking` | 口說 | — | 草案見路線圖 | pending-review | v3 保留 |
 
@@ -69,7 +69,7 @@ interface RendererHandle {
 
 規則：
 
-1. renderer **不判答案**，也不讀 `question.answer`／`pairs` 的對應關係來改畫面；判定只在 `score()`。
+1. renderer **不判答案**，也不讀 `question.answer`／`pairs` 的對應關係來改畫面；判定只在 `score()`；ordering 僅為避免初始畫面已是正解而檢查洗牌結果。
 2. `shuffle: true` 時用 `ctx.seed` 做可重現洗牌（選項、配對右側）。事件記 seed，就能重建學生看到的順序。
 3. 面向學生的文字一律是 `spoken_text`；`ctx.speech.enabled` 時每段文字旁提供「聽」的觸發。
 4. 觸控目標 ≥ 48px；尊重 `prefers-reduced-motion`；只用原生 Web 技術（AGENTS 技術約定）。
@@ -87,10 +87,7 @@ interface RendererHandle {
 
 ### v2 候選（`planned`）
 
-| type | 中文 | 作答格式（草案） | 計分（草案） | 用途舉例 |
-| --- | --- | --- | --- | --- |
-| `ordering` | 排序 | `{ "order": ["<id>", …] }` | 全對 `correct`；部分依「位置正確數／n」給 `partial`（是否改用最長共同子序列待定） | 事件先後、步驟順序、數字大小排列 |
-| `classify` | 拖拉分類 | `{ "bins": { "<bin id>": ["<item id>", …] } }` | 每個物件歸類獨立判定；`partial = 對的物件數／總數`；同一物件出現在兩個桶 → `invalid` | 詞性分類、奇偶數、生物分類 |
+目前沒有候選；ordering 與 classify 已納入 v1。
 
 單格填字（原本想另開 `text-input`）併入 `blanks` 的「一格」情況，不另開型別。
 

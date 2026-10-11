@@ -1,0 +1,87 @@
+{
+  "format_version": 1,
+  "id": "i-classify-01",
+  "unit": "u01-stream-bridge",
+  "type": "classify",
+  "kind": "fixed",
+  "skill": "詞語與順序理解",
+  "difficulty": 1,
+  "ladder_ids": [
+    "c-III-2#a@1"
+  ],
+  "curriculum_codes": [
+    "5-Ⅲ-2"
+  ],
+  "stem": {
+    "text": {
+      "text": "請把詞語分成動作和事物。",
+      "audio": null
+    }
+  },
+  "hints": [
+    {
+      "text": "想想哪些詞語表示做一件事。",
+      "audio": null
+    },
+    {
+      "text": "走和看都是動作。",
+      "audio": null
+    },
+    {
+      "text": "小橋是可以看到的事物。",
+      "audio": null
+    }
+  ],
+  "feedback": {
+    "correct": {
+      "text": "你完成了！",
+      "audio": null
+    },
+    "retry": {
+      "text": "再想一想每張卡片的意思。",
+      "audio": null
+    }
+  },
+  "bins": [
+    {
+      "id": "action",
+      "label": {
+        "text": "動作",
+        "audio": null
+      }
+    },
+    {
+      "id": "thing",
+      "label": {
+        "text": "事物",
+        "audio": null
+      }
+    }
+  ],
+  "objects": [
+    {
+      "id": "walk",
+      "text": {
+        "text": "走",
+        "audio": null
+      },
+      "bin": "action"
+    },
+    {
+      "id": "look",
+      "text": {
+        "text": "看",
+        "audio": null
+      },
+      "bin": "action"
+    },
+    {
+      "id": "bridge",
+      "text": {
+        "text": "小橋",
+        "audio": null
+      },
+      "bin": "thing"
+    }
+  ]
+}
