@@ -11,6 +11,10 @@
 
 `input`、`max_length` 是 renderer 提示，不參與計分。固定題禁止頂層 `answer`、`options`、`pairs`、`tolerance`、`input`、`unit_label`、`shuffle`、`distractor_pool`。generated 模板不能帶 `blanks` 實例。
 
+載入內容包時應先通過 schema 與 conformance 驗證，再交給 `score()`。`accept[]` 的原始字串不得重複，由 schema 的 `uniqueItems` 檢查；計分器的局部防衛檢查不取代完整內容驗證，也不重複檢查這項唯一性。若不同字串經正規化後相同，只會視為同一個可接受答案，不會增加分數。
+
+範例的三層提示沿用「輕推 → 縮範圍 → 近答案」：第三層提供詞首或計算步驟，留給學生完成最後一步。這是範例內容的選擇，不新增全域提示政策。
+
 ## 作答與計分
 
 ```json

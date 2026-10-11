@@ -20,6 +20,7 @@ export function score(question, response) {
     if (!isPlainObject(slot) || !isId(slot.id) || ids.has(slot.id)) throw new TypeError("score(blanks): 格 id 不合法或重複");
     ids.add(slot.id);
     if (slot.kind === "numeric") {
+      // 只重用題目驗證；刻意忽略缺少作答所回傳的 invalid 結果。
       numericScore({ ...slot, type: "numeric" }, undefined);
     } else if (slot.kind === "text") {
       if (typeof slot.answer !== "string" || slot.answer.length === 0 ||

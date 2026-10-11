@@ -25,11 +25,11 @@
   "files": [
     {
       "path": "items/i-blanks-chinese-01.json",
-      "sha256": "d2e445c28217b32642c8137d7f2d1f3b352fad80c3675094446a04b9042a2530"
+      "sha256": "836e4a36dea7fddf6cba76859fb6b1f5449539994470f0e6158781209474fffd"
     },
     {
       "path": "items/i-blanks-math-01.json",
-      "sha256": "88a42c12a84115ab4594034df4f778f73647248c9df584dbc0aba88909c7bbde"
+      "sha256": "166ec2046608779f921ad306d5952a70d001d48da2e759ec279c929c9c8ffccc"
     },
     {
       "path": "items/i-choice-01.json",
