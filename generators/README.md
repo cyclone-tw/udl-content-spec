@@ -7,7 +7,7 @@
 | id | 中文 | 版本 | 條件 | 參數 | 產出題型 | 狀態 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `math.add-sub` | 加減法（依能力指標條件檔） | 1 | 由 `profiles/` 的檔位決定：進位次數、退位次數、被減數個位是否為 0、和的範圍 | `tiers`、`weights`、`operations`、`shapes`、`presentation`、`scaffold`、`context`、`distinct`、`context_pools`（用 `resolveParams` 產生） | `blanks`（直式）或 `numeric` | v1（#18） |
-| `math.add-2digit-carry` | 二位數進位加法 | 1 | 個位相加 ≥ 10 | `min`、`max`（10–99）、`max_sum`、`distinct`、`layout` | `numeric` | legacy：已被 `math.add-sub` 涵蓋，保留到 v2；驗證器對它的題目只警告「沒有條件檔」 |
+| `math.add-2digit-carry` | 二位數進位加法 | 1 | 個位相加 ≥ 10 | `min`、`max`（10–99）、`max_sum`、`distinct`、`layout` | `numeric` | legacy：已被 `math.add-sub` 涵蓋，保留到 v2；驗證器對它的題目只警告「沒有條件檔」（`ladder_ids` 仍必填） |
 | `math.add-2digit-no-carry` | 二位數不進位加法 | 1 | 個位相加 < 10 | 同上 | `numeric` | 同上 |
 
 ## 能力指標條件檔（`profiles/`）

@@ -58,6 +58,11 @@ test("登錄表：條件檔通過 schema，每個檔位都有三句提示，預�
     assert.ok(validateProfile(p), JSON.stringify(validateProfile.errors));
     assert.deepEqual(Object.keys(p.hints).sort(), Object.keys(p.tiers).sort(), "每個檔位都要有提示範本");
     for (const h of Object.values(p.hints)) assert.equal(pickHints(h, []).length, 3, "default 一定三句");
+    const count = (text, id) => (text.match(new RegExp(`\\[\\[${id}\\]\\]`, "g")) ?? []).length;
+    const others = (text) => [...text.matchAll(/\[\[([^\]]*)\]\]/g)].map((m) => m[1]).filter((x) => !["ones", "tens", "hundreds"].includes(x));
+    assert.equal(count(p.stems.vertical.places_2, "ones"), 1); assert.equal(count(p.stems.vertical.places_2, "tens"), 1); assert.equal(count(p.stems.vertical.places_2, "hundreds"), 0);
+    for (const id of ["ones", "tens", "hundreds"]) assert.equal(count(p.stems.vertical.places_3, id), 1);
+    assert.deepEqual(others(p.stems.vertical.places_2), []); assert.deepEqual(others(p.stems.vertical.places_3), []);
     for (const t of p.defaults.tiers) assert.ok(p.tiers[t], `預設檔位 ${t} 不存在`);
     for (const t of Object.keys(p.defaults.weights)) assert.ok(p.defaults.tiers.includes(t), `權重 ${t} 不在預設檔位`);
     for (const s of p.shapes.default) assert.ok(p.shapes.allowed.some((a) => a[0] === s[0] && a[1] === s[1]));
@@ -205,6 +210,7 @@ test("橫式實例：numeric、answer 正確、display 帶 operation 與 scaffol
     assert.equal(q.type, "numeric");
     assert.equal(q.answer, q.variables.result);
     assert.equal(q.display.layout, "horizontal");
+    assert.deepEqual(q.input, { min: 0, max: 999, decimals: 0 });
     assert.equal(q.display.scaffold, "full");
     assert.ok(["add", "sub"].includes(q.display.operation));
     assert.equal(score(q, { value: q.answer }).outcome, "correct");
@@ -326,6 +332,8 @@ test("checkGeneratedItem 是純函式：給驗證器與平台共用", async () =
   assert.deepEqual(checkGeneratedItem(example, { validateParams: v.params[example.generator], pools }), { errors: [], warnings: [] });
   const two = { ...example, ladder_ids: [A2, A2] };
   assert.match(checkGeneratedItem(two, { validateParams: v.params[example.generator], pools }).errors.join(), /對到 2 份條件檔/);
+  const unknown = { ...example, ladder_ids: ["n-II-2#b@1"], generator: "math.nope" };
+  assert.match(checkGeneratedItem(unknown, { validateParams: undefined, pools }).errors.join(), /generator math.nope 未登錄/);
   const badVersion = { ...example, generator_version: 2 };
   assert.match(checkGeneratedItem(badVersion, { validateParams: v.params[example.generator], pools }).errors.join(), /generator_version 2/);
   // legacy 產生器：沒有條件檔只警告，params 仍過形狀 schema
@@ -378,7 +386,8 @@ test("提示變體：十位進位的 add-one-carry 不再說個位進 1；一位
       tensCarry += 1;
       assert.equal(v.hint_variant, "tens-carry");
       assert.equal(q.hints[0].text, `先算個位：${v.a_ones} 加 ${v.b_ones} 是 ${v.ones}，不用進位。`);
-      assert.equal(q.hints[1].text, `十位：${v.a_tens} 加 ${v.b_tens} 是 ${v.tens_sum}，超過 10，要向百位進 1。`);
+      assert.equal(q.hints[1].text, `十位：${v.a_tens} 加 ${v.b_tens} 是 ${v.tens_sum}，滿 10 了，要向百位進 1。`);
+      assert.ok(v.tens_sum >= 10 && v.tens_sum <= 18);
       assert.equal(q.hints[2].text, `百位寫 1，十位寫 ${v.tens}，答案是 ${v.sum}。`);
       assert.ok(v.sum >= 100);
     } else {
@@ -390,10 +399,21 @@ test("提示變體：十位進位的 add-one-carry 不再說個位進 1；一位
   }
   assert.ok(tensCarry > 30, `十位進位子情形太少（${tensCarry}）`);
 
-  const one = resolveParams(profile, { overrides: { tiers: ["sub-no-borrow", "add-no-carry", "sub-one-borrow", "sub-borrow-from-zero"], shapes: [[2, 1]], context: false, distinct: false } }).params;
-  for (const q of instantiate(item(one, { count: 80 }), { seed: "one" })) {
-    assert.equal(q.variables.hint_variant, "one-digit");
-    for (const h of q.hints) assert.ok(!/[加減] 0[，。]/.test(h.text), h.text);
+  // 所有檔位 × [2,1]：每一句提示都不能出現「加 0」「減 0」（含「加 0 再加 1」這種中間位置），也不能剩下未代入的變數
+  const one = resolveParams(profile, { overrides: { tiers: Object.keys(profile.tiers), shapes: [[2, 1]], context: false, distinct: false } }).params;
+  const oneBatch = instantiate(item(one, { count: 240 }), { seed: "one" });
+  for (const q of oneBatch) {
+    assert.equal(q.variables.hint_variant, q.variables.carries === 1 ? "ones-carry" : "one-digit");
+    for (const h of q.hints) {
+      assert.ok(!/[加減] 0(?![0-9])/.test(h.text), h.text);
+      assert.ok(!h.text.includes("{"), h.text);
+    }
+  }
+  assert.ok(oneBatch.some((q) => q.tier === "add-two-carries"), "[2,1] 也要抽到進兩次的題");
+  // 「滿 10」措辭對 tens_sum 恰為 10 也成立；「超過 10」只用在個位（ones_sum ≥ 10 時必 > 9，但要確認沒有 = 10 被說成超過）
+  for (const q of instantiate(item(resolveParams(profile, { overrides: { tiers: ["add-two-carries"], context: false, distinct: false } }).params, { count: 100 }), { seed: "two" })) {
+    assert.match(q.hints[1].text, /是 \d+，又滿 10 了/);
+    assert.ok(q.variables.tens_sum >= 10);
   }
 });
 

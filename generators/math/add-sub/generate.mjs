@@ -128,6 +128,8 @@ export function generate({ params, seed, count, profile, pools }) {
   if (!Number.isInteger(count) || count < 1) throw new TypeError(`${id}: count 必須是 ≥ 1 的整數`);
 
   const rng = createRng(`${id}|${String(seed)}`);
+  // 橫式輸入框上限：最大位數再多一位（二位數相加最多三位）。
+  const inputMax = 10 ** (Math.max(...params.shapes.map((s) => s[0])) + 1) - 1;
   const weighted = params.tiers.map((t) => [t, params.weights?.[t] ?? 1]);
   const seen = new Set();
   const out = [];
@@ -195,7 +197,7 @@ export function generate({ params, seed, count, profile, pools }) {
         stem: { text: { text, audio: null } },
         answer: info.result,
         tolerance: { type: "nominal", value: 0 },
-        input: { min: 0, max: 999, decimals: 0 },
+        input: { min: 0, max: inputMax, decimals: 0 },
         display: { layout: "horizontal", operation, operands: [a, b], scaffold: params.scaffold },
       });
     }

@@ -33,4 +33,4 @@
 
 ## 與舊產生器的關係
 
-`math.add-2digit-carry`／`math.add-2digit-no-carry` 是沒有條件檔時代的產物（模組標 `legacy = true`），功能被本產生器涵蓋；保留到 v2 以免既有內容包壞掉：`instantiate` 照常展開，驗證器對它們的題目只警告「沒有條件檔」不擋。新內容請用本產生器並標有條件檔的能力指標。
+`math.add-2digit-carry`／`math.add-2digit-no-carry` 是沒有條件檔時代的產物（模組標 `legacy = true`），功能被本產生器涵蓋；保留到 v2 以免既有內容包壞掉：`instantiate` 照常展開，驗證器對它們的題目只警告「沒有條件檔」不擋（題目仍須有至少一條 kit 階梯 id，這是所有題目的 schema 規則）。新內容請用本產生器並標有條件檔的能力指標。

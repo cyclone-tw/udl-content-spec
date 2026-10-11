@@ -5,45 +5,120 @@
     "repo": "cyclone-tw/sped-student-kit",
     "commit": "890e9fe",
     "behavior": "能用直式計算二位數加減（含一次進位或退位），10 題正確率約八成",
-    "curriculum_codes": ["N-2-2"]
+    "curriculum_codes": [
+      "N-2-2"
+    ]
   },
   "generator": "math.add-sub",
   "generator_version": 1,
   "tiers": {
-    "add-no-carry": { "label": "加法：不進位", "operation": "add", "carries": 0 },
-    "add-one-carry": { "label": "加法：恰一次進位", "operation": "add", "carries": 1 },
-    "add-two-carries": { "label": "加法：進兩次（和 ≥ 100）", "operation": "add", "carries": 2 },
-    "sub-no-borrow": { "label": "減法：不退位", "operation": "sub", "borrows": 0 },
-    "sub-one-borrow": { "label": "減法：退位一次", "operation": "sub", "borrows": 1, "minuend_ones_zero": false },
-    "sub-borrow-from-zero": { "label": "減法：被減數個位是 0 的退位", "operation": "sub", "borrows": 1, "minuend_ones_zero": true }
+    "add-no-carry": {
+      "label": "加法：不進位",
+      "operation": "add",
+      "carries": 0
+    },
+    "add-one-carry": {
+      "label": "加法：恰一次進位",
+      "operation": "add",
+      "carries": 1
+    },
+    "add-two-carries": {
+      "label": "加法：進兩次（和 ≥ 100）",
+      "operation": "add",
+      "carries": 2
+    },
+    "sub-no-borrow": {
+      "label": "減法：不退位",
+      "operation": "sub",
+      "borrows": 0
+    },
+    "sub-one-borrow": {
+      "label": "減法：退位一次",
+      "operation": "sub",
+      "borrows": 1,
+      "minuend_ones_zero": false
+    },
+    "sub-borrow-from-zero": {
+      "label": "減法：被減數個位是 0 的退位",
+      "operation": "sub",
+      "borrows": 1,
+      "minuend_ones_zero": true
+    }
   },
   "shapes": {
-    "allowed": [[2, 2], [2, 1]],
-    "default": [[2, 2]]
+    "allowed": [
+      [
+        2,
+        2
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "default": [
+      [
+        2,
+        2
+      ]
+    ]
   },
   "defaults": {
-    "tiers": ["add-no-carry", "add-one-carry", "sub-no-borrow", "sub-one-borrow"],
-    "weights": { "add-no-carry": 3, "add-one-carry": 7, "sub-no-borrow": 3, "sub-one-borrow": 7 },
-    "operations": ["add", "sub"],
-    "shapes": [[2, 2]],
+    "tiers": [
+      "add-no-carry",
+      "add-one-carry",
+      "sub-no-borrow",
+      "sub-one-borrow"
+    ],
+    "weights": {
+      "add-no-carry": 3,
+      "add-one-carry": 7,
+      "sub-no-borrow": 3,
+      "sub-one-borrow": 7
+    },
+    "operations": [
+      "add",
+      "sub"
+    ],
+    "shapes": [
+      [
+        2,
+        2
+      ]
+    ],
     "count": 10,
     "presentation": "vertical-blanks",
-    "scaffold": { "assess": "none", "practice": "full" },
+    "scaffold": {
+      "assess": "none",
+      "practice": "full"
+    },
     "context": true,
     "distinct": true
   },
   "adjustments": {
     "simplify": {
       "label": "簡化",
-      "tiers": ["add-no-carry", "sub-no-borrow"],
+      "tiers": [
+        "add-no-carry",
+        "sub-no-borrow"
+      ],
       "weights": {},
-      "scaffold": { "assess": "full", "practice": "full" }
+      "scaffold": {
+        "assess": "full",
+        "practice": "full"
+      }
     },
-    "reduce": { "label": "減量", "count": 5 },
+    "reduce": {
+      "label": "減量",
+      "count": 5
+    },
     "decompose": {
       "label": "分解",
       "presentation": "vertical-blanks",
-      "scaffold": { "assess": "full", "practice": "full" },
+      "scaffold": {
+        "assess": "full",
+        "practice": "full"
+      },
       "note": "直式逐位分步（先個位、鎖定後再十位）由 renderer 的完整鷹架實作；條件檔先只記鷹架檔位。"
     },
     "substitute": {
@@ -51,7 +126,10 @@
       "presentation": "horizontal-numeric",
       "note": "替代形式（指認／選擇型或換較低指標）待 Cyclone 定；先退到橫式單值。"
     },
-    "not_applicable": { "label": "不適用", "skip": true }
+    "not_applicable": {
+      "label": "不適用",
+      "skip": true
+    }
   },
   "hints": {
     "add-no-carry": {
@@ -77,7 +155,7 @@
       "variants": {
         "tens-carry": [
           "先算個位：{a_ones} 加 {b_ones} 是 {ones}，不用進位。",
-          "十位：{a_tens} 加 {b_tens} 是 {tens_sum}，超過 10，要向百位進 1。",
+          "十位：{a_tens} 加 {b_tens} 是 {tens_sum}，滿 10 了，要向百位進 1。",
           "百位寫 1，十位寫 {tens}，答案是 {sum}。"
         ],
         "one-digit": [
@@ -87,11 +165,20 @@
         ]
       }
     },
-    "add-two-carries": [
-      "先算個位：{a_ones} 加 {b_ones} 是 {ones_sum}，超過 10 要進 1。",
-      "十位：{a_tens} 加 {b_tens} 再加 1 是 {tens_sum}，又超過 10，再往百位進 1。",
-      "百位寫 1，十位寫 {tens}，答案是 {sum}。"
-    ],
+    "add-two-carries": {
+      "default": [
+        "先算個位：{a_ones} 加 {b_ones} 是 {ones_sum}，超過 10 要進 1。",
+        "十位：{a_tens} 加 {b_tens} 再加 1 是 {tens_sum}，又滿 10 了，再往百位進 1。",
+        "百位寫 1，十位寫 {tens}，答案是 {sum}。"
+      ],
+      "variants": {
+        "one-digit": [
+          "先算個位：{a_ones} 加 {b_ones} 是 {ones_sum}，超過 10 要進 1。",
+          "十位：{a_tens} 加進位的 1 是 {tens_sum}，滿 10 了，再往百位進 1。",
+          "百位寫 1，十位寫 {tens}，答案是 {sum}。"
+        ]
+      }
+    },
     "sub-no-borrow": {
       "default": [
         "先算個位：{a_ones} 減 {b_ones}。",

@@ -64,6 +64,7 @@ export function checkGeneratedItem(item, { validateParams, pools }) {
   const errors = [];
   const warnings = [];
   const gen = generators[item.generator];
+  if (!gen) return { errors: [`generator ${item.generator} 未登錄（generators/index.mjs）`], warnings };
   const paramsShape = () => {
     if (validateParams && !validateParams(item.params)) {
       errors.push(...(validateParams.errors ?? []).map((e) => `params${e.instancePath || "/"}: ${e.message}`));
