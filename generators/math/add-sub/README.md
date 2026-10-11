@@ -24,12 +24,13 @@
 2. 一律 `a ≠ b`；減法 `a > b`。
 3. 檔位條件：`carries`（加法進位次數，恰好）、`borrows`（退位次數）、`minuend_ones_zero`（被減數個位是否為 0）、`sum_max`／`sum_min`。
 4. 直式：`blanks` 為 `ones`、`tens`，結果 ≥ 100 再加 `hundreds`；每格 `input 0–9`。`display.carry_marks: true` 表示 renderer 可畫進退位記號格，記號不計分。
-5. 提示與回饋用條件檔該檔位的範本代入變數；題目檔自己寫了 `hints`／`feedback` 就覆寫（`instantiate` 處理）。
+5. 提示與回饋用條件檔該檔位的範本代入變數；檔位範本可有變體，產生器算出候選 key（恰一次進位在十位 → `tens-carry`、在個位 → `ones-carry`；第二個數一位數 → `one-digit`）依序找，實例 `variables.hint_variant` 記下用了哪個。題目檔自己寫了 `hints`／`feedback` 就覆寫（`instantiate` 處理）。
+6. `sum_max`／`sum_min` 作用在結果：加法的和、減法的差。
 
 ## 變數
 
-`a b op op_word operation sum|diff result a_ones a_tens b_ones b_tens ones tens hundreds ones_sum carry carries borrow borrows carry_or_borrow tier`；減法另有 `a_ones_borrowed`（借位後的個位）、`a_tens_after`（借走後的十位）；用了情境時另有 `subject action item unit`。
+`a b op op_word operation sum|diff result a_ones a_tens b_ones b_tens ones tens hundreds ones_sum tens_sum carry carry_tens carries borrow borrows carry_or_borrow tier hint_variant`；減法另有 `a_ones_borrowed`（借位後的個位）、`a_tens_after`（借走後的十位）；用了情境時另有 `subject action item unit`。
 
 ## 與舊產生器的關係
 
-`math.add-2digit-carry`／`math.add-2digit-no-carry` 是沒有條件檔時代的產物，功能被本產生器涵蓋；保留到 v2 以免既有內容包壞掉，新內容請用本產生器。
+`math.add-2digit-carry`／`math.add-2digit-no-carry` 是沒有條件檔時代的產物（模組標 `legacy = true`），功能被本產生器涵蓋；保留到 v2 以免既有內容包壞掉：`instantiate` 照常展開，驗證器對它們的題目只警告「沒有條件檔」不擋。新內容請用本產生器並標有條件檔的能力指標。

@@ -14,6 +14,7 @@ const entry = (mod) => Object.freeze({
   version: mod.version,
   generate: mod.generate,
   paramsSchemaPath: mod.paramsSchemaPath,
+  legacy: mod.legacy === true,
 });
 
 /** 已登錄的產生器。add-2digit-carry／no-carry 已被 add-sub 涵蓋，保留到 v2。 */
@@ -67,6 +68,10 @@ export function instantiate(item, { seed, pools } = {}) {
   if (profile && profile.generator !== gen.id) {
     throw new TypeError(`instantiate: 條件檔 ${profile.ladder_id} 指定產生器 ${profile.generator}，題目 ${item.id} 卻用 ${gen.id}`);
   }
+  if (profile && profile.generator_version !== gen.version) {
+    throw new TypeError(`instantiate: 條件檔 ${profile.ladder_id} 寫的是 ${gen.id} version ${profile.generator_version}，目前產生器是 version ${gen.version}；請更新條件檔`);
+  }
+  if (!profile && !gen.legacy) throw new TypeError(`instantiate: ${gen.id} 需要條件檔；題目 ${item.id} 的 ladder_ids 沒有任何一條有條件檔`);
 
   const seedText = String(seed);
   const parts = gen.generate({ params: item.params, seed: seedText, count: item.count, profile, pools });

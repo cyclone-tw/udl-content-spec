@@ -36,8 +36,8 @@
           "carries": { "type": "integer", "minimum": 0, "maximum": 3, "description": "加法進位次數（恰好）。" },
           "borrows": { "type": "integer", "minimum": 0, "maximum": 3, "description": "減法退位次數（恰好）。" },
           "minuend_ones_zero": { "type": "boolean", "description": "減法：被減數個位是否必須為 0（true）或不得為 0（false）。省略不限。" },
-          "sum_max": { "type": "integer", "minimum": 1, "description": "加法：和的上限（含）。" },
-          "sum_min": { "type": "integer", "minimum": 1, "description": "加法：和的下限（含）。" }
+          "sum_max": { "type": "integer", "minimum": 1, "description": "結果（加法的和、減法的差）上限（含）。" },
+          "sum_min": { "type": "integer", "minimum": 1, "description": "結果（加法的和、減法的差）下限（含）。" }
         },
         "additionalProperties": false
       }
@@ -68,9 +68,27 @@
     },
     "hints": {
       "type": "object",
-      "description": "檔位 id → 三句提示範本（輕推 → 縮範圍 → 近答案），可用 {變數}。每個檔位都要有。",
+      "description": "檔位 id → 三句提示範本（輕推 → 縮範圍 → 近答案），可用 {變數}。每個檔位都要有。同一檔位有不同解法子情形時用 { default, variants }：產生器依實例算出變體 key（例如 add-one-carry 的 tens-carry、形狀 [n,1] 的 one-digit），依序找第一個有的變體，都沒有就用 default。",
       "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
-      "additionalProperties": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "string", "minLength": 1 } }
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/$defs/three_hints" },
+          {
+            "type": "object",
+            "required": ["default", "variants"],
+            "properties": {
+              "default": { "$ref": "#/$defs/three_hints" },
+              "variants": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+                "additionalProperties": { "$ref": "#/$defs/three_hints" }
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
     },
     "feedback": {
       "type": "object",
@@ -113,6 +131,7 @@
   },
   "additionalProperties": false,
   "$defs": {
+    "three_hints": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "string", "minLength": 1 } },
     "shape": {
       "type": "array",
       "minItems": 2,

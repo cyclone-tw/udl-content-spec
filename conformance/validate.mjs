@@ -43,7 +43,12 @@ export async function loadLadderIds(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const e of entries) {
     if (!e.isFile() || !e.name.endsWith(".json")) continue;
-    const data = JSON.parse(await readFile(path.join(dir, e.name), "utf8"));
+    let data;
+    try {
+      data = JSON.parse(await readFile(path.join(dir, e.name), "utf8"));
+    } catch (err) {
+      throw new Error(`${path.join(dir, e.name)}: 不是合法 JSON（${err.message}）`);
+    }
     for (const row of Array.isArray(data) ? data : []) if (typeof row?.id === "string") ids.add(row.id);
   }
   if (!ids.size) throw new Error(`${dir}: 沒有讀到任何階梯行為 id`);
@@ -51,33 +56,44 @@ export async function loadLadderIds(dir) {
 }
 
 /**
- * 產生題的指標與參數檢查（純函式，給驗證器與測試用）：
+ * 產生題的指標與參數檢查（純函式，給驗證器與測試用），回傳 { errors, warnings }：
  * ladder_ids 之中恰一條有條件檔；generator／version 與條件檔一致；params 通過形狀 schema 與條件檔範圍；情境池存在。
+ * 例外：legacy 產生器（add-2digit-carry／no-carry，沒有條件檔時代的產物，保留到 v2）的題目沒有條件檔只警告，params 仍過形狀 schema。
  */
 export function checkGeneratedItem(item, { validateParams, pools }) {
   const errors = [];
+  const warnings = [];
+  const gen = generators[item.generator];
+  const paramsShape = () => {
+    if (validateParams && !validateParams(item.params)) {
+      errors.push(...(validateParams.errors ?? []).map((e) => `params${e.instancePath || "/"}: ${e.message}`));
+      return false;
+    }
+    return true;
+  };
   const found = profilesFor(item.ladder_ids);
   if (found.length === 0) {
-    errors.push(`ladder_ids ${JSON.stringify(item.ladder_ids)} 沒有任何一條有條件檔（generators/profiles/）；產生題必須對應有條件檔的能力指標`);
-    return errors;
+    if (gen?.legacy) {
+      warnings.push(`產生器 ${item.generator} 是 legacy（沒有條件檔），v2 移除；請改用 math.add-sub 並標有條件檔的能力指標`);
+      paramsShape();
+    } else {
+      errors.push(`ladder_ids ${JSON.stringify(item.ladder_ids)} 沒有任何一條有條件檔（generators/profiles/）；產生題必須對應有條件檔的能力指標`);
+    }
+    return { errors, warnings };
   }
   if (found.length > 1) {
     errors.push(`ladder_ids 對到 ${found.length} 份條件檔（${found.map((p) => p.ladder_id).join("、")}）；產生題只能檢測一條有條件檔的指標`);
-    return errors;
+    return { errors, warnings };
   }
   const profile = found[0];
   if (item.generator !== profile.generator) errors.push(`generator ${item.generator} 與條件檔 ${profile.ladder_id} 指定的 ${profile.generator} 不符`);
   if (item.generator_version !== profile.generator_version) errors.push(`generator_version ${item.generator_version} 與條件檔指定的 ${profile.generator_version} 不符`);
-  if (errors.length) return errors;
-  if (validateParams && !validateParams(item.params)) {
-    errors.push(...(validateParams.errors ?? []).map((e) => `params${e.instancePath || "/"}: ${e.message}`));
-    return errors;
-  }
+  if (errors.length || !paramsShape()) return { errors, warnings };
   errors.push(...checkParams(profile, item.params).map((m) => `params: ${m}`));
   for (const [key, poolId] of Object.entries(item.params.context_pools ?? {})) {
     if (pools && !pools.has(poolId)) errors.push(`params.context_pools.${key} 引用的池 ${poolId} 不在 pack.json pools`);
   }
-  return errors;
+  return { errors, warnings };
 }
 
 function formatAjvErrors(file, errors) {
@@ -297,7 +313,9 @@ export async function validatePack(dir, { strict = false, ladderDir = null } = {
       }
       if (item.kind === "generated") {
         // 指標決定題目長相：產生題的參數必須落在其能力指標條件檔允許的範圍內。
-        errors.push(...checkGeneratedItem(item, { validateParams: v.params[item.generator], pools }).map((m) => `${rel}: ${m}`));
+        const g = checkGeneratedItem(item, { validateParams: v.params[item.generator], pools });
+        errors.push(...g.errors.map((m) => `${rel}: ${m}`));
+        warnings.push(...g.warnings.map((m) => `${rel}: ${m}`));
       }
       if (typeof item.stem?.image === "string") requireListed(item.stem.image, rel);
       for (const o of [...asArray(item.options), ...asArray(item.sequence), ...asArray(item.objects)]) if (typeof o.image === "string") requireListed(o.image, rel);
@@ -364,7 +382,8 @@ export async function validateScopeFile(file) {
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const args = process.argv.slice(2);
+  // 接受 --ladder-dir <dir> 與 --ladder-dir=<dir> 兩種寫法。
+  const args = process.argv.slice(2).flatMap((a) => (a.startsWith("--ladder-dir=") ? ["--ladder-dir", a.slice("--ladder-dir=".length)] : [a]));
   const ladderIdx = args.indexOf("--ladder-dir");
   const ladderDir = ladderIdx >= 0 ? args[ladderIdx + 1] : null;
   const positional = args.filter((a, i) => !a.startsWith("--") && (ladderIdx < 0 || i !== ladderIdx + 1));

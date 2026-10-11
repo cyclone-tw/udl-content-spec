@@ -23,11 +23,12 @@ export function analyze(operation, a, b) {
   if (operation === "add") {
     const sum = a + b;
     const carry = a1 + b1 >= 10 ? 1 : 0;
-    const carry10 = a10 + b10 + carry >= 10 ? 1 : 0;
+    const tensSum = a10 + b10 + carry;
+    const carry10 = tensSum >= 10 ? 1 : 0;
     const [ones, tens, hundreds] = digits(sum);
     return {
-      result: sum, carries: carry + carry10, borrows: 0, carry, borrow: 0,
-      ones, tens, hundreds, ones_sum: a1 + b1,
+      result: sum, carries: carry + carry10, borrows: 0, carry, carry_tens: carry10, borrow: 0,
+      ones, tens, hundreds, ones_sum: a1 + b1, tens_sum: tensSum,
       a_ones: a1, a_tens: a10, b_ones: b1, b_tens: b10,
     };
   }
@@ -47,9 +48,27 @@ function matchesTier(def, operation, a, info) {
   if (def.carries !== undefined && info.carries !== def.carries) return false;
   if (def.borrows !== undefined && info.borrows !== def.borrows) return false;
   if (def.minuend_ones_zero !== undefined && (a % 10 === 0) !== def.minuend_ones_zero) return false;
+  // sum_max／sum_min 作用在「結果」：加法的和、減法的差（schema 說明同此）。
   if (def.sum_max !== undefined && info.result > def.sum_max) return false;
   if (def.sum_min !== undefined && info.result < def.sum_min) return false;
   return true;
+}
+
+/**
+ * 這題的提示變體候選，優先序由前到後：解法子情形（加法恰一次進位發生在十位 → tens-carry，在個位 → ones-carry）、
+ * 數字形狀（第二個數是一位數 → one-digit）。條件檔有哪個就用哪個，都沒有用 default。
+ */
+export function hintVariants(info, shape) {
+  const out = [];
+  if (info.carries === 1) out.push(info.carry_tens === 1 ? "tens-carry" : "ones-carry");
+  if (shape[1] === 1) out.push("one-digit");
+  return out;
+}
+
+export function pickHints(hintsForTier, candidates) {
+  if (Array.isArray(hintsForTier)) return hintsForTier;
+  for (const key of candidates) if (hintsForTier.variants && Object.hasOwn(hintsForTier.variants, key)) return hintsForTier.variants[key];
+  return hintsForTier.default;
 }
 
 const pickWeighted = (rng, entries) => {
@@ -149,7 +168,9 @@ export function generate({ params, seed, count, profile, pools }) {
     };
     const context = contextSentence(rng, profile, params, pools, operation, vars);
     const places = info.result >= 100 ? ["ones", "tens", "hundreds"] : ["ones", "tens"];
-    const hints = profile.hints[tierId].map((t) => ({ text: substitute(t, vars), audio: null }));
+    const variants = hintVariants(info, shape);
+    const hints = pickHints(profile.hints[tierId], variants).map((t) => ({ text: substitute(t, vars), audio: null }));
+    vars.hint_variant = variants[0] ?? "default";
     const feedback = {
       correct: { text: substitute(profile.feedback.correct, vars), audio: null },
       retry: { text: substitute(profile.feedback.retry, vars), audio: null },

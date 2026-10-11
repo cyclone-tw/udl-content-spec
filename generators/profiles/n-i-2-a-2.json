@@ -54,36 +54,86 @@
     "not_applicable": { "label": "不適用", "skip": true }
   },
   "hints": {
-    "add-no-carry": [
-      "先算個位：{a_ones} 加 {b_ones}。",
-      "個位是 {ones}，不用進位。",
-      "十位：{a_tens} 加 {b_tens}，答案是 {sum}。"
-    ],
-    "add-one-carry": [
-      "先算個位：{a_ones} 加 {b_ones}。",
-      "個位相加是 {ones_sum}，寫 {ones}，記得進 1。",
-      "十位：{a_tens} 加 {b_tens}，再加進位的 1，答案是 {sum}。"
-    ],
+    "add-no-carry": {
+      "default": [
+        "先算個位：{a_ones} 加 {b_ones}。",
+        "個位是 {ones}，不用進位。",
+        "十位：{a_tens} 加 {b_tens}，答案是 {sum}。"
+      ],
+      "variants": {
+        "one-digit": [
+          "先算個位：{a_ones} 加 {b_ones}。",
+          "個位是 {ones}，不用進位。",
+          "十位不變還是 {a_tens}，答案是 {sum}。"
+        ]
+      }
+    },
+    "add-one-carry": {
+      "default": [
+        "先算個位：{a_ones} 加 {b_ones}。",
+        "個位相加是 {ones_sum}，寫 {ones}，記得進 1。",
+        "十位：{a_tens} 加 {b_tens}，再加進位的 1，答案是 {sum}。"
+      ],
+      "variants": {
+        "tens-carry": [
+          "先算個位：{a_ones} 加 {b_ones} 是 {ones}，不用進位。",
+          "十位：{a_tens} 加 {b_tens} 是 {tens_sum}，超過 10，要向百位進 1。",
+          "百位寫 1，十位寫 {tens}，答案是 {sum}。"
+        ],
+        "one-digit": [
+          "先算個位：{a_ones} 加 {b_ones}。",
+          "個位相加是 {ones_sum}，寫 {ones}，記得進 1。",
+          "十位：{a_tens} 加進位的 1，答案是 {sum}。"
+        ]
+      }
+    },
     "add-two-carries": [
-      "先算個位：{a_ones} 加 {b_ones}，超過 10 要進 1。",
-      "十位：{a_tens} 加 {b_tens} 再加 1，又超過 10，再往百位進 1。",
-      "百位寫 1，答案是 {sum}。"
+      "先算個位：{a_ones} 加 {b_ones} 是 {ones_sum}，超過 10 要進 1。",
+      "十位：{a_tens} 加 {b_tens} 再加 1 是 {tens_sum}，又超過 10，再往百位進 1。",
+      "百位寫 1，十位寫 {tens}，答案是 {sum}。"
     ],
-    "sub-no-borrow": [
-      "先算個位：{a_ones} 減 {b_ones}。",
-      "個位是 {ones}，夠減，不用退位。",
-      "十位：{a_tens} 減 {b_tens}，答案是 {diff}。"
-    ],
-    "sub-one-borrow": [
-      "先看個位：{a_ones} 比 {b_ones} 小，不夠減。",
-      "向十位借 1，個位變成 {a_ones_borrowed}，再減 {b_ones} 得 {ones}。",
-      "十位借走 1 剩 {a_tens_after}，再減 {b_tens}，答案是 {diff}。"
-    ],
-    "sub-borrow-from-zero": [
-      "個位是 0，什麼都不夠減，一定要向十位借。",
-      "借 1 之後個位變成 10，10 減 {b_ones} 得 {ones}。",
-      "十位借走 1 剩 {a_tens_after}，再減 {b_tens}，答案是 {diff}。"
-    ]
+    "sub-no-borrow": {
+      "default": [
+        "先算個位：{a_ones} 減 {b_ones}。",
+        "個位是 {ones}，夠減，不用退位。",
+        "十位：{a_tens} 減 {b_tens}，答案是 {diff}。"
+      ],
+      "variants": {
+        "one-digit": [
+          "先算個位：{a_ones} 減 {b_ones}。",
+          "個位是 {ones}，夠減，不用退位。",
+          "十位不變還是 {a_tens}，答案是 {diff}。"
+        ]
+      }
+    },
+    "sub-one-borrow": {
+      "default": [
+        "先看個位：{a_ones} 比 {b_ones} 小，不夠減。",
+        "向十位借 1，個位變成 {a_ones_borrowed}，再減 {b_ones} 得 {ones}。",
+        "十位借走 1 剩 {a_tens_after}，再減 {b_tens}，答案是 {diff}。"
+      ],
+      "variants": {
+        "one-digit": [
+          "先看個位：{a_ones} 比 {b_ones} 小，不夠減。",
+          "向十位借 1，個位變成 {a_ones_borrowed}，再減 {b_ones} 得 {ones}。",
+          "十位借走 1 剩 {a_tens_after}，答案是 {diff}。"
+        ]
+      }
+    },
+    "sub-borrow-from-zero": {
+      "default": [
+        "個位是 0，什麼都不夠減，一定要向十位借。",
+        "借 1 之後個位變成 10，10 減 {b_ones} 得 {ones}。",
+        "十位借走 1 剩 {a_tens_after}，再減 {b_tens}，答案是 {diff}。"
+      ],
+      "variants": {
+        "one-digit": [
+          "個位是 0，什麼都不夠減，一定要向十位借。",
+          "借 1 之後個位變成 10，10 減 {b_ones} 得 {ones}。",
+          "十位借走 1 剩 {a_tens_after}，答案是 {diff}。"
+        ]
+      }
+    }
   },
   "feedback": {
     "correct": "答對了！{a} {op} {b} 等於 {result}。",

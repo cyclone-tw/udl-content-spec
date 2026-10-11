@@ -45,11 +45,11 @@ const { params, count } = resolveParams(profile, { adjustment: "simplify", overr
 // params → item.params；count → item.count；mode 決定鷹架取 scaffold.assess 還是 scaffold.practice
 ```
 
-`resolveParams` 會用 `checkParams` 檢查結果仍在條件檔範圍內，超出就丟 `TypeError`。老師的覆寫只能收窄（少開檔位、少題、換呈現、換鷹架），不能開條件檔沒有的檔位。
+`resolveParams` 會用 `checkParams` 檢查結果仍在條件檔範圍內，超出就丟 `TypeError`。**條件檔是上限**：老師的覆寫可以在條件檔列的檔位與形狀之內任意選（包括打開預設關的檔位，例如 `add-two-carries` 或 `[2,1]`，這是 #18 的決定），也可以改題數、呈現、鷹架；不能開條件檔沒有的檔位或形狀。`adjustments` 只是五種調整的預設方案，不是另一道上限。
 
 ## 提示與回饋
 
-每個檔位三句範本（輕推 → 縮範圍 → 近答案），可用產生器變數（見 `math/add-sub/README.md`）。題目檔沒寫 `hints`／`feedback` 就用範本；寫了就覆寫。逐位狀態提示（看學生做到哪一位再給）是 renderer「完整鷹架」的加值功能，不取代三層。
+每個檔位三句範本（輕推 → 縮範圍 → 近答案），可用產生器變數（見 `math/add-sub/README.md`）。同一檔位有不同解法子情形時寫成 `{ default, variants }`：`add-one-carry` 的進位可能發生在個位（`ones-carry`）或十位（`tens-carry`，例 80＋25），第二個數是一位數時用 `one-digit`；產生器依實例算出變體 key，依序找第一個有的，都沒有就用 `default`。題目檔沒寫 `hints`／`feedback` 就用範本；寫了就覆寫。逐位狀態提示（看學生做到哪一位再給）是 renderer「完整鷹架」的加值功能，不取代三層。
 
 ## 新增一條指標
 
