@@ -24,6 +24,14 @@
   ],
   "files": [
     {
+      "path": "items/i-blanks-chinese-01.json",
+      "sha256": "d2e445c28217b32642c8137d7f2d1f3b352fad80c3675094446a04b9042a2530"
+    },
+    {
+      "path": "items/i-blanks-math-01.json",
+      "sha256": "88a42c12a84115ab4594034df4f778f73647248c9df584dbc0aba88909c7bbde"
+    },
+    {
       "path": "items/i-choice-01.json",
       "sha256": "5367343df5d83bcbbd18c77974315958f7f57da1c33bd10be8cda83a9011543f"
     },
@@ -57,11 +65,11 @@
     },
     {
       "path": "units/u01-stream-bridge.json",
-      "sha256": "3b23a46099558d43b112054f94a02f793b9b2758c33d0954e6d8b4f4412f15b5"
+      "sha256": "146a4bef973452d3b26db143227cfdce9adb000b93b6e9177b80d75796f57b97"
     },
     {
       "path": "units/u02-add-2digit.json",
-      "sha256": "bd52fbae2ae3460a60432b62138830d6a3e529a86a22cf11bc58f27eead54331"
+      "sha256": "8475c4872c853f40fa84a9fb3bd59e0142105c79c64c08ca7e27fd30498b8273"
     }
   ]
 }

@@ -1,0 +1,57 @@
+{
+  "format_version": 1,
+  "id": "i-blanks-chinese-01",
+  "unit": "u01-stream-bridge",
+  "type": "blanks",
+  "kind": "fixed",
+  "skill": "詞語理解",
+  "difficulty": 1,
+  "ladder_ids": [
+    "c-III-2#a@1"
+  ],
+  "curriculum_codes": [
+    "5-Ⅲ-2"
+  ],
+  "stem": {
+    "text": {
+      "text": "請填入適合的詞語：溪水慢慢地流，讓人覺得很[[feeling]]。",
+      "audio": null
+    }
+  },
+  "hints": [
+    {
+      "text": "想一想慢慢流動的溪水帶來什麼感覺。",
+      "audio": null
+    },
+    {
+      "text": "可以用和吵鬧相反的詞。",
+      "audio": null
+    },
+    {
+      "text": "可以填「平靜」，也可以用意思相近的詞。",
+      "audio": null
+    }
+  ],
+  "feedback": {
+    "correct": {
+      "text": "這個詞很適合溪邊的感覺。",
+      "audio": null
+    },
+    "retry": {
+      "text": "再想想安安靜靜的溪水。",
+      "audio": null
+    }
+  },
+  "blanks": [
+    {
+      "id": "feeling",
+      "kind": "text",
+      "answer": "平靜",
+      "accept": [
+        "寧靜",
+        "安靜"
+      ],
+      "max_length": 10
+    }
+  ]
+}

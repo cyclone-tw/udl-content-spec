@@ -61,7 +61,7 @@ test("最小範例通過（只有語音槽與跨科警告）", async () => {
   assert.deepEqual(r.errors, []);
   assert.ok(r.ok);
   assert.equal(r.counts.units, 2);
-  assert.equal(r.counts.items, 5);
+  assert.equal(r.counts.items, 7);
   assert.equal(r.counts.pools, 1);
   assert.ok(r.warnings.every((w) => w.includes("語音槽") || w.includes("subject")), r.warnings.join("\n"));
 });
@@ -228,3 +228,40 @@ test("Scope 範例合法；version 不合法或 JSON 壞掉都回傳錯誤", asy
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("blanks schema：數字、文字、混合格與 1–12 格", async () => {
+  const v = await loadValidators();
+  const original = JSON.parse(await readFile(path.join(EXAMPLE, "items/i-blanks-math-01.json"), "utf8"));
+  const numeric = { id: "n", kind: "numeric", answer: 42, tolerance: { type: "nominal", value: 0 }, input: { min: 0, max: 99, decimals: 0 }, unit_label: "顆" };
+  const text = { id: "t", kind: "text", answer: "字", accept: ["詞"], case_sensitive: false, max_length: 20 };
+  for (const blanks of [[numeric], [text], [numeric, text], Array.from({ length: 12 }, (_, i) => ({ ...text, id: `s${i}` }))]) {
+    assert.ok(v.item({ ...original, blanks }), JSON.stringify(v.item.errors));
+  }
+  for (const blanks of [undefined, [], Array(13).fill(text), [{ ...numeric, kind: "other" }], [{ ...numeric, answer: "42" }],
+    [{ ...text, answer: 42 }], [{ ...text, answer: "" }], [{ ...text, accept: [1] }], [{ ...text, case_sensitive: 0 }],
+    [{ ...text, max_length: 0 }], [{ ...text, max_length: 1.5 }], [{ ...text, tolerance: { type: "nominal", value: 0 } }],
+    [{ ...numeric, accept: ["42"] }], [{ ...numeric, tolerance: { type: "bad", value: 0 } }], [{ ...numeric, id: "Bad" }],
+  ]) assert.equal(v.item({ ...original, blanks }), false, JSON.stringify(blanks));
+  for (const key of ["options", "pairs", "answer", "tolerance", "input", "unit_label", "shuffle", "distractor_pool"]) {
+    assert.equal(v.item({ ...original, [key]: key === "answer" ? 42 : {} }), false, key);
+  }
+  for (const name of ["i-numeric-01", "i-choice-01", "i-tf-01", "i-match-01", "i-gen-add-carry"]) {
+    const item = JSON.parse(await readFile(path.join(EXAMPLE, `items/${name}.json`), "utf8"));
+    assert.equal(v.item({ ...item, blanks: [numeric] }), false, name);
+  }
+});
+
+for (const [name, mutate, message] of [
+  ["缺少", (o) => { o.stem.text.text = "[[tens]]"; }, "ones 必須恰有一個佔位符"],
+  ["重複", (o) => { o.stem.text.text += "[[ones]]"; }, "ones 必須恰有一個佔位符"],
+  ["未知", (o) => { o.stem.text.text += "[[extra]]"; }, "佔位符 extra 不在 blanks"],
+  ["空白 id", (o) => { o.stem.text.text += "[[ ]]"; }, "不在 blanks"],
+  ["格 id 重複", (o) => { o.blanks[1].id = "tens"; }, "blanks id 重複"],
+]) test(`blanks 語意檢查：${name}`, () => withCopy(async (dir) => {
+  await editJson(dir, "items/i-blanks-math-01.json", mutate);
+  await rehash(dir);
+  const r = await validatePack(dir);
+  assert.equal(r.ok, false);
+  assert.ok(has(r.errors, "i-blanks-math-01", message), r.errors.join("\n"));
+  assert.ok(!has(r.errors, "sha256"));
+}));

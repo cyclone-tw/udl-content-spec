@@ -9,6 +9,6 @@
   "ladder_ids": ["n-II-2#b@1"],
   "estimated_minutes": 10,
   "materials": ["m-add-demo"],
-  "items": ["i-numeric-01", "i-gen-add-carry"],
+  "items": ["i-numeric-01", "i-gen-add-carry", "i-blanks-math-01"],
   "pools": []
 }

@@ -10,7 +10,7 @@
 | `true-false` | 是非題 | 1 | `{ "value": true\|false }` | correct／incorrect／invalid | v1 |
 | `match` | 配對題 | 1 | `{ "pairs": { "<左 id>": "<右 id>" } }` | correct／partial／incorrect／invalid | v1 |
 | `numeric` | 計算題（直接輸入數字，不呈現選項） | 1 | `{ "value": <number> }` | correct／incorrect／invalid | v1 |
-| `blanks` | 多格填空（含單格填字） | — | 草案見路線圖 | — | v2 候選 |
+| `blanks` | 多格填空（含單格填字） | 1 | `{ "blanks": { "<slot id>": <number\|string> } }` | correct／partial／incorrect／invalid | v1 |
 | `ordering` | 排序 | — | 草案見路線圖 | — | v2 候選 |
 | `classify` | 拖拉分類 | — | 草案見路線圖 | — | v2 候選 |
 | `drawing` | 畫圖 | — | 草案見路線圖 | pending-review | v3 保留 |
@@ -89,7 +89,6 @@ interface RendererHandle {
 
 | type | 中文 | 作答格式（草案） | 計分（草案） | 用途舉例 |
 | --- | --- | --- | --- | --- |
-| `blanks` | 多格填空 | `{ "blanks": { "<slot id>": <number\|string> } }`；題目每格宣告 `numeric`（含 tolerance）或 `text`（含同義答案清單） | 每格獨立判定；全對 `correct`、部分 `partial = 對的格數／總格數`；文字格先做全半形、前後空白、大小寫正規化 | 直式計算每一位一格、分數分子分母、「幾公尺幾公分」、填詞、寫注音、英文單字 |
 | `ordering` | 排序 | `{ "order": ["<id>", …] }` | 全對 `correct`；部分依「位置正確數／n」給 `partial`（是否改用最長共同子序列待定） | 事件先後、步驟順序、數字大小排列 |
 | `classify` | 拖拉分類 | `{ "bins": { "<bin id>": ["<item id>", …] } }` | 每個物件歸類獨立判定；`partial = 對的物件數／總數`；同一物件出現在兩個桶 → `invalid` | 詞性分類、奇偶數、生物分類 |
 

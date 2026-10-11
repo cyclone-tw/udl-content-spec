@@ -16,9 +16,10 @@ export function score(question, response) {
   if (!Array.isArray(question.pairs) || question.pairs.length === 0 || !question.pairs.every((p) => p && isId(p.id))) {
     throw new TypeError("score(match): question.pairs 必須是非空陣列且每組有 id");
   }
+  const ids = new Set(question.pairs.map((p) => p.id));
+  if (ids.size !== question.pairs.length) throw new TypeError("score(match): pairs id 重複");
   if (!isPlainObject(response) || !isPlainObject(response.pairs)) return invalid(type, version, "missing-field", { field: "pairs" });
 
-  const ids = new Set(question.pairs.map((p) => p.id));
   for (const [left, right] of Object.entries(response.pairs)) {
     if (!ids.has(left)) return invalid(type, version, "unknown-pair", { side: "left", id: left });
     if (!isId(right) || !ids.has(right)) return invalid(type, version, "unknown-pair", { side: "right", id: right });
