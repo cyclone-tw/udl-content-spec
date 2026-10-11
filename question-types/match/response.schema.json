@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:question-types/match/response",
+  "title": "配對題作答",
+  "description": "左側每個 pair id 對應學生連到的右側 pair id。左右都用 item.pairs[].id；學生沒連的左側可以省略（計分時算錯，不算 invalid）。",
+  "type": "object",
+  "required": ["pairs"],
+  "properties": {
+    "pairs": {
+      "type": "object",
+      "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+      "additionalProperties": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }
+    }
+  },
+  "additionalProperties": false
+}

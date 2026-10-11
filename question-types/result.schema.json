@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:question-types/result",
+  "title": "score() 回傳格式",
+  "description": "所有題型的 score(question, response) 都回傳這個形狀。殼、獨立執行器、平台伺服器只讀這裡，不自己判答案。",
+  "type": "object",
+  "required": ["type", "type_version", "outcome", "score", "detail"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "description": "題型代碼，與 registry 的 key 一致。"
+    },
+    "type_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "判定時使用的題型版本；事件契約據此鎖版本。"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["correct", "incorrect", "partial", "invalid", "pending-review"],
+      "description": "correct 全對；incorrect 全錯；partial 部分正確（只有多部件題型會出現，例如 match）；invalid 作答格式不對（缺欄位、未知 id、非數字），不算答錯也不計次；pending-review 保留給 v3 畫圖、口說等需人工批閱的題型，v1 題型不會回傳。"
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "0 到 1 的得分比例。correct 為 1，incorrect／invalid 為 0，partial 介於其間，pending-review 為 0（待批）。"
+    },
+    "detail": {
+      "type": "object",
+      "description": "題型專屬的說明，給殼顯示逐部件對錯或給報表用；各題型 README 定義欄位。invalid 時含 reason。",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "invalid 的原因代碼（missing-field、unknown-option、unknown-pair、not-number、not-boolean…）。"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

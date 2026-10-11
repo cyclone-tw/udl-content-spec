@@ -15,7 +15,7 @@ UDL 教學家族（udl-learning、udl-classroom、各教材 repo）共用的**�
 | 目錄 | 內容 | 狀態 |
 | --- | --- | --- |
 | `schema/` | `pack.json`、Unit／Material／Item／Pool／Scope 的 JSON Schema | v1（#3） |
-| `question-types/` | 題型登錄表：每題型一個資料夾（schema、`score()` 純函式、renderer 契約、版本與升版轉換）；v1：choice、true-false、match、numeric | 待做 |
+| `question-types/` | 題型登錄表：每題型一個資料夾（作答 schema、`score()` 純函式、renderer 契約、版本與升版轉換）；v1：choice、true-false、match、numeric；路線圖：blanks、ordering、classify（v2），drawing、speaking（v3 保留） | v1（#6） |
 | `generators/` | 數學參數化產生器（變數、條件重抽、種子、容差）；內容包只帶參數 | 待做 |
 | `events/` | Attempt event 契約（xAPI 2.0 子集）與 `udl-lesson-attempt/v1` 轉接器 | 待做 |
 | `runner/` | 獨立執行器：載入內容包、出題、判定、提示、下載事件檔；無登入、無後端 | 待做 |
@@ -38,4 +38,4 @@ pnpm add -D github:cyclone-tw/udl-content-spec#v1.0.0   # 教材 repo 或平台�
 pnpm exec udl-validate path/to/pack                     # 預定：套件化後的驗證指令
 ```
 
-目前尚無 v1.0.0 tag；在本 repo 內用 `pnpm run validate <pack-dir>`（見 `conformance/README.md`）。
+目前尚無 v1.0.0 tag；在本 repo 內用 `pnpm run validate <pack-dir>`（見 `conformance/README.md`）。判答案一律 `import { score } from "./question-types/index.mjs"`（見 `question-types/README.md`），殼與伺服器不自己比對答案。

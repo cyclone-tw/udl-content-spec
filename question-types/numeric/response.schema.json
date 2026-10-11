@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:question-types/numeric/response",
+  "title": "計算題作答",
+  "description": "學生輸入的數字。renderer 負責把鍵盤或輸入框的字串轉成 number；字串、NaN、Infinity 都不是合法作答。",
+  "type": "object",
+  "required": ["value"],
+  "properties": {
+    "value": { "type": "number" }
+  },
+  "additionalProperties": false
+}
