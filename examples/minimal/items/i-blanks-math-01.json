@@ -1,0 +1,67 @@
+{
+  "format_version": 1,
+  "id": "i-blanks-math-01",
+  "unit": "u02-add-2digit",
+  "type": "blanks",
+  "kind": "fixed",
+  "skill": "計算",
+  "difficulty": 1,
+  "ladder_ids": [
+    "n-II-2#b@1"
+  ],
+  "curriculum_codes": [
+    "N-2-2"
+  ],
+  "stem": {
+    "text": {
+      "text": "27 加 15 等於 [[tens]] 個十和 [[ones]] 個一。",
+      "audio": null
+    }
+  },
+  "hints": [
+    {
+      "text": "先算個位：7 加 5。",
+      "audio": null
+    },
+    {
+      "text": "7 加 5 是 12，個位寫 2，記得進 1。",
+      "audio": null
+    },
+    {
+      "text": "十位：2 加 1 再加 1，答案是 4 十幾。",
+      "audio": null
+    }
+  ],
+  "feedback": {
+    "correct": {
+      "text": "答對了！27 加 15 等於 42。",
+      "audio": null
+    },
+    "retry": {
+      "text": "再算一次個位有沒有進位。",
+      "audio": null
+    }
+  },
+  "blanks": [
+    {
+      "id": "tens",
+      "kind": "numeric",
+      "answer": 4,
+      "input": {
+        "min": 0,
+        "max": 9,
+        "decimals": 0
+      }
+    },
+    {
+      "id": "ones",
+      "kind": "numeric",
+      "answer": 2,
+      "input": {
+        "min": 0,
+        "max": 9,
+        "decimals": 0
+      }
+    }
+  ]
+}

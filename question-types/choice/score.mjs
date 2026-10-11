@@ -10,7 +10,7 @@ export const version = 1;
  */
 export function score(question, response) {
   assertQuestion(question, type);
-  if (!Array.isArray(question.options) || !isId(question.answer)) {
+  if (!Array.isArray(question.options) || !isId(question.answer) || !question.options.some((o) => o && o.id === question.answer)) {
     throw new TypeError("score(choice): question 需要 options[] 與 answer（option id）");
   }
   if (!isPlainObject(response) || !("option" in response)) return invalid(type, version, "missing-field", { field: "option" });

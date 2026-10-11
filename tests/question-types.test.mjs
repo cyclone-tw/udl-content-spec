@@ -58,17 +58,17 @@ const matchQ = {
 };
 const numQ = (extra = {}) => ({ type: "numeric", kind: "fixed", id: "i-n", answer: 42, ...extra });
 
-test("登錄表：四種 v1 題型、v2 候選、v3 保留", () => {
-  assert.deepEqual(Object.keys(types).sort(), ["choice", "match", "numeric", "true-false"]);
+test("登錄表：五種 v1 題型、v2 候選、v3 保留", () => {
+  assert.deepEqual(Object.keys(types).sort(), ["blanks", "choice", "match", "numeric", "true-false"]);
   for (const t of Object.values(types)) {
     assert.equal(t.version, 1);
     assert.equal(typeof t.score, "function");
   }
-  assert.deepEqual([...planned], ["blanks", "ordering", "classify"]);
+  assert.deepEqual([...planned], ["ordering", "classify"]);
   assert.deepEqual([...reserved], ["drawing", "speaking"]);
   assert.equal(getType("choice").type, "choice");
-  assert.equal(getType("blanks"), null);
-  assert.throws(() => score({ type: "blanks" }, {}), /v2 候選/);
+  assert.equal(getType("ordering"), null);
+  assert.throws(() => score({ type: "ordering" }, {}), /v2 候選/);
   assert.throws(() => score({ type: "speaking" }, {}), /v3 保留/);
   assert.throws(() => score({ type: "essay" }, {}), /未登錄/);
 });
@@ -230,9 +230,113 @@ function canonical(item) {
       const rotated = Object.fromEntries(ids.map((id, i) => [id, ids[(i + 1) % ids.length]]));
       return { right: { pairs: right }, wrong: { pairs: rotated } };
     }
+    case "blanks":
+      return { right: { blanks: Object.fromEntries(item.blanks.map((b) => [b.id, b.answer])) }, wrong: { blanks: {} } };
     case "numeric":
       return { right: { value: item.answer }, wrong: { value: item.answer + 1000 } };
     default:
       throw new Error(`測試未涵蓋題型 ${item.type}`);
   }
 }
+
+const blanksQ = (blanks = [
+  { id: "n", kind: "numeric", answer: 42 },
+  { id: "t", kind: "text", answer: "Hello World", accept: ["你好"] },
+]) => ({ type: "blanks", kind: "fixed", blanks });
+
+test("blanks：全對、部分、全錯、漏填與 detail", async () => {
+  const correct = await run(blanksQ(), { blanks: { n: 42, t: "Hello World" } });
+  assert.equal(correct.outcome, "correct");
+  assert.equal(correct.score, 1);
+  assert.deepEqual(correct.detail, { blanks: [
+    { id: "n", kind: "numeric", chosen: 42, correct: true },
+    { id: "t", kind: "text", chosen: "Hello World", correct: true },
+  ], correct_count: 2, total: 2 });
+  const partial = await run(blanksQ(), { blanks: { n: 42 } });
+  assert.equal(partial.outcome, "partial");
+  assert.equal(partial.score, 0.5);
+  assert.deepEqual(partial.detail.blanks[1], { id: "t", kind: "text", chosen: null, correct: false });
+  assert.equal((await run(blanksQ(), { blanks: { t: "你好", n: 0 } })).score, 0.5);
+  assert.equal((await run(blanksQ(), { blanks: { n: 0, t: "no" } })).outcome, "incorrect");
+  assert.equal((await run(blanksQ(), { blanks: {} })).outcome, "incorrect");
+});
+
+test("blanks：NFKC、空白、大小寫、同義答案與不自動簡繁轉換", async () => {
+  for (const t of ["  ＨＥＬＬＯ　 ＷＯＲＬＤ  ", "hello\t\nworld", "你好"]) {
+    assert.equal((await run(blanksQ(), { blanks: { n: 42, t } })).outcome, "correct");
+  }
+  const q = blanksQ([{ id: "t", kind: "text", answer: "ABC", case_sensitive: true, accept: ["絡繹不絕"] }]);
+  assert.equal((await run(q, { blanks: { t: "ＡＢＣ" } })).outcome, "correct");
+  for (const t of ["abc", "络绎不绝", ""]) assert.equal((await run(q, { blanks: { t } })).outcome, "incorrect");
+  q.blanks[0].accept.push("络绎不绝");
+  assert.equal((await run(q, { blanks: { t: "络绎不绝" } })).outcome, "correct");
+});
+
+test("blanks：數字格重用三種容差與浮點緩衝", async () => {
+  for (const [answer, tolerance, inside, outside] of [
+    [42, { type: "nominal", value: 1 }, 43, 44],
+    [200, { type: "relative", value: 0.05 }, 210, 211],
+    [-100, { type: "geometric", value: 0.1 }, -95, -115],
+    [0.3, undefined, 0.1 + 0.2, 0.4],
+  ]) {
+    const q = blanksQ([{ id: "n", kind: "numeric", answer, tolerance }]);
+    assert.equal((await run(q, { blanks: { n: inside } })).outcome, "correct");
+    assert.equal((await run(q, { blanks: { n: outside } })).outcome, "incorrect");
+  }
+});
+
+test("blanks：不合法作答回 invalid，不丟錯", async () => {
+  for (const r of [undefined, null, [], 1, "x", true, {}, { blanks: [] }, { blanks: null }, { blanks: "x" }]) {
+    assert.equal((await run(blanksQ(), r)).detail.reason, "missing-field");
+  }
+  assert.equal((await run(blanksQ(), { blanks: { extra: 1 } })).detail.reason, "unknown-blank");
+  for (const n of [null, "42", NaN, Infinity, -Infinity, [], {}, true]) {
+    assert.equal((await run(blanksQ(), { blanks: { n } })).detail.reason, "not-number");
+  }
+  for (const t of [null, 42, [], {}, false]) {
+    assert.equal((await run(blanksQ(), { blanks: { t } })).detail.reason, "not-string");
+  }
+});
+
+test("blanks：題目壞優先丟 TypeError", () => {
+  for (const slots of [undefined, [], Array.from({ length: 13 }, (_, i) => ({ id: `s${i}`, kind: "numeric", answer: 1 })),
+    [null], [{ id: "X", kind: "numeric", answer: 1 }], [{ id: "s", kind: "other", answer: 1 }],
+    [{ id: "s", kind: "numeric", answer: "1" }], [{ id: "s", kind: "numeric", answer: Infinity }],
+    [{ id: "s", kind: "numeric", answer: 1, tolerance: { type: "bad", value: 0 } }],
+    [{ id: "s", kind: "text", answer: 1 }], [{ id: "s", kind: "text", answer: "" }],
+    [{ id: "s", kind: "text", answer: "x", accept: [1] }],
+    [{ id: "s", kind: "text", answer: "x", case_sensitive: "false" }],
+    [{ id: "s", kind: "text", answer: "x", max_length: 0 }],
+    [{ id: "s", kind: "text", answer: "x" }, { id: "s", kind: "text", answer: "y" }],
+  ]) assert.throws(() => score({ ...blanksQ(), blanks: slots }, null), TypeError);
+  assert.throws(() => score({ ...blanksQ(), kind: "generated" }, null), TypeError);
+});
+
+test("blanks response schema：允許漏填與混合值，拒絕錯誤形狀", async () => {
+  const { validateResponse: v } = await ajvPromise;
+  for (const response of [{ blanks: {} }, { blanks: { n: 1, t: "a" } }]) assert.ok(v.blanks(response));
+  for (const response of [{}, [], { blanks: [] }, { blanks: { A: 1 } }, { blanks: { n: null } }, { blanks: { n: true } }, { blanks: {}, extra: 1 }]) assert.equal(v.blanks(response), false);
+});
+
+test("#8：題目先驗證、重複配對與不存在正解", () => {
+  for (const response of [null, {}, { value: "bad" }]) {
+    assert.throws(() => score(numQ({ tolerance: { type: "bad", value: 0 } }), response), TypeError);
+    assert.throws(() => score({ ...matchQ, pairs: [matchQ.pairs[0], matchQ.pairs[0]] }, response), TypeError);
+    assert.throws(() => score({ ...choiceQ, answer: "z" }, response), TypeError);
+  }
+});
+
+test("#8：大整數不放水，極端差值保持 JSON 安全", async () => {
+  assert.equal((await run(numQ({ answer: 1e12 }), { value: 1e12 + 500 })).outcome, "incorrect");
+  assert.equal((await run(numQ({ answer: 1e12 }), { value: 1e12 + 1 })).outcome, "incorrect");
+  const r = await run(numQ({ answer: -Number.MAX_VALUE }), { value: Number.MAX_VALUE });
+  assert.equal(r.outcome, "incorrect");
+  assert.equal(Object.hasOwn(r.detail, "difference"), false);
+  assert.deepEqual(JSON.parse(JSON.stringify(r)), r);
+});
+
+test("#8：choice／true-false 的非物件或陣列作答", async () => {
+  for (const q of [choiceQ, tfQ]) {
+    for (const response of [[], [1], 1, true, "x", null, undefined]) assert.equal((await run(q, response)).outcome, "invalid");
+  }
+});

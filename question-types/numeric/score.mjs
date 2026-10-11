@@ -3,9 +3,9 @@ import { assertQuestion, invalid, isFiniteNumber, isPlainObject, result } from "
 export const type = "numeric";
 export const version = 1;
 
-// 浮點誤差緩衝：0.1 + 0.2 這類運算不該讓學生被判錯。相對於數量級取一個很小的量。
+// 浮點誤差緩衝：0.1 + 0.2 這類運算不該讓學生被判錯。隨數量級增加但上限 1e-6，避免大整數被誤判。
 const EPS = 1e-9;
-const slack = (...xs) => EPS * Math.max(1, ...xs.map((x) => Math.abs(x)));
+const slack = (...xs) => EPS * Math.min(1e3, Math.max(1, ...xs.map((x) => Math.abs(x))));
 
 /**
  * 依 tolerance 判定 value 是否可接受。省略 tolerance 等於 nominal 0（精確）。
@@ -46,6 +46,9 @@ export function score(question, response) {
   if (!isPlainObject(tolerance) || !isFiniteNumber(tolerance.value) || tolerance.value < 0) {
     throw new TypeError("score(numeric): tolerance 需要 type 與非負 value");
   }
+  if (!["nominal", "relative", "geometric"].includes(tolerance.type)) {
+    throw new TypeError("score(numeric): 未知 tolerance.type");
+  }
   if (!isPlainObject(response) || !("value" in response)) return invalid(type, version, "missing-field", { field: "value" });
   if (!isFiniteNumber(response.value)) return invalid(type, version, "not-number", { field: "value" });
 
@@ -54,6 +57,6 @@ export function score(question, response) {
     value: response.value,
     answer: question.answer,
     tolerance,
-    difference: response.value - question.answer,
+    ...(Number.isFinite(response.value - question.answer) ? { difference: response.value - question.answer } : {}),
   });
 }

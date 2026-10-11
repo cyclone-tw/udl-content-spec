@@ -215,6 +215,17 @@ export async function validatePack(dir, { strict = false } = {}) {
         const ids = new Set(item.pairs.map((p) => p.id));
         if (ids.size !== item.pairs.length) errors.push(`${rel}: pairs id 重複`);
       }
+      if (item.kind === "fixed" && item.type === "blanks") {
+        const ids = new Set(item.blanks.map((b) => b.id));
+        if (ids.size !== item.blanks.length) errors.push(`${rel}: blanks id 重複`);
+        const placeholders = [...item.stem.text.text.matchAll(/\[\[([^\[\]]*)\]\]/g)].map((m) => m[1]);
+        for (const id of ids) {
+          if (placeholders.filter((p) => p === id).length !== 1) errors.push(`${rel}: blanks ${id} 必須恰有一個佔位符`);
+        }
+        for (const id of new Set(placeholders)) {
+          if (!ids.has(id)) errors.push(`${rel}: 佔位符 ${id} 不在 blanks`);
+        }
+      }
       if (item.distractor_pool && !pools.has(item.distractor_pool.pool)) {
         errors.push(`${rel}: distractor_pool ${item.distractor_pool.pool} 不在 pack.json pools`);
       }

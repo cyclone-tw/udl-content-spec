@@ -31,7 +31,8 @@
         "choice",
         "true-false",
         "match",
-        "numeric"
+        "numeric",
+        "blanks"
       ]
     },
     "kind": {
@@ -130,6 +131,9 @@
       "type": "integer",
       "minimum": 1,
       "description": "抽題時此產生器視為幾題。"
+    },
+    "blanks": {
+      "$ref": "#/$defs/blanks"
     }
   },
   "allOf": [
@@ -162,7 +166,8 @@
           "shuffle": false,
           "tolerance": false,
           "input": false,
-          "unit_label": false
+          "unit_label": false,
+          "blanks": false
         }
       },
       "else": {
@@ -208,7 +213,8 @@
           "pairs": false,
           "tolerance": false,
           "input": false,
-          "unit_label": false
+          "unit_label": false,
+          "blanks": false
         }
       }
     },
@@ -243,7 +249,8 @@
           "shuffle": false,
           "tolerance": false,
           "input": false,
-          "unit_label": false
+          "unit_label": false,
+          "blanks": false
         }
       }
     },
@@ -274,7 +281,8 @@
           "distractor_pool": false,
           "tolerance": false,
           "input": false,
-          "unit_label": false
+          "unit_label": false,
+          "blanks": false
         }
       }
     },
@@ -306,7 +314,41 @@
           "options": false,
           "pairs": false,
           "distractor_pool": false,
-          "shuffle": false
+          "shuffle": false,
+          "blanks": false
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "fixed"
+          },
+          "type": {
+            "const": "blanks"
+          }
+        },
+        "required": [
+          "kind",
+          "type"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "required": [
+          "blanks"
+        ],
+        "properties": {
+          "options": false,
+          "pairs": false,
+          "answer": false,
+          "tolerance": false,
+          "input": false,
+          "unit_label": false,
+          "shuffle": false,
+          "distractor_pool": false
         }
       }
     }
@@ -438,6 +480,81 @@
         }
       },
       "additionalProperties": false
+    },
+    "blanks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "kind",
+              "answer"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+              },
+              "kind": {
+                "const": "numeric"
+              },
+              "answer": {
+                "type": "number"
+              },
+              "tolerance": {
+                "$ref": "#/$defs/tolerance"
+              },
+              "input": {
+                "$ref": "#/$defs/numeric_input"
+              },
+              "unit_label": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "kind",
+              "answer"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+              },
+              "kind": {
+                "const": "text"
+              },
+              "answer": {
+                "type": "string",
+                "minLength": 1
+              },
+              "accept": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "case_sensitive": {
+                "type": "boolean",
+                "default": false
+              },
+              "max_length": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
     }
   }
 }

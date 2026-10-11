@@ -4,6 +4,8 @@ import * as trueFalse from "./true-false/score.mjs";
 import * as match from "./match/score.mjs";
 import * as numeric from "./numeric/score.mjs";
 
+import * as blanks from "./blanks/score.mjs";
+
 const entry = (mod) => Object.freeze({
   type: mod.type,
   version: mod.version,
@@ -17,10 +19,11 @@ export const types = Object.freeze({
   [trueFalse.type]: entry(trueFalse),
   [match.type]: entry(match),
   [numeric.type]: entry(numeric),
+  [blanks.type]: entry(blanks),
 });
 
 /** v2 候選：已排進路線圖、尚未實作（見 README 路線圖）。 */
-export const planned = Object.freeze(["blanks", "ordering", "classify"]);
+export const planned = Object.freeze(["ordering", "classify"]);
 
 /** v3 保留：先占名稱與結果形狀（pending-review），實作與隱私規則待定（見 README）。 */
 export const reserved = Object.freeze(["drawing", "speaking"]);

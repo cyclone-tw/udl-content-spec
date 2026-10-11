@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:question-types/blanks/response",
+  "title": "多格填空作答",
+  "type": "object",
+  "required": ["blanks"],
+  "properties": {
+    "blanks": {
+      "type": "object",
+      "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+      "additionalProperties": { "type": ["number", "string"] }
+    }
+  },
+  "additionalProperties": false
+}
