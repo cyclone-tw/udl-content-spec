@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:question-types/ordering/response",
+  "title": "ordering 作答",
+  "type": "object",
+  "required": [
+    "order"
+  ],
+  "properties": {
+    "order": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      }
+    }
+  },
+  "additionalProperties": false
+}

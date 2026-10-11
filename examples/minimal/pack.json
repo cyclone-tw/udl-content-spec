@@ -36,6 +36,10 @@
       "sha256": "5367343df5d83bcbbd18c77974315958f7f57da1c33bd10be8cda83a9011543f"
     },
     {
+      "path": "items/i-classify-01.json",
+      "sha256": "10cf0167d4ae693e960238c8769fbb9a87f0a477315a2892a15fdb4f1c4215ae"
+    },
+    {
       "path": "items/i-gen-add-carry.json",
       "sha256": "4c6711dae1622d1562a0e4640de8d7b42c21dbc0f5ae9210d6bde4fda2ab962b"
     },
@@ -46,6 +50,10 @@
     {
       "path": "items/i-numeric-01.json",
       "sha256": "0b782b57ed10445462a308e29ba812f29dbcf62d7f48f81a7175575906df1768"
+    },
+    {
+      "path": "items/i-ordering-01.json",
+      "sha256": "6193d32bbada68a451368f088b9df1b8ee6592b9132844b16e349e80c53cd6ec"
     },
     {
       "path": "items/i-tf-01.json",
@@ -65,7 +73,7 @@
     },
     {
       "path": "units/u01-stream-bridge.json",
-      "sha256": "146a4bef973452d3b26db143227cfdce9adb000b93b6e9177b80d75796f57b97"
+      "sha256": "1c157689833e38c7853fe4874c108db57e34308b83dddf1f9f3d069d91652d3c"
     },
     {
       "path": "units/u02-add-2digit.json",

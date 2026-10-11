@@ -61,7 +61,7 @@ test("最小範例通過（只有語音槽與跨科警告）", async () => {
   assert.deepEqual(r.errors, []);
   assert.ok(r.ok);
   assert.equal(r.counts.units, 2);
-  assert.equal(r.counts.items, 7);
+  assert.equal(r.counts.items, 9);
   assert.equal(r.counts.pools, 1);
   assert.ok(r.warnings.every((w) => w.includes("語音槽") || w.includes("subject")), r.warnings.join("\n"));
 });
@@ -263,5 +263,55 @@ for (const [name, mutate, message] of [
   const r = await validatePack(dir);
   assert.equal(r.ok, false);
   assert.ok(has(r.errors, "i-blanks-math-01", message), r.errors.join("\n"));
+  assert.ok(!has(r.errors, "sha256"));
+}));
+
+for (const type of ["ordering", "classify"]) test(`${type} schema：數量邊界、必要欄位、圖片與題型隔離`, async () => {
+  const v = await loadValidators();
+  const q = JSON.parse(await readFile(path.join(EXAMPLE, `items/i-${type}-01.json`), "utf8"));
+  const fields = type === "ordering" ? { sequence: 8 } : { bins: 6, objects: 12 };
+  for (const [field, max] of Object.entries(fields)) {
+    for (const n of [2, max]) {
+      const parts = Array.from({ length: n }, (_, i) => ({ ...q[field][0], id: `s${i}` }));
+      const candidate = { ...q, [field]: parts };
+      if (field === "bins") candidate.objects = q.objects.map((o) => ({ ...o, bin: "s0" }));
+      assert.ok(v.item(candidate), JSON.stringify(v.item.errors));
+    }
+    for (const parts of [undefined, [], [q[field][0]], Array(max + 1).fill(q[field][0]), [null, null]]) {
+      assert.equal(v.item({ ...q, [field]: parts }), false);
+    }
+    for (const key of Object.keys(q[field][0])) {
+      const candidate = structuredClone(q); delete candidate[field][0][key];
+      assert.equal(v.item(candidate), false, `${field}.${key} 必填`);
+    }
+    const badId = structuredClone(q); badId[field][0].id = "Bad";
+    assert.equal(v.item(badId), false);
+  }
+  const cardField = type === "ordering" ? "sequence" : "objects";
+  const image = structuredClone(q); image[cardField][0].image = "images/card.png";
+  assert.ok(v.item(image));
+  image[cardField][0].image = "../bad.png"; assert.equal(v.item(image), false);
+  for (const key of ["options", "pairs", "answer", "blanks", "tolerance", "input", "unit_label", "shuffle", "distractor_pool", ...(type === "ordering" ? ["bins", "objects"] : ["sequence"])]) {
+    assert.equal(v.item({ ...q, [key]: {} }), false, key);
+  }
+  for (const name of ["i-numeric-01", "i-choice-01", "i-tf-01", "i-match-01", "i-blanks-math-01", "i-gen-add-carry"]) {
+    const other = JSON.parse(await readFile(path.join(EXAMPLE, `items/${name}.json`), "utf8"));
+    for (const field of Object.keys(fields)) assert.equal(v.item({ ...other, [field]: q[field] }), false, `${name}: ${field}`);
+  }
+});
+
+for (const [type, mutate, message] of [
+  ["ordering", (q) => { q.sequence[1].id = q.sequence[0].id; }, "sequence id 重複"],
+  ["classify", (q) => { q.bins[1].id = q.bins[0].id; }, "bins id 重複"],
+  ["classify", (q) => { q.objects[1].id = q.objects[0].id; }, "objects id 重複"],
+  ["classify", (q) => { q.objects[0].bin = "missing"; }, "不在 bins"],
+  ["ordering", (q) => { q.sequence[0].image = "images/missing.png"; }, "不在 pack.json files"],
+  ["classify", (q) => { q.objects[0].image = "images/missing.png"; }, "不在 pack.json files"],
+]) test(`${type} 語意驗證：${message}`, () => withCopy(async (dir) => {
+  await editJson(dir, `items/i-${type}-01.json`, mutate);
+  await rehash(dir);
+  const r = await validatePack(dir);
+  assert.equal(r.ok, false);
+  assert.ok(has(r.errors, `i-${type}-01`, message), r.errors.join("\n"));
   assert.ok(!has(r.errors, "sha256"));
 }));

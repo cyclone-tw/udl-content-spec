@@ -58,17 +58,17 @@ const matchQ = {
 };
 const numQ = (extra = {}) => ({ type: "numeric", kind: "fixed", id: "i-n", answer: 42, ...extra });
 
-test("登錄表：五種 v1 題型、v2 候選、v3 保留", () => {
-  assert.deepEqual(Object.keys(types).sort(), ["blanks", "choice", "match", "numeric", "true-false"]);
+test("登錄表：七種 v1 題型、v2 候選、v3 保留", () => {
+  assert.deepEqual(Object.keys(types).sort(), ["blanks", "choice", "classify", "match", "numeric", "ordering", "true-false"]);
   for (const t of Object.values(types)) {
     assert.equal(t.version, 1);
     assert.equal(typeof t.score, "function");
   }
-  assert.deepEqual([...planned], ["ordering", "classify"]);
+  assert.deepEqual([...planned], []);
   assert.deepEqual([...reserved], ["drawing", "speaking"]);
   assert.equal(getType("choice").type, "choice");
-  assert.equal(getType("ordering"), null);
-  assert.throws(() => score({ type: "ordering" }, {}), /v2 候選/);
+  assert.equal(getType("ordering").version, 1);
+  assert.equal(getType("classify").version, 1);
   assert.throws(() => score({ type: "speaking" }, {}), /v3 保留/);
   assert.throws(() => score({ type: "essay" }, {}), /未登錄/);
 });
@@ -230,6 +230,12 @@ function canonical(item) {
       const rotated = Object.fromEntries(ids.map((id, i) => [id, ids[(i + 1) % ids.length]]));
       return { right: { pairs: right }, wrong: { pairs: rotated } };
     }
+    case "ordering": {
+      const ids = item.sequence.map((o) => o.id);
+      return { right: { order: ids }, wrong: { order: [...ids.slice(1), ids[0]] } };
+    }
+    case "classify":
+      return { right: { bins: Object.fromEntries(item.bins.map((b) => [b.id, item.objects.filter((o) => o.bin === b.id).map((o) => o.id)])) }, wrong: { bins: {} } };
     case "blanks":
       return { right: { blanks: Object.fromEntries(item.blanks.map((b) => [b.id, b.answer])) }, wrong: { blanks: {} } };
     case "numeric":
@@ -339,4 +345,86 @@ test("#8：choice／true-false 的非物件或陣列作答", async () => {
   for (const q of [choiceQ, tfQ]) {
     for (const response of [[], [1], 1, true, "x", null, undefined]) assert.equal((await run(q, response)).outcome, "invalid");
   }
+});
+
+const orderingQ = { type: "ordering", kind: "fixed", sequence: ["a", "b", "c"].map((id) => ({ id })) };
+const classifyQ = { type: "classify", kind: "fixed", bins: [{ id: "x" }, { id: "y" }, { id: "empty" }],
+  objects: [{ id: "a", bin: "x" }, { id: "b", bin: "y" }, { id: "c", bin: "x" }] };
+
+test("ordering：位置計分、完整 detail、全對與全錯", async () => {
+  assert.equal((await run(orderingQ, { order: ["a", "b", "c"] })).outcome, "correct");
+  assert.equal((await run(orderingQ, { order: ["b", "c", "a"] })).outcome, "incorrect");
+  const r = await run(orderingQ, { order: ["a", "c", "b"] });
+  assert.equal(r.outcome, "partial");
+  assert.equal(r.score, 1 / 3);
+  assert.deepEqual(r.detail, { positions: [
+    { id: "a", expected_index: 0, chosen_index: 0, correct: true },
+    { id: "b", expected_index: 1, chosen_index: 2, correct: false },
+    { id: "c", expected_index: 2, chosen_index: 1, correct: false },
+  ], correct_count: 1, total: 3 });
+});
+
+test("ordering：每種 invalid 與非字串 id", async () => {
+  for (const r of [undefined, null, [], 1, true, "a", {}, { order: null }, { order: {} }, { order: "abc" }]) {
+    assert.equal((await run(orderingQ, r)).detail.reason, "missing-field");
+  }
+  for (const [order, reason] of [[[], "incomplete-order"], [["a", "b"], "incomplete-order"],
+    [["a", "a", "c"], "duplicate-id"], [["a", "b", "c", "a"], "duplicate-id"], [["a", "b", "z"], "unknown-id"]]) {
+    assert.equal((await run(orderingQ, { order })).detail.reason, reason);
+  }
+  for (const id of [null, 1, {}, [], true, NaN, Infinity]) {
+    assert.equal((await run(orderingQ, { order: ["a", "b", id] })).detail.reason, "unknown-id");
+  }
+});
+
+test("classify：獨立計分、未分類、空干擾桶、桶內順序與 detail", async () => {
+  assert.equal((await run(classifyQ, { bins: { x: ["c", "a"], y: ["b"], empty: [] } })).outcome, "correct");
+  for (const bins of [{}, { x: ["b"], y: ["a", "c"] }, { empty: ["a", "b", "c"] }]) {
+    assert.equal((await run(classifyQ, { bins })).outcome, "incorrect");
+  }
+  const r = await run(classifyQ, { bins: { x: ["a", "b"] } });
+  assert.equal(r.outcome, "partial");
+  assert.equal(r.score, 1 / 3);
+  assert.deepEqual(r.detail, { objects: [
+    { id: "a", expected_bin: "x", chosen_bin: "x", correct: true },
+    { id: "b", expected_bin: "y", chosen_bin: "x", correct: false },
+    { id: "c", expected_bin: "x", chosen_bin: null, correct: false },
+  ], correct_count: 1, total: 3 });
+});
+
+test("classify：每種 invalid、同桶與跨桶重複", async () => {
+  for (const r of [undefined, null, [], 1, true, "x", {}, { bins: null }, { bins: [] }, { bins: "x" }, { bins: { x: 1 } }]) {
+    assert.equal((await run(classifyQ, r)).detail.reason, "missing-field");
+  }
+  for (const bins of [{ x: ["a"], y: ["a"] }, { x: ["a", "a"] }]) {
+    assert.equal((await run(classifyQ, { bins })).detail.reason, "duplicate-object");
+  }
+  assert.equal((await run(classifyQ, { bins: { z: [] } })).detail.reason, "unknown-bin");
+  for (const id of ["z", null, 1, {}, [], true, NaN, Infinity]) {
+    assert.equal((await run(classifyQ, { bins: { x: [id] } })).detail.reason, "unknown-object");
+  }
+});
+
+test("ordering／classify：壞題目優先 TypeError", () => {
+  const invalid = [undefined, null, [], [{}], [null, null], [{ id: "A" }, { id: "b" }], [{ id: "a" }, { id: "a" }]];
+  for (const sequence of [...invalid, Array.from({ length: 9 }, (_, i) => ({ id: `s${i}` }))]) {
+    assert.throws(() => score({ ...orderingQ, sequence }, null), TypeError);
+  }
+  for (const bins of [...invalid, Array.from({ length: 7 }, (_, i) => ({ id: `s${i}` }))]) {
+    assert.throws(() => score({ ...classifyQ, bins }, null), TypeError);
+  }
+  for (const objects of [...invalid, [{ id: "a", bin: "z" }, { id: "b", bin: "x" }],
+    [{ id: "a", bin: "x" }, { id: "a", bin: "y" }], Array.from({ length: 13 }, (_, i) => ({ id: `s${i}`, bin: "x" }))]) {
+    assert.throws(() => score({ ...classifyQ, objects }, null), TypeError);
+  }
+  for (const q of [orderingQ, classifyQ]) assert.throws(() => score({ ...q, kind: "generated" }, null), TypeError);
+});
+
+test("ordering／classify response schema：形狀、id、重複與額外欄位", async () => {
+  const { validateResponse: v } = await ajvPromise;
+  assert.ok(v.ordering({ order: ["a", "b"] }));
+  assert.ok(v.classify({ bins: {} }));
+  assert.ok(v.classify({ bins: { x: ["a"], y: [] } }));
+  for (const r of [{}, [], { order: [] }, { order: "a" }, { order: ["a", "a"] }, { order: ["a", 1] }, { order: ["A", "b"] }, { order: ["a", "b"], extra: 1 }]) assert.equal(v.ordering(r), false);
+  for (const r of [{}, [], { bins: [] }, { bins: { A: [] } }, { bins: { x: null } }, { bins: { x: [1] } }, { bins: { x: ["a", "a"] } }, { bins: {}, extra: 1 }]) assert.equal(v.classify(r), false);
 });

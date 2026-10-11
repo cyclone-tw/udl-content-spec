@@ -32,7 +32,9 @@
         "true-false",
         "match",
         "numeric",
-        "blanks"
+        "blanks",
+        "ordering",
+        "classify"
       ]
     },
     "kind": {
@@ -134,6 +136,15 @@
     },
     "blanks": {
       "$ref": "#/$defs/blanks"
+    },
+    "sequence": {
+      "$ref": "#/$defs/sequence"
+    },
+    "bins": {
+      "$ref": "#/$defs/bins"
+    },
+    "objects": {
+      "$ref": "#/$defs/objects"
     }
   },
   "allOf": [
@@ -167,7 +178,10 @@
           "tolerance": false,
           "input": false,
           "unit_label": false,
-          "blanks": false
+          "blanks": false,
+          "sequence": false,
+          "bins": false,
+          "objects": false
         }
       },
       "else": {
@@ -214,7 +228,10 @@
           "tolerance": false,
           "input": false,
           "unit_label": false,
-          "blanks": false
+          "blanks": false,
+          "sequence": false,
+          "bins": false,
+          "objects": false
         }
       }
     },
@@ -250,7 +267,10 @@
           "tolerance": false,
           "input": false,
           "unit_label": false,
-          "blanks": false
+          "blanks": false,
+          "sequence": false,
+          "bins": false,
+          "objects": false
         }
       }
     },
@@ -282,7 +302,10 @@
           "tolerance": false,
           "input": false,
           "unit_label": false,
-          "blanks": false
+          "blanks": false,
+          "sequence": false,
+          "bins": false,
+          "objects": false
         }
       }
     },
@@ -315,7 +338,10 @@
           "pairs": false,
           "distractor_pool": false,
           "shuffle": false,
-          "blanks": false
+          "blanks": false,
+          "sequence": false,
+          "bins": false,
+          "objects": false
         }
       }
     },
@@ -348,7 +374,82 @@
           "input": false,
           "unit_label": false,
           "shuffle": false,
-          "distractor_pool": false
+          "distractor_pool": false,
+          "sequence": false,
+          "bins": false,
+          "objects": false
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "fixed"
+          },
+          "type": {
+            "const": "ordering"
+          }
+        },
+        "required": [
+          "kind",
+          "type"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "required": [
+          "sequence"
+        ],
+        "properties": {
+          "options": false,
+          "pairs": false,
+          "answer": false,
+          "blanks": false,
+          "tolerance": false,
+          "input": false,
+          "unit_label": false,
+          "shuffle": false,
+          "distractor_pool": false,
+          "bins": false,
+          "objects": false
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "const": "fixed"
+          },
+          "type": {
+            "const": "classify"
+          }
+        },
+        "required": [
+          "kind",
+          "type"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "required": [
+          "bins",
+          "objects"
+        ],
+        "properties": {
+          "options": false,
+          "pairs": false,
+          "answer": false,
+          "blanks": false,
+          "tolerance": false,
+          "input": false,
+          "unit_label": false,
+          "shuffle": false,
+          "distractor_pool": false,
+          "sequence": false
         }
       }
     }
@@ -554,6 +655,79 @@
             "additionalProperties": false
           }
         ]
+      }
+    },
+    "sequence": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "text": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+          },
+          "image": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "objects": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "bin"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "text": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+          },
+          "image": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path"
+          },
+          "bin": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "bins": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "label": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+          }
+        },
+        "additionalProperties": false
       }
     }
   }

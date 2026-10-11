@@ -226,11 +226,20 @@ export async function validatePack(dir, { strict = false } = {}) {
           if (!ids.has(id)) errors.push(`${rel}: 佔位符 ${id} 不在 blanks`);
         }
       }
+      if (item.kind === "fixed" && item.type === "ordering") {
+        if (new Set(item.sequence.map((o) => o.id)).size !== item.sequence.length) errors.push(`${rel}: sequence id 重複`);
+      }
+      if (item.kind === "fixed" && item.type === "classify") {
+        const bins = new Set(item.bins.map((b) => b.id));
+        if (bins.size !== item.bins.length) errors.push(`${rel}: bins id 重複`);
+        if (new Set(item.objects.map((o) => o.id)).size !== item.objects.length) errors.push(`${rel}: objects id 重複`);
+        for (const o of item.objects) if (!bins.has(o.bin)) errors.push(`${rel}: object ${o.id} 的 bin ${o.bin} 不在 bins`);
+      }
       if (item.distractor_pool && !pools.has(item.distractor_pool.pool)) {
         errors.push(`${rel}: distractor_pool ${item.distractor_pool.pool} 不在 pack.json pools`);
       }
       if (typeof item.stem?.image === "string") requireListed(item.stem.image, rel);
-      for (const o of asArray(item.options)) if (typeof o.image === "string") requireListed(o.image, rel);
+      for (const o of [...asArray(item.options), ...asArray(item.sequence), ...asArray(item.objects)]) if (typeof o.image === "string") requireListed(o.image, rel);
       if (!asArray(item.ladder_ids).length && !asArray(item.curriculum_codes).length) warnings.push(`${rel}: 沒有 ladder_ids 或 curriculum_codes，kit 無法對回目標`);
       items.set(itemId, item);
       walkSpoken(item, rel, warnings, null);

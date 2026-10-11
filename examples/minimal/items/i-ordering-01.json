@@ -1,0 +1,68 @@
+{
+  "format_version": 1,
+  "id": "i-ordering-01",
+  "unit": "u01-stream-bridge",
+  "type": "ordering",
+  "kind": "fixed",
+  "skill": "詞語與順序理解",
+  "difficulty": 1,
+  "ladder_ids": [
+    "c-III-2#a@1"
+  ],
+  "curriculum_codes": [
+    "5-Ⅲ-2"
+  ],
+  "stem": {
+    "text": {
+      "text": "請把過橋的步驟排好。",
+      "audio": null
+    }
+  },
+  "hints": [
+    {
+      "text": "先想想過橋前要做什麼。",
+      "audio": null
+    },
+    {
+      "text": "先看橋面，再慢慢走。",
+      "audio": null
+    },
+    {
+      "text": "最後走到對岸。",
+      "audio": null
+    }
+  ],
+  "feedback": {
+    "correct": {
+      "text": "你完成了！",
+      "audio": null
+    },
+    "retry": {
+      "text": "再想一想每張卡片的意思。",
+      "audio": null
+    }
+  },
+  "sequence": [
+    {
+      "id": "look",
+      "text": {
+        "text": "先看橋面。",
+        "audio": null
+      }
+    },
+    {
+      "id": "walk",
+      "text": {
+        "text": "慢慢走過橋。",
+        "audio": null
+      }
+    },
+    {
+      "id": "arrive",
+      "text": {
+        "text": "走到對岸。",
+        "audio": null
+      }
+    }
+  ]
+}
