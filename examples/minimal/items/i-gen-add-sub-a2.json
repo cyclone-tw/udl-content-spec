@@ -1,0 +1,56 @@
+{
+  "format_version": 1,
+  "id": "i-gen-add-sub-a2",
+  "unit": "u02-add-2digit",
+  "type": "blanks",
+  "kind": "generated",
+  "skill": "計算",
+  "difficulty": 2,
+  "ladder_ids": [
+    "n-I-2#a@2"
+  ],
+  "curriculum_codes": [
+    "N-2-2"
+  ],
+  "generator": "math.add-sub",
+  "generator_version": 1,
+  "params": {
+    "tiers": [
+      "add-no-carry",
+      "add-one-carry",
+      "sub-no-borrow",
+      "sub-one-borrow"
+    ],
+    "weights": {
+      "add-no-carry": 3,
+      "add-one-carry": 7,
+      "sub-no-borrow": 3,
+      "sub-one-borrow": 7
+    },
+    "operations": [
+      "add",
+      "sub"
+    ],
+    "shapes": [
+      [
+        2,
+        2
+      ]
+    ],
+    "presentation": "vertical-blanks",
+    "scaffold": "none",
+    "context": true,
+    "distinct": true,
+    "context_pools": {
+      "subjects": "p-math-subjects",
+      "items": "p-math-items",
+      "actions_add": "p-math-actions-add",
+      "actions_sub": "p-math-actions-sub"
+    }
+  },
+  "count": 10,
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
+}

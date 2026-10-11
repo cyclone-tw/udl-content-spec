@@ -12,8 +12,7 @@
     "kind",
     "skill",
     "difficulty",
-    "hints",
-    "feedback"
+    "ladder_ids"
   ],
   "properties": {
     "format_version": {
@@ -54,6 +53,8 @@
     },
     "ladder_ids": {
       "type": "array",
+      "description": "這題在檢測哪些能力階梯行為（kit 正本）。必填且至少一條；產生題的其中恰一條必須有條件檔（generators/profiles/）。",
+      "minItems": 1,
       "items": {
         "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id"
       },
@@ -187,7 +188,9 @@
       "else": {
         "type": "object",
         "required": [
-          "stem"
+          "stem",
+          "hints",
+          "feedback"
         ],
         "properties": {
           "generator": false,

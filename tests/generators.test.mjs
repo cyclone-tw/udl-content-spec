@@ -23,7 +23,7 @@ async function loadAjv() {
   return { validateInstance, validateParams };
 }
 const ajvPromise = loadAjv();
-const examplePromise = readJson("examples/minimal/items/i-gen-add-carry.json");
+
 
 const CARRY = "math.add-2digit-carry";
 const NO_CARRY = "math.add-2digit-no-carry";
@@ -52,8 +52,8 @@ const genItem = (overrides = {}) => ({
   ...overrides,
 });
 
-test("登錄表：兩個產生器、版本 1、params schema 可編譯", async () => {
-  assert.deepEqual(Object.keys(generators).sort(), [CARRY, NO_CARRY]);
+test("登錄表：三個產生器、版本 1、params schema 可編譯", async () => {
+  assert.deepEqual(Object.keys(generators).sort(), [CARRY, NO_CARRY, "math.add-sub"]);
   for (const g of Object.values(generators)) {
     assert.equal(g.version, 1);
     assert.equal(typeof g.generate, "function");
@@ -203,22 +203,4 @@ test("提示與回饋的 {變數} 置換；沒有的變數原樣保留；不改�
   assert.deepEqual(item, frozen, "instantiate 改動了 item");
   assert.equal(substitute("{a}+{b}", { a: 1, b: 2 }), "1+2");
   assert.equal(substitute("{A}", { A: 1 }), "{A}", "佔位符只接受小寫變數名");
-});
-
-test("examples/minimal 的 i-gen-add-carry 可展開成 3 題，id 與 source_item 正確", async () => {
-  const example = await examplePromise;
-  const { validateInstance } = await ajvPromise;
-  const batch = instantiate(example, { seed: "demo" });
-  assert.equal(batch.length, example.count);
-  batch.forEach((inst, i) => {
-    assert.equal(inst.id, `${example.id}#${i}`);
-    assert.equal(inst.source_item, example.id);
-    assert.equal(inst.generator, example.generator);
-    assert.equal(inst.generator_version, example.generator_version);
-    assert.equal(inst.seed, "demo");
-    assert.equal(inst.index, i);
-    assert.ok(hasCarry(inst.variables.a, inst.variables.b));
-    assert.ok(validateInstance(inst), JSON.stringify(validateInstance.errors));
-    assert.equal(score(inst, { value: inst.answer }).outcome, "correct");
-  });
 });

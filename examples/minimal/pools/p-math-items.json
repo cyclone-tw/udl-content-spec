@@ -1,0 +1,11 @@
+{
+  "format_version": 1,
+  "id": "p-math-items",
+  "kind": "情境物品",
+  "entries": [
+    { "text": { "text": "蘋果", "audio": null }, "unit": "顆" },
+    { "text": { "text": "餅乾", "audio": null }, "unit": "片" },
+    { "text": { "text": "貼紙", "audio": null }, "unit": "張" },
+    { "text": { "text": "玩具車", "audio": null }, "unit": "台" }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "format_version": 1,
+  "ladder_id": "n-I-2#a@2",
+  "ladder_ref": {
+    "repo": "cyclone-tw/sped-student-kit",
+    "commit": "890e9fe",
+    "behavior": "能用直式計算二位數加減（含一次進位或退位），10 題正確率約八成",
+    "curriculum_codes": ["N-2-2"]
+  },
+  "generator": "math.add-sub",
+  "generator_version": 1,
+  "tiers": {
+    "add-no-carry": { "label": "加法：不進位", "operation": "add", "carries": 0 },
+    "add-one-carry": { "label": "加法：恰一次進位", "operation": "add", "carries": 1 },
+    "add-two-carries": { "label": "加法：進兩次（和 ≥ 100）", "operation": "add", "carries": 2 },
+    "sub-no-borrow": { "label": "減法：不退位", "operation": "sub", "borrows": 0 },
+    "sub-one-borrow": { "label": "減法：退位一次", "operation": "sub", "borrows": 1, "minuend_ones_zero": false },
+    "sub-borrow-from-zero": { "label": "減法：被減數個位是 0 的退位", "operation": "sub", "borrows": 1, "minuend_ones_zero": true }
+  },
+  "shapes": {
+    "allowed": [[2, 2], [2, 1]],
+    "default": [[2, 2]]
+  },
+  "defaults": {
+    "tiers": ["add-no-carry", "add-one-carry", "sub-no-borrow", "sub-one-borrow"],
+    "weights": { "add-no-carry": 3, "add-one-carry": 7, "sub-no-borrow": 3, "sub-one-borrow": 7 },
+    "operations": ["add", "sub"],
+    "shapes": [[2, 2]],
+    "count": 10,
+    "presentation": "vertical-blanks",
+    "scaffold": { "assess": "none", "practice": "full" },
+    "context": true,
+    "distinct": true
+  },
+  "adjustments": {
+    "simplify": {
+      "label": "簡化",
+      "tiers": ["add-no-carry", "sub-no-borrow"],
+      "weights": {},
+      "scaffold": { "assess": "full", "practice": "full" }
+    },
+    "reduce": { "label": "減量", "count": 5 },
+    "decompose": {
+      "label": "分解",
+      "presentation": "vertical-blanks",
+      "scaffold": { "assess": "full", "practice": "full" },
+      "note": "直式逐位分步（先個位、鎖定後再十位）由 renderer 的完整鷹架實作；條件檔先只記鷹架檔位。"
+    },
+    "substitute": {
+      "label": "替代",
+      "presentation": "horizontal-numeric",
+      "note": "替代形式（指認／選擇型或換較低指標）待 Cyclone 定；先退到橫式單值。"
+    },
+    "not_applicable": { "label": "不適用", "skip": true }
+  },
+  "hints": {
+    "add-no-carry": [
+      "先算個位：{a_ones} 加 {b_ones}。",
+      "個位是 {ones}，不用進位。",
+      "十位：{a_tens} 加 {b_tens}，答案是 {sum}。"
+    ],
+    "add-one-carry": [
+      "先算個位：{a_ones} 加 {b_ones}。",
+      "個位相加是 {ones_sum}，寫 {ones}，記得進 1。",
+      "十位：{a_tens} 加 {b_tens}，再加進位的 1，答案是 {sum}。"
+    ],
+    "add-two-carries": [
+      "先算個位：{a_ones} 加 {b_ones}，超過 10 要進 1。",
+      "十位：{a_tens} 加 {b_tens} 再加 1，又超過 10，再往百位進 1。",
+      "百位寫 1，答案是 {sum}。"
+    ],
+    "sub-no-borrow": [
+      "先算個位：{a_ones} 減 {b_ones}。",
+      "個位是 {ones}，夠減，不用退位。",
+      "十位：{a_tens} 減 {b_tens}，答案是 {diff}。"
+    ],
+    "sub-one-borrow": [
+      "先看個位：{a_ones} 比 {b_ones} 小，不夠減。",
+      "向十位借 1，個位變成 {a_ones_borrowed}，再減 {b_ones} 得 {ones}。",
+      "十位借走 1 剩 {a_tens_after}，再減 {b_tens}，答案是 {diff}。"
+    ],
+    "sub-borrow-from-zero": [
+      "個位是 0，什麼都不夠減，一定要向十位借。",
+      "借 1 之後個位變成 10，10 減 {b_ones} 得 {ones}。",
+      "十位借走 1 剩 {a_tens_after}，再減 {b_tens}，答案是 {diff}。"
+    ]
+  },
+  "feedback": {
+    "correct": "答對了！{a} {op} {b} 等於 {result}。",
+    "retry": "再算一次個位有沒有{carry_or_borrow}。"
+  },
+  "stems": {
+    "equation": "{a} {op} {b} = ？",
+    "vertical": {
+      "places_2": "十位填 [[tens]]，個位填 [[ones]]。",
+      "places_3": "百位填 [[hundreds]]，十位填 [[tens]]，個位填 [[ones]]。"
+    },
+    "context": {
+      "add": [
+        "{subject}有 {a} {unit}{item}，{action} {b} {unit}，現在一共有幾{unit}？算式：{a} ＋ {b}",
+        "盒子裡有 {a} {unit}{item}，再放進 {b} {unit}，一共有幾{unit}？算式：{a} ＋ {b}"
+      ],
+      "sub": [
+        "{subject}有 {a} {unit}{item}，{action} {b} {unit}，現在剩下幾{unit}？算式：{a} － {b}",
+        "盒子裡有 {a} {unit}{item}，拿走 {b} {unit}，剩下幾{unit}？算式：{a} － {b}"
+      ]
+    }
+  },
+  "notes": "Cyclone 2026-10-11 逐題確認（udl-content-spec#18）。檔位三檔預設只開前兩檔；檢測預設無鷹架、練習預設完整；情境預設帶、算式一併列出，學生不自己列式。"
+}

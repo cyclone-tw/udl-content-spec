@@ -3,7 +3,7 @@
   "id": "sample-willow",
   "version": "0.1.0",
   "title": "示範：溪橋旁的小鎮",
-  "description": "合成範例內容包：一個國語單元（原創短文、選擇／是非／配對三題、一個語意混淆池）與一個數學小單元（情境示範、固定計算題、參數化題）。不含課文原句、不含學生資料。",
+  "description": "合成範例內容包：一個國語單元（原創短文、選擇／是非／配對三題、一個語意混淆池）與一個數學小單元（情境示範、固定計算題、參數化題、依能力指標條件檔出題的加減法直式題與四個情境池）。不含課文原句、不含學生資料。",
   "subject": "chinese",
   "language": "zh-TW",
   "license": "CC-BY-4.0",
@@ -20,44 +20,48 @@
     "u02-add-2digit"
   ],
   "pools": [
-    "p-semantic-01"
+    "p-semantic-01",
+    "p-math-subjects",
+    "p-math-items",
+    "p-math-actions-add",
+    "p-math-actions-sub"
   ],
   "files": [
     {
       "path": "items/i-blanks-chinese-01.json",
-      "sha256": "836e4a36dea7fddf6cba76859fb6b1f5449539994470f0e6158781209474fffd"
+      "sha256": "ff50ff9ae46b4e2c6c27e1c6da38cb926ab658a8302aa6e1ad1eb72eaf35d9c0"
     },
     {
       "path": "items/i-blanks-math-01.json",
-      "sha256": "166ec2046608779f921ad306d5952a70d001d48da2e759ec279c929c9c8ffccc"
+      "sha256": "a0a82b89b79d7df98730a742649080830052c83bb9f9c95fcd404dfb66a6cab1"
     },
     {
       "path": "items/i-choice-01.json",
-      "sha256": "5367343df5d83bcbbd18c77974315958f7f57da1c33bd10be8cda83a9011543f"
+      "sha256": "1c7b50a717f895a87ae0e251d98e455b3a0050be8e8a5f4b50d7011bc76b5091"
     },
     {
       "path": "items/i-classify-01.json",
-      "sha256": "10cf0167d4ae693e960238c8769fbb9a87f0a477315a2892a15fdb4f1c4215ae"
+      "sha256": "0e6d249413ac7af9cb7ea6b4edb1ee36fa65cb22caccdba5dd56258d14a1061a"
     },
     {
-      "path": "items/i-gen-add-carry.json",
-      "sha256": "4c6711dae1622d1562a0e4640de8d7b42c21dbc0f5ae9210d6bde4fda2ab962b"
+      "path": "items/i-gen-add-sub-a2.json",
+      "sha256": "8465a993db2097522762381298a2a34a4f1a10a26eda7c0f7d5f4b5cf2b820c3"
     },
     {
       "path": "items/i-match-01.json",
-      "sha256": "eb7439a868358d43e878300c60d72f5efdea77ae3f867b232dcc6b8bc0ffa61a"
+      "sha256": "2511c474d279b7c08504f84245afe8ea4cdf10bf39474a4fc17d54bf16fea38d"
     },
     {
       "path": "items/i-numeric-01.json",
-      "sha256": "0b782b57ed10445462a308e29ba812f29dbcf62d7f48f81a7175575906df1768"
+      "sha256": "37f51d71947942aece5b5d3f8f0350460f71cfb32ccff9a3efc2795fe58572b3"
     },
     {
       "path": "items/i-ordering-01.json",
-      "sha256": "6193d32bbada68a451368f088b9df1b8ee6592b9132844b16e349e80c53cd6ec"
+      "sha256": "c538d3c2b9ebaaf7d06104dabd764586d1c1eee8bb48030c7393d621cd711644"
     },
     {
       "path": "items/i-tf-01.json",
-      "sha256": "287653defdea9b23d1928666b0ea1f58b7a6e3898c8d8e6935365798da8708a6"
+      "sha256": "2428f2e3f4158d2d1952509c05246577568f1e6be9a41b811dc3686b8accfb1d"
     },
     {
       "path": "materials/m-add-demo.json",
@@ -68,16 +72,32 @@
       "sha256": "22ad102fff61ff815276b513ddaf59dc7ffbe5b00d75a29362d2ba1dd35f1dca"
     },
     {
+      "path": "pools/p-math-actions-add.json",
+      "sha256": "6e0974e6685e7f892cbef529fa02c8d15220dbec704f3bdb65c1f7a83e352f1f"
+    },
+    {
+      "path": "pools/p-math-actions-sub.json",
+      "sha256": "525a6be14f1ce23ee7f20d5f5a728674cb57bba9172ae3d420f06242a8050911"
+    },
+    {
+      "path": "pools/p-math-items.json",
+      "sha256": "180cba32bf127740483ced0bf039c7bbc940ca307f12d44db6d6233f41fda755"
+    },
+    {
+      "path": "pools/p-math-subjects.json",
+      "sha256": "52e9e0d2b6bc4af5d56435abd9ec8973b5e672422b477a705e64e0525e4df41a"
+    },
+    {
       "path": "pools/p-semantic-01.json",
       "sha256": "3d2e8054ad39a421f2c29e64a1f4974348c832229d645e1c522dcb1d3e4d772d"
     },
     {
       "path": "units/u01-stream-bridge.json",
-      "sha256": "1c157689833e38c7853fe4874c108db57e34308b83dddf1f9f3d069d91652d3c"
+      "sha256": "e244b95c17c2370254cc6ea0ce77647a4d10a49d6243ea2b278d0c04a415e982"
     },
     {
       "path": "units/u02-add-2digit.json",
-      "sha256": "8475c4872c853f40fa84a9fb3bd59e0142105c79c64c08ca7e27fd30498b8273"
+      "sha256": "aaceb69fe00297b274c63e4c07c6e71a3358ce86705ceb2d2ec14a1a2e9af0af"
     }
   ]
 }

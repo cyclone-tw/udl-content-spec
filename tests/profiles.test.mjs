@@ -1,0 +1,339 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFile, mkdtemp, cp, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import Ajv2020 from "ajv/dist/2020.js";
+import addFormats from "ajv-formats";
+import {
+  profiles, getProfile, profilesFor, resolveParams, checkParams, PROFILE_SCHEMA_PATH, INSTANCE_SCHEMA_PATH,
+  generators, instantiate, profileForItem,
+} from "../generators/index.mjs";
+import { analyze } from "../generators/math/add-sub/generate.mjs";
+import { score } from "../question-types/index.mjs";
+import { validatePack, checkGeneratedItem, loadValidators } from "../conformance/validate.mjs";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.join(here, "..");
+const EXAMPLE = path.join(ROOT, "examples", "minimal");
+const readJson = async (rel) => JSON.parse(await readFile(path.join(ROOT, rel), "utf8"));
+const A2 = "n-I-2#a@2";
+
+async function loadAjv() {
+  const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true, allowUnionTypes: true });
+  addFormats(ajv);
+  ajv.addSchema(await readJson("schema/common.schema.json"));
+  return {
+    validateProfile: ajv.compile(await readJson(PROFILE_SCHEMA_PATH)),
+    validateInstance: ajv.compile(await readJson(INSTANCE_SCHEMA_PATH)),
+    validateParams: ajv.compile(await readJson(generators["math.add-sub"].paramsSchemaPath)),
+  };
+}
+const ajvPromise = loadAjv();
+const examplePromise = readJson("examples/minimal/items/i-gen-add-sub-a2.json");
+const poolsPromise = (async () => {
+  const pack = await readJson("examples/minimal/pack.json");
+  const map = new Map();
+  for (const id of pack.pools) map.set(id, await readJson(`examples/minimal/pools/${id}.json`));
+  return map;
+})();
+
+const profile = getProfile(A2);
+const item = (params, overrides = {}) => ({
+  format_version: 1, id: "i-gen-test", unit: "u02-add-2digit", type: "blanks", kind: "generated",
+  skill: "計算", difficulty: 2, ladder_ids: [A2], curriculum_codes: ["N-2-2"],
+  generator: "math.add-sub", generator_version: 1, params, count: 10, ...overrides,
+});
+const canonical = (q) => (q.type === "blanks" ? { blanks: Object.fromEntries(q.blanks.map((b) => [b.id, b.answer])) } : { value: q.answer });
+
+test("登錄表：條件檔通過 schema，每個檔位都有三句提示，預設檔位與權重都在 tiers 內", async () => {
+  const { validateProfile } = await ajvPromise;
+  assert.deepEqual(Object.keys(profiles), [A2]);
+  assert.equal(profilesFor([A2, "c-x"]).length, 1);
+  assert.equal(getProfile("nope"), null);
+  for (const p of Object.values(profiles)) {
+    assert.ok(validateProfile(p), JSON.stringify(validateProfile.errors));
+    assert.deepEqual(Object.keys(p.hints).sort(), Object.keys(p.tiers).sort(), "每個檔位都要有提示範本");
+    for (const t of p.defaults.tiers) assert.ok(p.tiers[t], `預設檔位 ${t} 不存在`);
+    for (const t of Object.keys(p.defaults.weights)) assert.ok(p.defaults.tiers.includes(t), `權重 ${t} 不在預設檔位`);
+    for (const s of p.shapes.default) assert.ok(p.shapes.allowed.some((a) => a[0] === s[0] && a[1] === s[1]));
+    assert.ok(generators[p.generator], `產生器 ${p.generator} 未登錄`);
+    assert.equal(generators[p.generator].version, p.generator_version);
+    assert.equal(checkParams(p, resolveParams(p).params).length, 0);
+  }
+});
+
+test("resolveParams：預設、五種調整、覆寫只能收窄、mode 決定鷹架", async () => {
+  const { validateParams } = await ajvPromise;
+  const base = resolveParams(profile);
+  assert.ok(validateParams(base.params), JSON.stringify(validateParams.errors));
+  assert.deepEqual(base.params.tiers, ["add-no-carry", "add-one-carry", "sub-no-borrow", "sub-one-borrow"]);
+  assert.equal(base.count, 10);
+  assert.equal(base.params.scaffold, "none");
+  assert.equal(resolveParams(profile, { mode: "practice" }).params.scaffold, "full");
+  assert.equal(base.params.presentation, "vertical-blanks");
+
+  const simp = resolveParams(profile, { adjustment: "simplify" });
+  assert.deepEqual(simp.params.tiers, ["add-no-carry", "sub-no-borrow"]);
+  assert.deepEqual(simp.params.weights, { "add-no-carry": 1, "sub-no-borrow": 1 }, "收窄後只保留還在的檔位，缺的權重 1");
+  assert.equal(simp.params.scaffold, "full", "簡化：檢測也給完整鷹架");
+  assert.equal(resolveParams(profile, { adjustment: "reduce" }).count, 5);
+  assert.equal(resolveParams(profile, { adjustment: "decompose" }).params.scaffold, "full");
+  assert.equal(resolveParams(profile, { adjustment: "substitute" }).params.presentation, "horizontal-numeric");
+  assert.deepEqual(resolveParams(profile, { adjustment: "not_applicable" }), { skip: true, adjustment: "not_applicable", label: "不適用" });
+
+  const addOnly = resolveParams(profile, { overrides: { tiers: ["add-one-carry"] } });
+  assert.deepEqual(addOnly.params.operations, ["add"], "只開加法檔時 operations 跟著收窄");
+  assert.equal(resolveParams(profile, { overrides: { count: 3, shapes: [[2, 1]] } }).count, 3);
+  assert.throws(() => resolveParams(profile, { overrides: { tiers: ["add-three-carries"] } }), /檔位 "add-three-carries" 不在條件檔/);
+  assert.throws(() => resolveParams(profile, { overrides: { shapes: [[3, 3]] } }), /形狀 \[3,3\] 不在/);
+  assert.throws(() => resolveParams(profile, { adjustment: "harder" }), /未知調整/);
+  assert.throws(() => resolveParams(profile, { mode: "exam" }), /mode/);
+  assert.throws(() => resolveParams(profile, { overrides: { tiers: ["add-one-carry"], operations: ["sub"] } }), /operations 沒有 add/);
+});
+
+test("checkParams：每一種越界都有可讀訊息", () => {
+  const ok = resolveParams(profile).params;
+  assert.deepEqual(checkParams(profile, ok), []);
+  const bad = (patch, re) => assert.match(checkParams(profile, { ...ok, ...patch }).join("；"), re);
+  bad({ tiers: [] }, /tiers 必須/);
+  bad({ tiers: ["add-no-carry", "add-no-carry"] }, /不可重複/);
+  bad({ weights: { "add-two-carries": 1 } }, /weights 的 add-two-carries 不在 tiers/);
+  bad({ weights: { "add-no-carry": 0 } }, /必須是正數/);
+  bad({ operations: ["mul"] }, /operations 必須/);
+  bad({ presentation: "grid" }, /presentation/);
+  bad({ scaffold: "lots" }, /scaffold/);
+  bad({ context: "yes" }, /context 必須是布林/);
+  bad({ distinct: 1 }, /distinct/);
+  bad({ context_pools: { people: "p" } }, /未知鍵/);
+  bad({ context_pools: { subjects: "" } }, /必須是池 id/);
+  bad({ extra: 1 }, /未知參數/);
+  assert.deepEqual(checkParams(profile, null), ["params 必須是物件"]);
+});
+
+test("六個檔位各抽 200 題：條件全滿足、數字形狀正確、不重複、a ≠ b、減法 a > b", () => {
+  for (const [tierId, def] of Object.entries(profile.tiers)) {
+    for (const shape of profile.shapes.allowed) {
+      const params = resolveParams(profile, { overrides: { tiers: [tierId], shapes: [shape], context: false, distinct: false } }).params;
+      const batch = instantiate(item(params, { count: 200 }), { seed: `t-${tierId}` });
+      assert.equal(batch.length, 200);
+      for (const q of batch) {
+        const { a, b } = q.variables;
+        const info = analyze(def.operation, a, b);
+        assert.equal(q.tier, tierId);
+        assert.ok(a !== b, `${a} = ${b}`);
+        assert.equal(String(a).length, shape[0], `${a} 不是 ${shape[0]} 位數`);
+        assert.equal(String(b).length, shape[1], `${b} 不是 ${shape[1]} 位數`);
+        if (def.operation === "sub") assert.ok(a > b, `${a} − ${b}`);
+        if (def.carries !== undefined) assert.equal(info.carries, def.carries, `${a}+${b} 進位 ${info.carries} 次`);
+        if (def.borrows !== undefined) assert.equal(info.borrows, def.borrows, `${a}−${b} 退位 ${info.borrows} 次`);
+        if (def.minuend_ones_zero !== undefined) assert.equal(a % 10 === 0, def.minuend_ones_zero, `${a} 個位`);
+        if (tierId === "add-two-carries") assert.ok(info.result >= 100);
+        if (tierId === "add-one-carry") assert.ok(info.result >= 10);
+      }
+    }
+  }
+  // 不重複：二位數不進位加法的不重複組合夠多，60 題必須全部不同
+  const distinct = instantiate(item(resolveParams(profile, { overrides: { tiers: ["add-no-carry"], context: false } }).params, { count: 60 }), { seed: "d" });
+  const keys = distinct.map(({ variables: { a, b } }) => (a <= b ? `${a}+${b}` : `${b}+${a}`));
+  assert.equal(new Set(keys).size, 60);
+});
+
+test("權重配比：7：3 的大樣本落在合理區間；只開一檔就全是那一檔", () => {
+  const params = resolveParams(profile, { overrides: { tiers: ["add-no-carry", "add-one-carry"], context: false, distinct: false } }).params;
+  const batch = instantiate(item(params, { count: 1000 }), { seed: "w" });
+  const share = batch.filter((q) => q.tier === "add-one-carry").length / 1000;
+  assert.ok(share > 0.62 && share < 0.78, `進位檔占比 ${share}`);
+  const only = instantiate(item(resolveParams(profile, { overrides: { tiers: ["sub-borrow-from-zero"], context: false, distinct: false } }).params, { count: 50 }), { seed: "o" });
+  assert.ok(only.every((q) => q.tier === "sub-borrow-from-zero" && q.variables.a % 10 === 0));
+});
+
+test("決定性：同 item 同 seed 深相等，不同 seed 不同；不改動 item", async () => {
+  const pools = await poolsPromise;
+  const example = structuredClone(await examplePromise);
+  const frozen = structuredClone(example);
+  const x1 = instantiate(example, { seed: "s1", pools });
+  const x2 = instantiate(example, { seed: "s1", pools });
+  const y = instantiate(example, { seed: "s2", pools });
+  assert.deepEqual(x1, x2);
+  assert.notDeepEqual(x1, y);
+  assert.deepEqual(example, frozen);
+});
+
+test("直式實例：通過 instance schema、每位一格、和 ≥ 100 才有百位、標準答案 correct、錯一格 partial", async () => {
+  const { validateInstance } = await ajvPromise;
+  const pools = await poolsPromise;
+  const example = await examplePromise;
+  const batch = instantiate(example, { seed: "demo", pools });
+  assert.equal(batch.length, 10);
+  for (const q of batch) {
+    assert.ok(validateInstance(q), JSON.stringify(validateInstance.errors));
+    assert.equal(q.type, "blanks");
+    assert.deepEqual(q.ladder_ids, [A2]);
+    const places = q.variables.result >= 100 ? ["ones", "tens", "hundreds"] : ["ones", "tens"];
+    assert.deepEqual(q.blanks.map((b) => b.id), places);
+    assert.deepEqual(q.display.places, places);
+    assert.equal(q.display.scaffold, "none");
+    assert.equal(q.display.carry_marks, true);
+    for (const p of places) assert.match(q.stem.text.text, new RegExp(`\\[\\[${p}\\]\\]`));
+    const digits = places.map((p) => q.blanks.find((b) => b.id === p).answer);
+    assert.equal(digits.reduce((n, d, i) => n + d * 10 ** i, 0), q.variables.result, "各位數字拼回結果");
+    assert.equal(score(q, canonical(q)).outcome, "correct");
+    const wrong = canonical(q); wrong.blanks.ones = (wrong.blanks.ones + 1) % 10;
+    assert.equal(score(q, wrong).outcome, places.length > 1 ? "partial" : "incorrect");
+  }
+  const two = instantiate(item(resolveParams(profile, { overrides: { tiers: ["add-two-carries"], context: false } }).params, { count: 5 }), { seed: "h" });
+  for (const q of two) assert.deepEqual(q.blanks.map((b) => b.id), ["ones", "tens", "hundreds"]);
+});
+
+test("橫式實例：numeric、answer 正確、display 帶 operation 與 scaffold", async () => {
+  const { validateInstance } = await ajvPromise;
+  const params = resolveParams(profile, { adjustment: "substitute", mode: "practice" }).params;
+  const batch = instantiate(item(params, { type: "numeric", count: 6 }), { seed: "n" });
+  for (const q of batch) {
+    assert.ok(validateInstance(q), JSON.stringify(validateInstance.errors));
+    assert.equal(q.type, "numeric");
+    assert.equal(q.answer, q.variables.result);
+    assert.equal(q.display.layout, "horizontal");
+    assert.equal(q.display.scaffold, "full");
+    assert.ok(["add", "sub"].includes(q.display.operation));
+    assert.equal(score(q, { value: q.answer }).outcome, "correct");
+    assert.equal(q.stem.text.text, `${q.variables.a} ${q.variables.op} ${q.variables.b} = ？`);
+  }
+});
+
+test("提示與回饋：用條件檔範本代入變數；題目自己寫就覆寫；減法範本用借位變數", async () => {
+  const params = resolveParams(profile, { overrides: { tiers: ["add-one-carry"], context: false } }).params;
+  const [q] = instantiate(item(params, { count: 1 }), { seed: "h1" });
+  const { a_ones, b_ones, ones_sum, ones, a, b, sum } = q.variables;
+  assert.equal(q.hints[0].text, `先算個位：${a_ones} 加 ${b_ones}。`);
+  assert.equal(q.hints[1].text, `個位相加是 ${ones_sum}，寫 ${ones}，記得進 1。`);
+  assert.equal(q.feedback.correct.text, `答對了！${a} ＋ ${b} 等於 ${sum}。`);
+  assert.equal(q.feedback.retry.text, "再算一次個位有沒有進位。");
+  assert.ok(q.hints.every((h) => !h.text.includes("{")), "範本變數都要被代入");
+
+  const subParams = resolveParams(profile, { overrides: { tiers: ["sub-one-borrow"], context: false } }).params;
+  const [s] = instantiate(item(subParams, { count: 1 }), { seed: "h2" });
+  assert.equal(s.hints[1].text, `向十位借 1，個位變成 ${s.variables.a_ones + 10}，再減 ${s.variables.b_ones} 得 ${s.variables.ones}。`);
+  assert.equal(s.feedback.retry.text, "再算一次個位有沒有退位。");
+
+  const own = instantiate(item(params, {
+    count: 1,
+    hints: [{ text: "自己寫的 {a}", audio: null }, { text: "二", audio: null }, { text: "三", audio: null }],
+    feedback: { correct: { text: "好", audio: null }, retry: { text: "再來 {b}", audio: null } },
+  }), { seed: "h1" })[0];
+  assert.equal(own.hints[0].text, `自己寫的 ${own.variables.a}`);
+  assert.equal(own.feedback.retry.text, `再來 ${own.variables.b}`);
+});
+
+test("情境：有池就用情境句並附算式，池缺某欄就只用不需要那欄的範本，沒池就退回算式", async () => {
+  const pools = await poolsPromise;
+  const example = await examplePromise;
+  const withPools = instantiate(example, { seed: "ctx", pools });
+  for (const q of withPools) {
+    const { a, b, op } = q.variables;
+    assert.match(q.stem.text.text, new RegExp(`算式：${a} ${op} ${b}`));
+    assert.ok(q.variables.item && q.variables.unit, "情境變數要記進 variables");
+    assert.ok(!q.stem.text.text.includes("{"), q.stem.text.text);
+  }
+  const noPools = instantiate(example, { seed: "ctx" });
+  for (const q of noPools) assert.match(q.stem.text.text, /^\d+ [＋－] \d+，/);
+  // 只給物品池：角色與動作的範本不可用，只能用「盒子裡有」範本
+  const onlyItems = new Map([["p-math-items", pools.get("p-math-items")]]);
+  const partial = instantiate({ ...example, params: { ...example.params, context_pools: { items: "p-math-items" } } }, { seed: "ctx", pools: onlyItems });
+  for (const q of partial) assert.match(q.stem.text.text, /^盒子裡有/);
+  // 池條目沒有 unit 時用「個」
+  const noUnit = new Map([["p-math-items", { entries: [{ text: { text: "球", audio: null } }] }]]);
+  const generic = instantiate({ ...example, params: { ...example.params, context_pools: { items: "p-math-items" } } }, { seed: "ctx", pools: noUnit });
+  assert.match(generic[0].stem.text.text, /個球/);
+});
+
+test("守門：沒有條件檔、兩份條件檔、產生器不符、參數越界、不可能的檔位", () => {
+  const params = resolveParams(profile, { overrides: { context: false } }).params;
+  assert.throws(() => instantiate(item(params, { ladder_ids: ["c-x"] }), { seed: "s" }), /需要條件檔/);
+  assert.throws(() => instantiate(item(params, { generator: "math.add-2digit-carry" }), { seed: "s" }), /條件檔 n-I-2#a@2 指定產生器 math.add-sub/);
+  assert.throws(() => instantiate(item({ ...params, tiers: ["nope"] }), { seed: "s" }), /檔位 "nope" 不在條件檔/);
+  assert.throws(() => instantiate(item({ ...params, shapes: [[3, 3]] }), { seed: "s" }), /形狀/);
+  assert.equal(profileForItem(item(params)), profile);
+  assert.equal(profileForItem(item(params, { ladder_ids: ["c-x"] })), null);
+  // 二位減一位且被減數個位為 0、退位一次：可行（例 40−7）；但要求退位 0 次且被減數個位為 0 又 a>b 的一位減數：a1=0 < b1 恆退位 → 抽不到
+  const impossible = { ...profile, tiers: { ...profile.tiers, "sub-zero-no-borrow": { label: "測試用", operation: "sub", borrows: 0, minuend_ones_zero: true } } };
+  const gen = generators["math.add-sub"];
+  assert.throws(() => gen.generate({ params: { ...params, tiers: ["sub-zero-no-borrow"], weights: {}, shapes: [[2, 1]] }, seed: "x", count: 1, profile: impossible }), /抽不到符合檔位「測試用」/);
+});
+
+test("驗證器：範例包通過；參數超出條件檔、沒有條件檔的產生題、缺 ladder_ids、產生器不符都被擋下並給可讀訊息", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "udl-profiles-"));
+  await cp(EXAMPLE, dir, { recursive: true });
+  const itemPath = path.join(dir, "items/i-gen-add-sub-a2.json");
+  const original = JSON.parse(await readFile(itemPath, "utf8"));
+  const rehash = async () => {
+    const { createHash } = await import("node:crypto");
+    const p = path.join(dir, "pack.json");
+    const pack = JSON.parse(await readFile(p, "utf8"));
+    for (const f of pack.files) f.sha256 = createHash("sha256").update(await readFile(path.join(dir, f.path))).digest("hex");
+    await writeFile(p, JSON.stringify(pack, null, 2));
+  };
+  const run = async (mutate) => {
+    const o = structuredClone(original); mutate(o);
+    await writeFile(itemPath, JSON.stringify(o, null, 2));
+    await rehash();
+    return validatePack(dir);
+  };
+  try {
+    const ok = await validatePack(dir);
+    assert.deepEqual(ok.errors, []);
+    assert.equal(ok.ok, true);
+    const r1 = await run((o) => { o.params.tiers.push("add-three-carries"); });
+    assert.ok(r1.errors.some((e) => /i-gen-add-sub-a2.*params: 檔位 "add-three-carries" 不在條件檔/.test(e)), r1.errors.join("\n"));
+    const r2 = await run((o) => { o.ladder_ids = ["n-I-2#b@2"]; });
+    assert.ok(r2.errors.some((e) => /沒有任何一條有條件檔/.test(e)), r2.errors.join("\n"));
+    const r3 = await run((o) => { delete o.ladder_ids; });
+    assert.ok(r3.errors.some((e) => /i-gen-add-sub-a2.*ladder_ids/.test(e)), r3.errors.join("\n"));
+    const r4 = await run((o) => { o.generator = "math.add-2digit-carry"; });
+    assert.ok(r4.errors.some((e) => /generator math.add-2digit-carry 與條件檔 n-I-2#a@2 指定的 math.add-sub 不符/.test(e)), r4.errors.join("\n"));
+    const r5 = await run((o) => { o.params.context_pools.items = "p-nope"; });
+    assert.ok(r5.errors.some((e) => /context_pools.items 引用的池 p-nope 不在/.test(e)), r5.errors.join("\n"));
+    const r6 = await run((o) => { o.params.scaffold = "lots"; });
+    assert.ok(r6.errors.some((e) => /params\/scaffold/.test(e)), r6.errors.join("\n"));
+    // 固定題也必須有 ladder_ids
+    const tfPath = path.join(dir, "items/i-tf-01.json");
+    const tf = JSON.parse(await readFile(tfPath, "utf8")); delete tf.ladder_ids;
+    await writeFile(tfPath, JSON.stringify(tf, null, 2)); await rehash();
+    const r7 = await validatePack(dir);
+    assert.ok(r7.errors.some((e) => e.startsWith("items/i-tf-01.json") && /ladder_ids/.test(e)), r7.errors.join("\n"));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("checkGeneratedItem 是純函式：給驗證器與平台共用", async () => {
+  const v = await loadValidators();
+  const example = await examplePromise;
+  const pools = await poolsPromise;
+  assert.deepEqual(checkGeneratedItem(example, { validateParams: v.params[example.generator], pools }), []);
+  const two = { ...example, ladder_ids: [A2, A2] };
+  assert.match(checkGeneratedItem(two, { validateParams: v.params[example.generator], pools }).join(), /對到 2 份條件檔/);
+  const badVersion = { ...example, generator_version: 2 };
+  assert.match(checkGeneratedItem(badVersion, { validateParams: v.params[example.generator], pools }).join(), /generator_version 2/);
+});
+
+test("--ladder-dir：有 kit checkout 時範例的 ladder_ids 全部存在；假目錄的 id 會被擋", async () => {
+  const kitDir = path.join(ROOT, "..", "sped-student-kit", "data", "ladder");
+  const dir = await mkdtemp(path.join(tmpdir(), "udl-ladder-"));
+  try {
+    await writeFile(path.join(dir, "fake.json"), JSON.stringify([{ id: "n-I-2#a@2" }]));
+    const r = await validatePack(EXAMPLE, { ladderDir: dir });
+    assert.ok(r.errors.some((e) => /ladder_id 5-Ⅲ-3#a@6 不在 kit 階梯資料/.test(e)), r.errors.join("\n"));
+    assert.ok(!r.errors.some((e) => /ladder_id n-I-2#a@2/.test(e)));
+    let hasKit = false;
+    try { await readFile(path.join(kitDir, "math-number.json")); hasKit = true; } catch { /* 沒有 kit checkout 就略過 */ }
+    if (hasKit) {
+      const real = await validatePack(EXAMPLE, { ladderDir: kitDir });
+      assert.deepEqual(real.errors, []);
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

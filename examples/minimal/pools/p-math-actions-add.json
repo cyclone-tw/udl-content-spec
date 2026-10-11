@@ -1,0 +1,10 @@
+{
+  "format_version": 1,
+  "id": "p-math-actions-add",
+  "kind": "情境動作（加）",
+  "entries": [
+    { "text": { "text": "又買了", "audio": null } },
+    { "text": { "text": "又拿到", "audio": null } },
+    { "text": { "text": "媽媽又給了", "audio": null } }
+  ]
+}

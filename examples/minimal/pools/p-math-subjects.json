@@ -1,0 +1,11 @@
+{
+  "format_version": 1,
+  "id": "p-math-subjects",
+  "kind": "情境角色",
+  "entries": [
+    { "text": { "text": "小勇", "audio": null } },
+    { "text": { "text": "美美", "audio": null } },
+    { "text": { "text": "阿強", "audio": null } },
+    { "text": { "text": "玲玲", "audio": null } }
+  ]
+}
