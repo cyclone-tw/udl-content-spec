@@ -57,7 +57,10 @@ test("登錄表：條件檔通過 schema，每個檔位都有三句提示，預�
   for (const p of Object.values(profiles)) {
     assert.ok(validateProfile(p), JSON.stringify(validateProfile.errors));
     assert.deepEqual(Object.keys(p.hints).sort(), Object.keys(p.tiers).sort(), "每個檔位都要有提示範本");
-    for (const h of Object.values(p.hints)) assert.equal(pickHints(h, []).length, 3, "default 一定三句");
+    for (const h of Object.values(p.hints)) assert.equal(pickHints(h, []).hints.length, 3, "default 一定三句");
+    assert.equal(pickHints(p.hints["add-one-carry"], ["ones-carry"]).key, "default", "沒登錄的候選退回 default，key 也要說 default");
+    assert.equal(pickHints(p.hints["add-one-carry"], ["ones-carry", "one-digit"]).key, "one-digit");
+    assert.equal(pickHints(p.hints["add-one-carry"], ["tens-carry"]).key, "tens-carry");
     const count = (text, id) => (text.match(new RegExp(`\\[\\[${id}\\]\\]`, "g")) ?? []).length;
     const others = (text) => [...text.matchAll(/\[\[([^\]]*)\]\]/g)].map((m) => m[1]).filter((x) => !["ones", "tens", "hundreds"].includes(x));
     assert.equal(count(p.stems.vertical.places_2, "ones"), 1); assert.equal(count(p.stems.vertical.places_2, "tens"), 1); assert.equal(count(p.stems.vertical.places_2, "hundreds"), 0);
@@ -104,6 +107,8 @@ test("resolveParams：預設、五種調整、覆寫只能收窄、mode 決定�
   assert.throws(() => resolveParams(profile, { overrides: { shapes: [[3, 3]] } }), /形狀 \[3,3\] 不在/);
   assert.throws(() => resolveParams(profile, { adjustment: "harder" }), /未知調整/);
   assert.throws(() => resolveParams(profile, { mode: "exam" }), /mode/);
+  assert.throws(() => resolveParams(profile, { overrides: { scaffold: "full" } }), /scaffold 覆寫必須是 \{ assess, practice \} 物件/);
+  assert.equal(resolveParams(profile, { overrides: { scaffold: { assess: "partial" } } }).params.scaffold, "partial");
   assert.throws(() => resolveParams(profile, { overrides: { tiers: ["add-one-carry"], operations: ["sub"] } }), /operations 沒有 add/);
 });
 
@@ -337,16 +342,18 @@ test("checkGeneratedItem 是純函式：給驗證器與平台共用", async () =
   const badVersion = { ...example, generator_version: 2 };
   assert.match(checkGeneratedItem(badVersion, { validateParams: v.params[example.generator], pools }).errors.join(), /generator_version 2/);
   // legacy 產生器：沒有條件檔只警告，params 仍過形狀 schema
-  const legacy = { ...example, type: "numeric", ladder_ids: ["n-II-2#b@1"], generator: "math.add-2digit-carry", params: { min: 10, max: 99, require_carry: true } };
+  const legacy = { ...example, type: "numeric", ladder_ids: ["n-II-2#b@1"], generator: "math.add-2digit-carry", params: { min: 10, max: 99, require_carry: true }, hints: example_hints(), feedback: example_feedback() };
   const l = checkGeneratedItem(legacy, { validateParams: v.params[legacy.generator], pools });
   assert.deepEqual(l.errors, []);
   assert.match(l.warnings.join(), /legacy/);
+  const noHints = { ...legacy }; delete noHints.hints;
+  assert.match(checkGeneratedItem(noHints, { validateParams: v.params[legacy.generator], pools }).errors.join(), /必須自己寫 hints 與 feedback/);
   const legacyBad = { ...legacy, params: { min: "10" } };
   assert.match(checkGeneratedItem(legacyBad, { validateParams: v.params[legacy.generator], pools }).errors.join(), /params\/min/);
   assert.equal(generators["math.add-2digit-carry"].legacy, true);
   assert.equal(generators["math.add-sub"].legacy, false);
   // instantiate 對 legacy 題照常展開
-  assert.equal(instantiate({ ...legacy, count: 2, hints: example_hints(), feedback: example_feedback() }, { seed: "l" }).length, 2);
+  assert.equal(instantiate({ ...legacy, count: 2 }, { seed: "l" }).length, 2);
 });
 
 test("--ladder-dir：有 kit checkout 時範例的 ladder_ids 全部存在；假目錄的 id 會被擋", async () => {
@@ -376,6 +383,8 @@ test("提示變體：十位進位的 add-one-carry 不再說個位進 1；一位
   assert.deepEqual(hintVariants(analyze("add", 57, 65), [2, 2]), []);
   assert.equal(analyze("add", 80, 25).tens_sum, 10);
   assert.equal(analyze("add", 38, 47).tens_sum, 8, "十位和含個位進位");
+  assert.equal(analyze("sub", 45, 2).a_ones_borrowed, undefined, "沒退位就沒有借位變數");
+  assert.equal(analyze("sub", 45, 8).a_ones_borrowed, 15);
 
   const params = resolveParams(profile, { overrides: { tiers: ["add-one-carry"], context: false, distinct: false } }).params;
   const batch = instantiate(item(params, { count: 300 }), { seed: "variants" });
@@ -391,7 +400,7 @@ test("提示變體：十位進位的 add-one-carry 不再說個位進 1；一位
       assert.equal(q.hints[2].text, `百位寫 1，十位寫 ${v.tens}，答案是 ${v.sum}。`);
       assert.ok(v.sum >= 100);
     } else {
-      assert.equal(v.hint_variant, "ones-carry");
+      assert.equal(v.hint_variant, "default", "個位進位沒有專屬變體，實際用的是 default，事件要記 default 而不是候選");
       assert.equal(q.hints[1].text, `個位相加是 ${v.ones_sum}，寫 ${v.ones}，記得進 1。`);
       assert.ok(!q.hints[2].text.includes("百位"));
     }
@@ -403,7 +412,7 @@ test("提示變體：十位進位的 add-one-carry 不再說個位進 1；一位
   const one = resolveParams(profile, { overrides: { tiers: Object.keys(profile.tiers), shapes: [[2, 1]], context: false, distinct: false } }).params;
   const oneBatch = instantiate(item(one, { count: 240 }), { seed: "one" });
   for (const q of oneBatch) {
-    assert.equal(q.variables.hint_variant, q.variables.carries === 1 ? "ones-carry" : "one-digit");
+    assert.equal(q.variables.hint_variant, "one-digit", "每個檔位都有 one-digit 變體，[2,1] 一律用它");
     for (const h of q.hints) {
       assert.ok(!/[加減] 0(?![0-9])/.test(h.text), h.text);
       assert.ok(!h.text.includes("{"), h.text);
@@ -413,6 +422,7 @@ test("提示變體：十位進位的 add-one-carry 不再說個位進 1；一位
   // 「滿 10」措辭對 tens_sum 恰為 10 也成立；「超過 10」只用在個位（ones_sum ≥ 10 時必 > 9，但要確認沒有 = 10 被說成超過）
   for (const q of instantiate(item(resolveParams(profile, { overrides: { tiers: ["add-two-carries"], context: false, distinct: false } }).params, { count: 100 }), { seed: "two" })) {
     assert.match(q.hints[1].text, /是 \d+，又滿 10 了/);
+    assert.match(q.hints[0].text, /是 \d+，滿 10 了，要進 1/);
     assert.ok(q.variables.tens_sum >= 10);
   }
 });
@@ -431,6 +441,10 @@ test("--ladder-dir=<dir> 寫法與壞 JSON 的錯誤訊息", async () => {
     assert.equal(missingValue.status, 2);
     await writeFile(path.join(dir, "broken.json"), "{not json");
     await assert.rejects(validatePack(EXAMPLE, { ladderDir: dir }), /broken\.json.*不是合法 JSON/);
+    const cli = run([EXAMPLE, "--ladder-dir", dir]);
+    assert.equal(cli.status, 2);
+    assert.match(cli.stderr, /無法讀取階梯資料.*broken\.json/);
+    assert.ok(!cli.stderr.includes("    at "), "CLI 不該噴 stack");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

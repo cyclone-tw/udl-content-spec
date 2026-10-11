@@ -89,7 +89,10 @@ function mergeSettings(base, patch) {
   for (const k of ["tiers", "weights", "operations", "shapes", "count", "presentation", "context", "distinct"]) {
     if (patch[k] !== undefined) out[k] = structuredClone(patch[k]);
   }
-  if (patch.scaffold) out.scaffold = { ...base.scaffold, ...patch.scaffold };
+  if (patch.scaffold !== undefined) {
+    if (!isPlainObject(patch.scaffold)) throw new TypeError(`scaffold 覆寫必須是 { assess, practice } 物件（例如 { assess: "full" }），不是 ${JSON.stringify(patch.scaffold)}`);
+    out.scaffold = { ...base.scaffold, ...patch.scaffold };
+  }
   return out;
 }
 

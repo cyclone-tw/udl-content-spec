@@ -76,6 +76,8 @@ export function checkGeneratedItem(item, { validateParams, pools }) {
   if (found.length === 0) {
     if (gen?.legacy) {
       warnings.push(`產生器 ${item.generator} 是 legacy（沒有條件檔），v2 移除；請改用 math.add-sub 並標有條件檔的能力指標`);
+      // legacy 產生器不提供提示範本：題目自己沒寫就會在 instantiate 時失敗，提早在這裡擋。
+      if (!Array.isArray(item.hints) || !item.feedback) errors.push(`legacy 產生器 ${item.generator} 的題目必須自己寫 hints 與 feedback（沒有條件檔範本可用）`);
       paramsShape();
     } else {
       errors.push(`ladder_ids ${JSON.stringify(item.ladder_ids)} 沒有任何一條有條件檔（generators/profiles/）；產生題必須對應有條件檔的能力指標`);
@@ -404,7 +406,14 @@ if (isMain) {
     console.error(`${ladderDir} 不是目錄`);
     process.exit(2);
   }
-  const result = await validatePack(dir, { strict, ladderDir });
+  let result;
+  try {
+    result = await validatePack(dir, { strict, ladderDir });
+  } catch (err) {
+    // 只有 --ladder-dir 的資料讀不到或壞掉會走到這裡；內容包本身的問題都已是 result.errors。
+    console.error(`無法讀取階梯資料：${err.message}`);
+    process.exit(2);
+  }
   if (json) console.log(JSON.stringify(result, null, 2));
   else {
     for (const e of result.errors) console.log(`錯誤  ${e}`);

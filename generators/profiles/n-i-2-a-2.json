@@ -167,13 +167,13 @@
     },
     "add-two-carries": {
       "default": [
-        "先算個位：{a_ones} 加 {b_ones} 是 {ones_sum}，超過 10 要進 1。",
+        "先算個位：{a_ones} 加 {b_ones} 是 {ones_sum}，滿 10 了，要進 1。",
         "十位：{a_tens} 加 {b_tens} 再加 1 是 {tens_sum}，又滿 10 了，再往百位進 1。",
         "百位寫 1，十位寫 {tens}，答案是 {sum}。"
       ],
       "variants": {
         "one-digit": [
-          "先算個位：{a_ones} 加 {b_ones} 是 {ones_sum}，超過 10 要進 1。",
+          "先算個位：{a_ones} 加 {b_ones} 是 {ones_sum}，滿 10 了，要進 1。",
           "十位：{a_tens} 加進位的 1 是 {tens_sum}，滿 10 了，再往百位進 1。",
           "百位寫 1，十位寫 {tens}，答案是 {sum}。"
         ]

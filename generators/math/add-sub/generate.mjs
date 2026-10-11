@@ -39,7 +39,8 @@ export function analyze(operation, a, b) {
     result: diff, carries: 0, borrows: borrow, carry: 0, borrow,
     ones, tens, hundreds, ones_sum: a1 + b1,
     a_ones: a1, a_tens: a10, b_ones: b1, b_tens: b10,
-    a_ones_borrowed: a1 + 10, a_tens_after: a10 - 1,
+    // 借位變數只在真的退位時才有，免得事件裡出現誤導的「借位後個位」
+    ...(borrow ? { a_ones_borrowed: a1 + 10, a_tens_after: a10 - 1 } : {}),
   };
 }
 
@@ -65,10 +66,11 @@ export function hintVariants(info, shape) {
   return out;
 }
 
+/** 依候選 key 依序找變體；回傳用到的三句與實際用的 key（候選都沒有就是 default）。 */
 export function pickHints(hintsForTier, candidates) {
-  if (Array.isArray(hintsForTier)) return hintsForTier;
-  for (const key of candidates) if (hintsForTier.variants && Object.hasOwn(hintsForTier.variants, key)) return hintsForTier.variants[key];
-  return hintsForTier.default;
+  if (Array.isArray(hintsForTier)) return { hints: hintsForTier, key: "default" };
+  for (const key of candidates) if (hintsForTier.variants && Object.hasOwn(hintsForTier.variants, key)) return { hints: hintsForTier.variants[key], key };
+  return { hints: hintsForTier.default, key: "default" };
 }
 
 const pickWeighted = (rng, entries) => {
@@ -170,9 +172,9 @@ export function generate({ params, seed, count, profile, pools }) {
     };
     const context = contextSentence(rng, profile, params, pools, operation, vars);
     const places = info.result >= 100 ? ["ones", "tens", "hundreds"] : ["ones", "tens"];
-    const variants = hintVariants(info, shape);
-    const hints = pickHints(profile.hints[tierId], variants).map((t) => ({ text: substitute(t, vars), audio: null }));
-    vars.hint_variant = variants[0] ?? "default";
+    const picked = pickHints(profile.hints[tierId], hintVariants(info, shape));
+    const hints = picked.hints.map((t) => ({ text: substitute(t, vars), audio: null }));
+    vars.hint_variant = picked.key; // 實際用到的變體（事件要記），不是候選
     const feedback = {
       correct: { text: substitute(profile.feedback.correct, vars), audio: null },
       retry: { text: substitute(profile.feedback.retry, vars), audio: null },
