@@ -16,7 +16,7 @@ UDL 教學家族（udl-learning、udl-classroom、各教材 repo）共用的**�
 | --- | --- | --- |
 | `schema/` | `pack.json`、Unit／Material／Item／Pool／Scope 的 JSON Schema | v1（#3） |
 | `question-types/` | 題型登錄表：每題型一個資料夾（作答 schema、`score()` 純函式、renderer 契約、版本與升版轉換）；v1：choice、true-false、match、numeric、blanks；路線圖：ordering、classify（v2），drawing、speaking（v3 保留） | v1（#6、#10） |
-| `generators/` | 數學參數化產生器（變數、條件重抽、種子、容差）；內容包只帶參數 | 待做 |
+| `generators/` | 數學參數化產生器（種子可重現、條件不符重抽、`{變數}` 提示置換）；內容包只帶參數；v1：`math.add-2digit-carry`、`math.add-2digit-no-carry` | v1（#9） |
 | `events/` | Attempt event 契約（xAPI 2.0 子集）與 `udl-lesson-attempt/v1` 轉接器 | 待做 |
 | `runner/` | 獨立執行器：載入內容包、出題、判定、提示、下載事件檔；無登入、無後端 | 待做 |
 | `conformance/` | 驗證器（schema＋引用＋hash）；lint 與隱私掃描待補；本機執行 | 驗證器 v1（#3） |

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:generators/math/add-2digit-no-carry/params",
+  "title": "二位數不進位加法參數",
+  "type": "object",
+  "properties": {
+    "min": { "type": "integer", "minimum": 10, "maximum": 99, "default": 10, "description": "加數下限（含）。" },
+    "max": { "type": "integer", "minimum": 10, "maximum": 99, "default": 99, "description": "加數上限（含）。" },
+    "max_sum": { "type": "integer", "minimum": 20, "description": "和的上限（含）；省略不限制。" },
+    "distinct": { "type": "boolean", "default": true, "description": "同一批不重複的加數組合。" },
+    "layout": { "type": "string", "enum": ["horizontal", "vertical"], "default": "horizontal", "description": "給 renderer：橫式或直式呈現；不影響答案。" },
+    "require_carry": { "const": false, "description": "可省略；寫出來只能是 false（由產生器決定）。" }
+  },
+  "additionalProperties": false
+}
