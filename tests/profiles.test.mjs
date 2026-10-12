@@ -223,21 +223,24 @@ test("橫式實例：numeric、answer 正確、display 帶 operation 與 scaffol
   }
 });
 
-test("提示與回饋：用條件檔範本代入變數；題目自己寫就覆寫；減法範本用借位變數", async () => {
+test("提示與回饋：用條件檔範本代入變數；題目自己寫就覆寫；減法範本用退位變數", async () => {
   const params = resolveParams(profile, { overrides: { tiers: ["add-one-carry"], context: false } }).params;
   // 挑一個「個位進位」的實例（十位進位的子情形在變體測試另測）
   const q = instantiate(item(params, { count: 20, distinct: false }), { seed: "h1" }).find((x) => x.variables.carry === 1);
   const { a_ones, b_ones, ones_sum, ones, a, b, sum } = q.variables;
-  assert.equal(q.hints[0].text, `先算個位：${a_ones} 加 ${b_ones}。`);
-  assert.equal(q.hints[1].text, `個位相加是 ${ones_sum}，寫 ${ones}，記得進 1。`);
+  assert.equal(q.hints[0].text, `先算個位：${a_ones} 加 ${b_ones}，有沒有滿 10？`);
+  assert.equal(q.hints[1].text, `${a_ones} 加 ${b_ones} 是 ${ones_sum}，滿 10 了，要進位：10 個一換成 1 個十，個位寫 ${ones}，在十位上面寫小小的 1。`);
   assert.equal(q.feedback.correct.text, `答對了！${a} ＋ ${b} 等於 ${sum}。`);
-  assert.equal(q.feedback.retry.text, "再算一次個位有沒有進位。");
+  assert.equal(q.feedback.retry.text, "再檢查一次個位：有沒有要進位？");
   assert.ok(q.hints.every((h) => !h.text.includes("{")), "範本變數都要被代入");
 
   const subParams = resolveParams(profile, { overrides: { tiers: ["sub-one-borrow"], context: false } }).params;
   const [s] = instantiate(item(subParams, { count: 1 }), { seed: "h2" });
-  assert.equal(s.hints[1].text, `向十位借 1，個位變成 ${s.variables.a_ones + 10}，再減 ${s.variables.b_ones} 得 ${s.variables.ones}。`);
-  assert.equal(s.feedback.retry.text, "再算一次個位有沒有退位。");
+  const sv = s.variables;
+  assert.equal(s.hints[1].text, `${sv.a_ones} 比 ${sv.b_ones} 小，不夠減，要退位：從十位退 1 個十，換成 10 個一，個位變成 ${sv.a_ones + 10}；${sv.a_ones + 10} 減 ${sv.b_ones} 是 ${sv.ones}，個位寫 ${sv.ones}。`);
+  assert.equal(s.hints[2].text, `十位退了 1 個十，剩 ${sv.a_tens - 1}；${sv.a_tens - 1} 減 ${sv.b_tens} 是 ${sv.tens}，十位寫 ${sv.tens}，答案是 ${sv.diff}。`);
+  assert.ok(!s.hints.some((h) => h.text.includes("借")), "課程手冊用「退位」，提示不說「借」");
+  assert.equal(s.feedback.retry.text, "再檢查一次個位：有沒有要退位？");
 
   const own = instantiate(item(params, {
     count: 1,
@@ -394,17 +397,17 @@ test("提示變體：十位進位的 add-one-carry 不再說個位進 1；一位
     if (v.carry_tens === 1) {
       tensCarry += 1;
       assert.equal(v.hint_variant, "tens-carry");
-      assert.equal(q.hints[0].text, `先算個位：${v.a_ones} 加 ${v.b_ones} 是 ${v.ones}，不用進位。`);
-      assert.equal(q.hints[1].text, `十位：${v.a_tens} 加 ${v.b_tens} 是 ${v.tens_sum}，滿 10 了，要向百位進 1。`);
+      assert.equal(q.hints[0].text, `先算個位：${v.a_ones} 加 ${v.b_ones} 是 ${v.ones}，沒有滿 10，不用進位，個位寫 ${v.ones}。`);
+      assert.equal(q.hints[1].text, `再算十位：${v.a_tens} 加 ${v.b_tens} 是 ${v.tens_sum}，滿 10 了，要進位：10 個十換成 1 個百。`);
       assert.ok(v.tens_sum >= 10 && v.tens_sum <= 18);
-      assert.equal(q.hints[2].text, `百位寫 1，十位寫 ${v.tens}，答案是 ${v.sum}。`);
+      assert.equal(q.hints[2].text, `十位寫 ${v.tens}，百位寫 1，答案是 ${v.sum}。`);
       assert.ok(v.sum >= 100);
     } else {
       assert.equal(v.hint_variant, "default", "個位進位沒有專屬變體，實際用的是 default，事件要記 default 而不是候選");
-      assert.equal(q.hints[1].text, `個位相加是 ${v.ones_sum}，寫 ${v.ones}，記得進 1。`);
+      assert.ok(q.hints[1].text.startsWith(`${v.a_ones} 加 ${v.b_ones} 是 ${v.ones_sum}，滿 10 了，要進位`), q.hints[1].text);
       assert.ok(!q.hints[2].text.includes("百位"));
     }
-    assert.ok(q.hints.every((h) => !h.text.includes("進 1。") || v.carry === 1 || v.carry_tens === 1));
+    assert.ok(q.hints.every((h) => !h.text.includes("滿 10 了") || v.carry === 1 || v.carry_tens === 1));
   }
   assert.ok(tensCarry > 30, `十位進位子情形太少（${tensCarry}）`);
 
@@ -422,7 +425,7 @@ test("提示變體：十位進位的 add-one-carry 不再說個位進 1；一位
   // 「滿 10」措辭對 tens_sum 恰為 10 也成立；「超過 10」只用在個位（ones_sum ≥ 10 時必 > 9，但要確認沒有 = 10 被說成超過）
   for (const q of instantiate(item(resolveParams(profile, { overrides: { tiers: ["add-two-carries"], context: false, distinct: false } }).params, { count: 100 }), { seed: "two" })) {
     assert.match(q.hints[1].text, /是 \d+，又滿 10 了/);
-    assert.match(q.hints[0].text, /是 \d+，滿 10 了，要進 1/);
+    assert.match(q.hints[0].text, /是 \d+，滿 10 了，個位寫 \d，進 1 到十位/);
     assert.ok(q.variables.tens_sum >= 10);
   }
 });
