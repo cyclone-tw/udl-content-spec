@@ -12,11 +12,17 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)[^\\\\]+$",
-      "description": "包內相對路徑；不得是絕對路徑或完整網址（取用端自己組網址前綴）。`..` 由驗證器另外擋。"
+      "not": {
+        "pattern": "(^|/)\\.\\.?(/|$)"
+      },
+      "description": "包內相對路徑；不得是絕對路徑、完整網址、反斜線，也不得有 `.` 或 `..` 路徑段（取用端自己組網址前綴，不能被帶出包外）。"
     },
     "pack": {
       "type": "object",
-      "required": ["id", "version"],
+      "required": [
+        "id",
+        "version"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -33,13 +39,33 @@
     },
     "voice": {
       "type": "object",
-      "required": ["name", "engine"],
+      "required": [
+        "name",
+        "engine"
+      ],
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string", "minLength": 1, "description": "聲音名稱，例如 zh-TW-HsiaoChenNeural；真人錄音寫錄音者代稱。" },
-        "engine": { "enum": ["edge-tts", "azure-speech", "human", "other"], "description": "產音來源；決定能否公開散布（見 audio/README.md）。" },
-        "engine_version": { "type": "string" },
-        "rate": { "type": "string", "description": "語速設定，例如 -28%。" }
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "聲音名稱，例如 zh-TW-HsiaoChenNeural；真人錄音寫錄音者代稱。"
+        },
+        "engine": {
+          "enum": [
+            "edge-tts",
+            "azure-speech",
+            "human",
+            "other"
+          ],
+          "description": "產音來源；決定能否公開散布（見 audio/README.md）。"
+        },
+        "engine_version": {
+          "type": "string"
+        },
+        "rate": {
+          "type": "string",
+          "description": "語速設定，例如 -28%。"
+        }
       }
     },
     "duration": {

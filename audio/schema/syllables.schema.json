@@ -4,52 +4,128 @@
   "title": "單音包清單 udl-audio-syllables/v1",
   "description": "一個注音音節一個音檔，多個同音字共用（行、形、型都用 ㄒㄧㄥˊ）。不含輕聲：輕聲沒有單獨的唸法。鍵與檔名規則見 audio/README.md。",
   "type": "object",
-  "required": ["format_version", "format", "pack", "voice", "synthetic", "generated_at", "syllables"],
+  "required": [
+    "format_version",
+    "format",
+    "pack",
+    "voice",
+    "synthetic",
+    "generated_at",
+    "syllables"
+  ],
   "additionalProperties": false,
   "properties": {
-    "format_version": { "const": 1 },
-    "format": { "const": "udl-audio-syllables" },
-    "pack": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/pack" },
-    "voice": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/voice" },
-    "synthetic": { "type": "boolean", "description": "是否為合成語音；播放端要據此揭露。" },
-    "generated_at": { "type": "string", "format": "date-time" },
+    "format_version": {
+      "const": 1
+    },
+    "format": {
+      "const": "udl-audio-syllables"
+    },
+    "pack": {
+      "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/pack"
+    },
+    "voice": {
+      "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/voice"
+    },
+    "synthetic": {
+      "type": "boolean",
+      "description": "是否為合成語音；播放端要據此揭露。"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "syllables": {
       "type": "object",
       "description": "鍵是注音音節（輕聲點放最前，不含輕聲）。",
       "additionalProperties": {
         "type": "object",
-        "required": ["key", "src", "sha256", "check"],
+        "required": [
+          "key",
+          "src",
+          "sha256",
+          "check"
+        ],
         "additionalProperties": false,
         "properties": {
-          "key": { "type": "string", "pattern": "^[a-z]+[1-4]$", "description": "ASCII 鍵：拼音加聲調數字（ü 寫 v、ê 寫 eh）。" },
-          "src": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/relativeSrc" },
-          "sha256": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256" },
-          "duration": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/duration" },
-          "source_text": { "type": "string", "minLength": 1, "description": "實際送去合成的代表字。真人錄音可省略。" },
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z]+[1-4]$",
+            "description": "ASCII 鍵：拼音加聲調數字（ü 寫 v、ê 寫 eh）。"
+          },
+          "src": {
+            "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/relativeSrc"
+          },
+          "sha256": {
+            "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256"
+          },
+          "duration": {
+            "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/duration"
+          },
+          "source_text": {
+            "type": "string",
+            "minLength": 1,
+            "description": "實際送去合成的代表字。真人錄音可省略。"
+          },
           "check": {
             "type": "object",
-            "required": ["method", "status"],
+            "required": [
+              "method",
+              "status"
+            ],
             "additionalProperties": false,
             "properties": {
-              "method": { "enum": ["two-reference", "listened", "none"], "description": "two-reference：兩個不同代表字合成後比對一致；listened：人耳試聽。" },
-              "status": { "enum": ["pass", "review"], "description": "review 表示還要人聽；不可靠的不放進清單，改列 unresolved。" },
-              "references": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-              "note": { "type": "string" }
+              "method": {
+                "enum": [
+                  "two-reference",
+                  "listened",
+                  "none"
+                ],
+                "description": "two-reference：兩個不同代表字合成後比對一致；listened：人耳試聽。"
+              },
+              "status": {
+                "enum": [
+                  "pass",
+                  "review"
+                ],
+                "description": "review 表示還要人聽；不可靠的不放進清單，改列 unresolved。"
+              },
+              "references": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "note": {
+                "type": "string"
+              }
             }
           }
         }
-      }
+      },
+      "minProperties": 1
     },
     "unresolved": {
       "type": "array",
       "description": "找不到可靠做法、因此不產出的音節。",
       "items": {
         "type": "object",
-        "required": ["zhuyin", "reason"],
+        "required": [
+          "zhuyin",
+          "reason"
+        ],
         "additionalProperties": false,
         "properties": {
-          "zhuyin": { "type": "string", "minLength": 1 },
-          "reason": { "type": "string", "minLength": 1 }
+          "zhuyin": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     }

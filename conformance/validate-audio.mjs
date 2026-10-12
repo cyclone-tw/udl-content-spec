@@ -78,6 +78,15 @@ function checkWords(m, errors) {
     if (seenSrc.has(e.src)) errors.push(`${where}: src ${e.src} 與 ${seenSrc.get(e.src)} 重複`);
     else seenSrc.set(e.src, where);
   }
+  for (const [i, u] of (m.unresolved ?? []).entries()) {
+    const where = `unresolved[${i}]`;
+    const parts = u.key.split("|");
+    if (parts.length !== 2) { errors.push(`${where}: 鍵必須是「詞|注音」`); continue; }
+    let canonical;
+    try { canonical = wordKey(parts[0], parts[1]); } catch (err) { errors.push(`${where}: ${err.message}`); continue; }
+    if (canonical !== u.key) errors.push(`${where}: 鍵沒有正規化（應為「${canonical}」）`);
+    if (Object.hasOwn(m.words, canonical)) errors.push(`${where}:「${canonical}」同時出現在 words`);
+  }
 }
 
 function checkLesson(m, errors) {
@@ -98,23 +107,32 @@ function checkLesson(m, errors) {
 }
 
 // 同一包同一版只能新增：舊清單裡的每一項，新清單都要原樣保留（src 與 sha256 相同）。
+// 舊清單必須是同一個包（或同一課）且本身合格；否則報錯，不默默略過檢查。
 function checkAppendOnly(kind, m, prev, errors) {
   if (prev.format !== m.format) { errors.push(`--previous 的格式是 ${prev.format}，與本清單 ${m.format} 不同`); return; }
   if (kind === "lesson") {
-    const same = ["publisher", "grade", "semester", "lesson_no"].every((f) => prev.lesson?.[f] === m.lesson[f]);
-    if (!same || prev.version_id !== m.version_id) return; // 不同課或不同版本：不受限
-    for (const pt of prev.tracks ?? []) {
+    const same = ["publisher", "grade", "semester", "lesson_no"].every((f) => prev.lesson[f] === m.lesson[f]);
+    if (!same) { errors.push("--previous 是另一課的清單，無法檢查只新增規則"); return; }
+    const prevRev = prev.revision ?? 1;
+    const rev = m.revision ?? 1;
+    if (prev.version_id !== m.version_id) return; // 課文或讀音改了：新版本，不受限
+    if (rev < prevRev) { errors.push(`revision ${rev} 比舊清單的 ${prevRev} 小；同一內容只能往上遞增`); return; }
+    if (rev > prevRev) return; // 同內容重新產出：新 revision，不受限
+    for (const pt of prev.tracks) {
       const t = m.tracks.find((x) => x.track === pt.track);
-      if (!t) errors.push(`同一版本（${m.version_id}）移除了軌 ${pt.track}；要改請產新版本`);
+      if (!t) errors.push(`同一版本（${m.version_id} r${rev}）移除了軌 ${pt.track}；要改請遞增 revision`);
       else if (t.audio.sha256 !== pt.audio.sha256 || t.timeline.sha256 !== pt.timeline.sha256 || t.audio.src !== pt.audio.src || t.timeline.src !== pt.timeline.src) {
-        errors.push(`同一版本（${m.version_id}）改動了軌 ${pt.track}；要改請產新版本`);
+        errors.push(`同一版本（${m.version_id} r${rev}）改動了軌 ${pt.track}；要改請遞增 revision`);
       }
     }
     return;
   }
-  if (prev.pack?.id !== m.pack.id || prev.pack?.version !== m.pack.version) return; // 開了新版本：不受限
+  if (prev.pack.id !== m.pack.id) { errors.push(`--previous 是另一個包（${prev.pack.id}），無法檢查只新增規則`); return; }
+  const ver = (v) => Number(v.slice(1));
+  if (ver(m.pack.version) < ver(prev.pack.version)) { errors.push(`版本 ${m.pack.version} 比舊清單的 ${prev.pack.version} 舊`); return; }
+  if (prev.pack.version !== m.pack.version) return; // 開了新版本：不受限
   const field = kind === "syllables" ? "syllables" : "words";
-  for (const [k, pe] of Object.entries(prev[field] ?? {})) {
+  for (const [k, pe] of Object.entries(prev[field])) {
     const e = m[field][k];
     if (!e) errors.push(`${m.pack.id}@${m.pack.version} 移除了 ${k}；同一版只能新增，要移除請開新版本`);
     else if (e.src !== pe.src || e.sha256 !== pe.sha256) errors.push(`${m.pack.id}@${m.pack.version} 改動了 ${k}（src 或 sha256 不同）；同一版只能新增，要換請開新版本`);
@@ -141,7 +159,14 @@ export async function validateAudioManifest(manifest, { previous = null } = {}) 
   else checkLesson(manifest, errors);
   if (manifest.voice.engine === "human" && manifest.synthetic) errors.push("voice.engine 是 human，synthetic 卻是 true");
   if (manifest.voice.engine !== "human" && !manifest.synthetic) errors.push(`voice.engine 是 ${manifest.voice.engine}，synthetic 必須是 true（播放端要據此揭露合成語音）`);
-  if (previous) checkAppendOnly(kind, manifest, previous, errors);
+  if (previous) {
+    const pv = (await loadValidators())[KIND_BY_FORMAT[previous?.format] ?? kind];
+    if (!pv(previous)) {
+      errors.push(`--previous 的舊清單本身不合格，無法檢查只新增規則：${(pv.errors ?? []).map((e) => `${e.instancePath || "/"} ${e.message}`).join("；")}`);
+    } else {
+      checkAppendOnly(kind, manifest, previous, errors);
+    }
+  }
   return { ok: errors.length === 0, kind, errors, warnings };
 }
 

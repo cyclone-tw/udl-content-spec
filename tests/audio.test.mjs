@@ -64,7 +64,7 @@ test("整課版本碼：與軌順序無關，課文或讀音一改就不同", ()
 test("相對路徑：擋絕對路徑、網址、..、反斜線", () => {
   assert.ok(isPackRelativePath("xing2.m4a"));
   assert.ok(isPackRelativePath("sub/xing2.m4a"));
-  for (const p of ["/abs/x.m4a", "https://cdn.example/x.m4a", "../x.m4a", "a/../x.m4a", "a\\x.m4a", ""]) {
+  for (const p of ["/abs/x.m4a", "https://cdn.example/x.m4a", "../x.m4a", "a/../x.m4a", "./x.m4a", "a//x.m4a", "a/", "a\\x.m4a", ""]) {
     assert.equal(isPackRelativePath(p), false, p);
   }
 });
@@ -82,7 +82,7 @@ test("單音包：輕聲、錯鍵、錯檔名、重複、網址、代表字不�
   let m = clone(base);
   m.syllables["˙ㄉㄜ"] = { key: "de5", src: "de5.m4a", sha256: SHA, source_text: "的", check: { method: "none", status: "pass" } };
   let r = await validateAudioManifest(m);
-  assert.ok(!r.ok); // schema 的 key pattern 只收 1–4 聲
+  assert.ok(has(r.errors, "/syllables/˙ㄉㄜ/key"), r.errors.join("\n")); // schema 的 key pattern 只收 1–4 聲
 
   m = clone(base);
   m.syllables["˙ㄉㄜ"] = { key: "de1", src: "de1.m4a", sha256: SHA, source_text: "的", check: { method: "none", status: "pass" } };
@@ -104,12 +104,14 @@ test("單音包：輕聲、錯鍵、錯檔名、重複、網址、代表字不�
   m = clone(base);
   m.syllables["ㄒㄧㄥˊ"].src = "https://cdn.example/xing2.m4a";
   r = await validateAudioManifest(m);
-  assert.ok(!r.ok);
+  assert.ok(has(r.errors, "/syllables/ㄒㄧㄥˊ/src"), r.errors.join("\n"));
 
-  m = clone(base);
-  m.syllables["ㄒㄧㄥˊ"].src = "../xing2.m4a";
-  r = await validateAudioManifest(m);
-  assert.ok(has(r.errors, "相對路徑"));
+  for (const bad of ["../xing2.m4a", "a/../xing2.m4a", "./xing2.m4a"]) {
+    m = clone(base);
+    m.syllables["ㄒㄧㄥˊ"].src = bad;
+    r = await validateAudioManifest(m);
+    assert.ok(has(r.errors, "/syllables/ㄒㄧㄥˊ/src"), `${bad}: ${r.errors.join("\n")}`); // schema 本身就擋，不靠 JS 工具
+  }
 
   m = clone(base);
   m.syllables["ㄒㄧㄥˊ"].check.references = ["形"];
@@ -129,7 +131,12 @@ test("單音包：輕聲、錯鍵、錯檔名、重複、網址、代表字不�
   m = clone(base);
   m.syllables["ㄒㄧㄥˊ"].check.status = "fail";
   r = await validateAudioManifest(m);
-  assert.ok(!r.ok);
+  assert.ok(has(r.errors, "/check/status"), r.errors.join("\n"));
+
+  m = clone(base);
+  m.syllables = {};
+  r = await validateAudioManifest(m);
+  assert.ok(has(r.errors, "/syllables", "fewer than 1"), r.errors.join("\n"));
 
   m = clone(base);
   m.unresolved.push({ zhuyin: "ㄒㄧㄥˊ", reason: "x" });
@@ -181,6 +188,19 @@ test("語詞包：錯檔名、未正規化、字數不符、重複都擋", async
   assert.ok(has(r.errors, "詞|注音"));
 
   m = clone(base);
+  m.words = {};
+  r = await validateAudioManifest(m);
+  assert.ok(has(r.errors, "/words", "fewer than 1"), r.errors.join("\n"));
+
+  m = clone(base);
+  m.unresolved = [{ key: "銀行|ㄧㄣˊ ㄏㄤˊ", reason: "x" }, { key: "行|ㄒㄧㄥˊ ㄏㄤˊ", reason: "x" }, { key: "大家|ㄉㄚˋ  ㄐㄧㄚ", reason: "x" }, { key: "沒有直線", reason: "x" }];
+  r = await validateAudioManifest(m);
+  assert.ok(has(r.errors, "unresolved[0]", "同時出現"));
+  assert.ok(has(r.errors, "unresolved[1]", "音節"));
+  assert.ok(has(r.errors, "unresolved[2]", "沒有正規化"));
+  assert.ok(has(r.errors, "unresolved[3]", "詞|注音"));
+
+  m = clone(base);
   const other = "行走|ㄒㄧㄥˊ ㄗㄡˇ";
   m.words[other].src = m.words[k].src;
   r = await validateAudioManifest(m);
@@ -207,7 +227,7 @@ test("整課：version_id 要對得上、軌名與路徑不得重複", async () 
   m = clone(base);
   m.lesson.school_year = 115;
   r = await validateAudioManifest(m);
-  assert.ok(!r.ok); // 路徑與清單不帶學年度
+  assert.ok(has(r.errors, "/lesson", "additional properties"), r.errors.join("\n")); // 不帶學年度
 });
 
 test("同一版只能新增：移除或改動既有項目要開新版本", async () => {
@@ -277,4 +297,56 @@ test("指令列：吃得下 pnpm 傳來的 --、--previous 缺值或讀不到時
   assert.match(r.stderr, /讀不到舊清單/);
   r = run(path.join(EX, "nope.json"));
   assert.equal(r.status, 1);
+});
+
+test("--previous：舊清單不合格、別的包、版本倒退都報錯，不默默略過", async () => {
+  const prev = await readJson(path.join(EX, "words.json"));
+  const m = clone(prev);
+  delete m.words["銀行|ㄧㄣˊ ㄏㄤˊ"];
+  let r = await validateAudioManifest(m, { previous: {} });
+  assert.ok(has(r.errors, "舊清單本身不合格"), r.errors.join("\n"));
+  r = await validateAudioManifest(m, { previous: { format: "udl-audio-words" } });
+  assert.ok(has(r.errors, "舊清單本身不合格"));
+
+  const otherPack = clone(prev);
+  otherPack.pack.id = "words/other-voice";
+  r = await validateAudioManifest(m, { previous: otherPack });
+  assert.ok(has(r.errors, "另一個包"));
+
+  const newer = clone(prev);
+  newer.pack.version = "v3";
+  const older = clone(prev);
+  older.pack.version = "v2";
+  r = await validateAudioManifest(older, { previous: newer });
+  assert.ok(has(r.errors, "比舊清單的 v3 舊"));
+
+  const lesson = await readJson(path.join(EX, "lesson.json"));
+  const broken = clone(lesson);
+  broken.tracks = [{}];
+  r = await validateAudioManifest(lesson, { previous: broken }); // 不得拋例外
+  assert.ok(has(r.errors, "舊清單本身不合格"));
+
+  const otherLesson = clone(lesson);
+  otherLesson.lesson.lesson_no = 4;
+  r = await validateAudioManifest(lesson, { previous: otherLesson });
+  assert.ok(has(r.errors, "另一課"));
+});
+
+test("整課 revision：同內容重新產出要遞增，不得倒退", async () => {
+  const prev = await readJson(path.join(EX, "lesson.json"));
+  let m = clone(prev);
+  m.tracks[0].audio.sha256 = SHA;
+  m.revision = 2;
+  let r = await validateAudioManifest(m, { previous: prev });
+  assert.deepEqual(r.errors, []);
+
+  const p2 = clone(m);
+  m = clone(prev);
+  r = await validateAudioManifest(m, { previous: p2 });
+  assert.ok(has(r.errors, "revision 1 比舊清單的 2 小"));
+
+  m = clone(p2);
+  m.tracks[1].audio.sha256 = SHA;
+  r = await validateAudioManifest(m, { previous: p2 });
+  assert.ok(has(r.errors, "r2", "改動了軌 simplified"));
 });

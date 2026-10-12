@@ -2,58 +2,152 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:udl-content-spec:v1:audio/lesson",
   "title": "整課朗讀清單 udl-audio-lesson/v1",
-  "description": "一課的連續朗讀音軌與時間表（每軌一條，不是一句一個檔）。依出版社／年級學期／課次存放、不帶學年度；version_id 由課文與讀音的雜湊算出。音檔與課文有版權，不放公開網址。",
+  "description": "一課的連續朗讀音軌與時間表（每軌一條，不是一句一個檔）。依出版社／年級學期／課次存放、不帶學年度；version_id 由課文與讀音的雜湊算出，revision 記同一內容的第幾次產出。音檔與課文有版權，不放公開網址。",
   "type": "object",
-  "required": ["format_version", "format", "lesson", "readings_sha256", "version_id", "voice", "synthetic", "generated_at", "tracks"],
+  "required": [
+    "format_version",
+    "format",
+    "lesson",
+    "readings_sha256",
+    "version_id",
+    "voice",
+    "synthetic",
+    "generated_at",
+    "tracks"
+  ],
   "additionalProperties": false,
   "properties": {
-    "format_version": { "const": 1 },
-    "format": { "const": "udl-audio-lesson" },
+    "format_version": {
+      "const": 1
+    },
+    "format": {
+      "const": "udl-audio-lesson"
+    },
     "lesson": {
       "type": "object",
-      "required": ["publisher", "grade", "semester", "lesson_no", "id"],
+      "required": [
+        "publisher",
+        "grade",
+        "semester",
+        "lesson_no",
+        "id"
+      ],
       "additionalProperties": false,
       "properties": {
-        "publisher": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "description": "出版社代稱（ASCII），例如 nani。" },
-        "grade": { "type": "integer", "minimum": 1, "maximum": 12 },
-        "semester": { "enum": [1, 2], "description": "1＝上學期、2＝下學期。" },
-        "lesson_no": { "type": "integer", "minimum": 1, "maximum": 99 },
-        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$", "description": "課包 id（與 udl-learning lesson.json 相同）。" }
+        "publisher": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "出版社代稱（ASCII），例如 nani。"
+        },
+        "grade": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "semester": {
+          "enum": [
+            1,
+            2
+          ],
+          "description": "1＝上學期、2＝下學期。"
+        },
+        "lesson_no": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 99
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+          "description": "課包 id（與 udl-learning lesson.json 相同）。"
+        }
       }
     },
-    "readings_sha256": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256", "description": "讀音資料（含人工覆寫）的 sha256；讀音改了就是新版本。" },
-    "version_id": { "type": "string", "pattern": "^[0-9a-f]{12}$", "description": "lessonVersionId(各軌 text_sha256, readings_sha256)。" },
-    "voice": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/voice" },
-    "synthetic": { "type": "boolean" },
-    "generated_at": { "type": "string", "format": "date-time" },
+    "readings_sha256": {
+      "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256",
+      "description": "讀音資料（含人工覆寫）的 sha256；讀音改了就是新版本。"
+    },
+    "version_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{12}$",
+      "description": "lessonVersionId(各軌 text_sha256, readings_sha256)。"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "同一份課文與讀音（同一個 version_id）的第幾次產出。只重新合成或重新編碼、課文與讀音沒變時遞增；預設 1。"
+    },
+    "voice": {
+      "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/voice"
+    },
+    "synthetic": {
+      "type": "boolean"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "tracks": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["track", "text_sha256", "audio", "timeline"],
+        "required": [
+          "track",
+          "text_sha256",
+          "audio",
+          "timeline"
+        ],
         "additionalProperties": false,
         "properties": {
-          "track": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "例如 faithful、simplified。" },
-          "text_sha256": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256", "description": "這一軌實際朗讀文字（各行以換行連接）的 sha256。" },
+          "track": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "description": "例如 faithful、simplified。"
+          },
+          "text_sha256": {
+            "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256",
+            "description": "這一軌實際朗讀文字（各行以換行連接）的 sha256。"
+          },
           "audio": {
             "type": "object",
-            "required": ["src", "sha256", "duration"],
+            "required": [
+              "src",
+              "sha256",
+              "duration"
+            ],
             "additionalProperties": false,
             "properties": {
-              "src": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/relativeSrc" },
-              "sha256": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256" },
-              "duration": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/duration" }
+              "src": {
+                "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/relativeSrc"
+              },
+              "sha256": {
+                "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256"
+              },
+              "duration": {
+                "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/duration"
+              }
             }
           },
           "timeline": {
             "type": "object",
-            "required": ["src", "sha256", "format"],
+            "required": [
+              "src",
+              "sha256",
+              "format"
+            ],
             "additionalProperties": false,
             "properties": {
-              "src": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/relativeSrc" },
-              "sha256": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256" },
-              "format": { "const": "udl-reading-track/v1", "description": "時間表格式，由 udl-learning reading-engine 定義。" }
+              "src": {
+                "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/relativeSrc"
+              },
+              "sha256": {
+                "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256"
+              },
+              "format": {
+                "const": "udl-reading-track/v1",
+                "description": "時間表格式，由 udl-learning reading-engine 定義。"
+              }
             }
           }
         }

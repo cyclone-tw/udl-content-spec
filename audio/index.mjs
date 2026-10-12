@@ -143,8 +143,8 @@ export function lessonVersionId(trackTextSha256, readingsSha256) {
   return createHash("sha256").update(`${parts.join(",")}:${readingsSha256}`, "utf8").digest("hex").slice(0, 12);
 }
 
-/** 包內相對路徑檢查：不得是絕對路徑、完整網址、含 `..` 或反斜線。 */
+/** 包內相對路徑檢查：不得是絕對路徑、完整網址、反斜線，也不得有 `.`、`..` 或空的路徑段。 */
 export function isPackRelativePath(src) {
   return typeof src === "string" && src.length > 0 && !src.startsWith("/") && !/^[a-z][a-z0-9+.-]*:/i.test(src)
-    && !src.split("/").includes("..") && !src.includes("\\");
+    && !src.includes("\\") && src.split("/").every((seg) => seg !== "" && seg !== "." && seg !== "..");
 }
