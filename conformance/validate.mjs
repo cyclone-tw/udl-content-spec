@@ -1,16 +1,19 @@
 #!/usr/bin/env node
-// 驗證一個內容包目錄：schema、引用、檔案 hash。
-// 用法：node conformance/validate.mjs <pack-dir> [--json] [--strict]
+// 驗證一個內容包目錄：schema、引用、檔案 hash、產生題參數是否落在能力指標條件檔內。
+// 用法：node conformance/validate.mjs <pack-dir> [--json] [--strict] [--ladder-dir <kit data/ladder>]
 //   --strict：警告也算失敗（例如語音槽為 null）。
+//   --ladder-dir：kit 的 data/ladder 目錄；給了就檢查所有 ladder_ids 存在於 kit 階梯資料。
 import { readFile, readdir, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import { generators, profilesFor, checkParams } from "../generators/index.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const schemaDir = path.join(here, "..", "schema");
+const root_ = path.join(here, "..");
+const schemaDir = path.join(root_, "schema");
 const SCHEMAS = ["common", "pack", "unit", "material", "item", "pool", "scope"];
 // 與 schema/common.schema.json 的 relative_path 同一條規則；讀檔前先用它過濾。
 export const RELATIVE_PATH = /^(?!\/)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
@@ -26,7 +29,74 @@ export async function loadValidators() {
     ajv.addSchema(schema);
   }
   const get = (name) => ajv.getSchema(`urn:udl-content-spec:v1:${name}`);
-  return { ajv, pack: get("pack"), unit: get("unit"), material: get("material"), item: get("item"), pool: get("pool"), scope: get("scope") };
+  // 每個產生器的 params schema（形狀）；值是否在條件檔範圍內另由 checkParams 檢查。
+  const params = {};
+  for (const g of Object.values(generators)) {
+    params[g.id] = ajv.compile(JSON.parse(await readFile(path.join(root_, g.paramsSchemaPath), "utf8")));
+  }
+  return { ajv, pack: get("pack"), unit: get("unit"), material: get("material"), item: get("item"), pool: get("pool"), scope: get("scope"), params };
+}
+
+/** 讀 kit 的 data/ladder/*.json，回傳所有階梯行為 id 的集合；目錄讀不到就丟錯（參數是人給的）。 */
+export async function loadLadderIds(dir) {
+  const ids = new Set();
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const e of entries) {
+    if (!e.isFile() || !e.name.endsWith(".json")) continue;
+    let data;
+    try {
+      data = JSON.parse(await readFile(path.join(dir, e.name), "utf8"));
+    } catch (err) {
+      throw new Error(`${path.join(dir, e.name)}: 不是合法 JSON（${err.message}）`);
+    }
+    for (const row of Array.isArray(data) ? data : []) if (typeof row?.id === "string") ids.add(row.id);
+  }
+  if (!ids.size) throw new Error(`${dir}: 沒有讀到任何階梯行為 id`);
+  return ids;
+}
+
+/**
+ * 產生題的指標與參數檢查（純函式，給驗證器與測試用），回傳 { errors, warnings }：
+ * ladder_ids 之中恰一條有條件檔；generator／version 與條件檔一致；params 通過形狀 schema 與條件檔範圍；情境池存在。
+ * 例外：legacy 產生器（add-2digit-carry／no-carry，沒有條件檔時代的產物，保留到 v2）的題目沒有條件檔只警告，params 仍過形狀 schema。
+ */
+export function checkGeneratedItem(item, { validateParams, pools }) {
+  const errors = [];
+  const warnings = [];
+  const gen = generators[item.generator];
+  if (!gen) return { errors: [`generator ${item.generator} 未登錄（generators/index.mjs）`], warnings };
+  const paramsShape = () => {
+    if (validateParams && !validateParams(item.params)) {
+      errors.push(...(validateParams.errors ?? []).map((e) => `params${e.instancePath || "/"}: ${e.message}`));
+      return false;
+    }
+    return true;
+  };
+  const found = profilesFor(item.ladder_ids);
+  if (found.length === 0) {
+    if (gen?.legacy) {
+      warnings.push(`產生器 ${item.generator} 是 legacy（沒有條件檔），v2 移除；請改用 math.add-sub 並標有條件檔的能力指標`);
+      // legacy 產生器不提供提示範本：題目自己沒寫就會在 instantiate 時失敗，提早在這裡擋。
+      if (!Array.isArray(item.hints) || !item.feedback) errors.push(`legacy 產生器 ${item.generator} 的題目必須自己寫 hints 與 feedback（沒有條件檔範本可用）`);
+      paramsShape();
+    } else {
+      errors.push(`ladder_ids ${JSON.stringify(item.ladder_ids)} 沒有任何一條有條件檔（generators/profiles/）；產生題必須對應有條件檔的能力指標`);
+    }
+    return { errors, warnings };
+  }
+  if (found.length > 1) {
+    errors.push(`ladder_ids 對到 ${found.length} 份條件檔（${found.map((p) => p.ladder_id).join("、")}）；產生題只能檢測一條有條件檔的指標`);
+    return { errors, warnings };
+  }
+  const profile = found[0];
+  if (item.generator !== profile.generator) errors.push(`generator ${item.generator} 與條件檔 ${profile.ladder_id} 指定的 ${profile.generator} 不符`);
+  if (item.generator_version !== profile.generator_version) errors.push(`generator_version ${item.generator_version} 與條件檔指定的 ${profile.generator_version} 不符`);
+  if (errors.length || !paramsShape()) return { errors, warnings };
+  errors.push(...checkParams(profile, item.params).map((m) => `params: ${m}`));
+  for (const [key, poolId] of Object.entries(item.params.context_pools ?? {})) {
+    if (pools && !pools.has(poolId)) errors.push(`params.context_pools.${key} 引用的池 ${poolId} 不在 pack.json pools`);
+  }
+  return { errors, warnings };
 }
 
 function formatAjvErrors(file, errors) {
@@ -107,12 +177,17 @@ async function listFilesIn(root, sub) {
   }
 }
 
-export async function validatePack(dir, { strict = false } = {}) {
+export async function validatePack(dir, { strict = false, ladderDir = null } = {}) {
   const errors = [];
   const warnings = [];
   const empty = { units: 0, materials: 0, items: 0, pools: 0 };
   const root = path.resolve(dir);
   const v = await loadValidators();
+  const ladderIds = ladderDir ? await loadLadderIds(ladderDir) : null;
+  const checkLadder = (ids, rel) => {
+    if (!ladderIds) return;
+    for (const id of asArray(ids)) if (!ladderIds.has(id)) errors.push(`${rel}: ladder_id ${id} 不在 kit 階梯資料（${ladderDir}）`);
+  };
 
   const pack = await readJson(root, "pack.json", errors);
   if (pack === undefined) return { ok: false, errors, warnings, counts: empty };
@@ -187,6 +262,7 @@ export async function validatePack(dir, { strict = false } = {}) {
     if (unit.id !== unitId) errors.push(`${rel}: id ${unit.id} 與檔名不符`);
     if (unit.subject !== pack.subject) warnings.push(`${rel}: subject ${unit.subject} 與 pack 的 ${pack.subject} 不同（跨科包允許，請確認）`);
     for (const poolId of asArray(unit.pools)) if (!pools.has(poolId)) errors.push(`${rel}: pools 引用的 ${poolId} 不在 pack.json pools`);
+    checkLadder(unit.ladder_ids, rel);
     seenUnits.add(unitId);
     unitRecords.push({ rel, unit });
   }
@@ -238,9 +314,15 @@ export async function validatePack(dir, { strict = false } = {}) {
       if (item.distractor_pool && !pools.has(item.distractor_pool.pool)) {
         errors.push(`${rel}: distractor_pool ${item.distractor_pool.pool} 不在 pack.json pools`);
       }
+      if (item.kind === "generated") {
+        // 指標決定題目長相：產生題的參數必須落在其能力指標條件檔允許的範圍內。
+        const g = checkGeneratedItem(item, { validateParams: v.params[item.generator], pools });
+        errors.push(...g.errors.map((m) => `${rel}: ${m}`));
+        warnings.push(...g.warnings.map((m) => `${rel}: ${m}`));
+      }
       if (typeof item.stem?.image === "string") requireListed(item.stem.image, rel);
       for (const o of [...asArray(item.options), ...asArray(item.sequence), ...asArray(item.objects)]) if (typeof o.image === "string") requireListed(o.image, rel);
-      if (!asArray(item.ladder_ids).length && !asArray(item.curriculum_codes).length) warnings.push(`${rel}: 沒有 ladder_ids 或 curriculum_codes，kit 無法對回目標`);
+      checkLadder(item.ladder_ids, rel);
       items.set(itemId, item);
       walkSpoken(item, rel, warnings, null);
     }
@@ -303,12 +385,16 @@ export async function validateScopeFile(file) {
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const args = process.argv.slice(2);
-  const dir = args.find((a) => !a.startsWith("--"));
+  // 接受 --ladder-dir <dir> 與 --ladder-dir=<dir> 兩種寫法。
+  const args = process.argv.slice(2).flatMap((a) => (a.startsWith("--ladder-dir=") ? ["--ladder-dir", a.slice("--ladder-dir=".length)] : [a]));
+  const ladderIdx = args.indexOf("--ladder-dir");
+  const ladderDir = ladderIdx >= 0 ? args[ladderIdx + 1] : null;
+  const positional = args.filter((a, i) => !a.startsWith("--") && (ladderIdx < 0 || i !== ladderIdx + 1));
+  const dir = positional[0];
   const json = args.includes("--json");
   const strict = args.includes("--strict");
-  if (!dir) {
-    console.error("用法：node conformance/validate.mjs <pack-dir> [--json] [--strict]");
+  if (!dir || (ladderIdx >= 0 && !ladderDir)) {
+    console.error("用法：node conformance/validate.mjs <pack-dir> [--json] [--strict] [--ladder-dir <kit data/ladder>]");
     process.exit(2);
   }
   const st = await stat(dir).catch(() => null);
@@ -316,7 +402,18 @@ if (isMain) {
     console.error(`${dir} 不是目錄`);
     process.exit(2);
   }
-  const result = await validatePack(dir, { strict });
+  if (ladderDir && !(await stat(ladderDir).catch(() => null))?.isDirectory()) {
+    console.error(`${ladderDir} 不是目錄`);
+    process.exit(2);
+  }
+  let result;
+  try {
+    result = await validatePack(dir, { strict, ladderDir });
+  } catch (err) {
+    // 只有 --ladder-dir 的資料讀不到或壞掉會走到這裡；內容包本身的問題都已是 result.errors。
+    console.error(`無法讀取階梯資料：${err.message}`);
+    process.exit(2);
+  }
   if (json) console.log(JSON.stringify(result, null, 2));
   else {
     for (const e of result.errors) console.log(`錯誤  ${e}`);

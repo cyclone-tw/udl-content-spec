@@ -1,0 +1,10 @@
+{
+  "format_version": 1,
+  "id": "p-math-actions-sub",
+  "kind": "情境動作（減）",
+  "entries": [
+    { "text": { "text": "吃掉了", "audio": null } },
+    { "text": { "text": "送給朋友", "audio": null } },
+    { "text": { "text": "用掉了", "audio": null } }
+  ]
+}

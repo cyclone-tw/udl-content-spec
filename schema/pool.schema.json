@@ -21,7 +21,8 @@
         "required": ["text"],
         "properties": {
           "text": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" },
-          "note": { "type": "string" }
+          "note": { "type": "string" },
+          "unit": { "type": "string", "minLength": 1, "description": "量詞（顆、片、台），給數學情境範本的 {unit}；只有物品池需要。" }
         },
         "additionalProperties": false
       }

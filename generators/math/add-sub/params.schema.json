@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:generators/math/add-sub/params",
+  "title": "math.add-sub 參數",
+  "description": "形狀由本 schema 檢查；值是否落在能力指標條件檔允許的範圍，由 generators/profiles/index.mjs 的 checkParams 檢查（驗證器與產生器共用）。通常不用手寫，呼叫 resolveParams(profile, { adjustment, overrides, mode }) 取得。",
+  "type": "object",
+  "required": ["tiers", "operations", "shapes", "presentation", "scaffold", "context", "distinct"],
+  "properties": {
+    "tiers": { "type": "array", "minItems": 1, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true, "description": "條件檔的檔位 id。" },
+    "weights": { "type": "object", "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }, "description": "檔位相對權重；未列的為 1。" },
+    "operations": { "type": "array", "minItems": 1, "items": { "type": "string", "enum": ["add", "sub"] }, "uniqueItems": true },
+    "shapes": { "type": "array", "minItems": 1, "items": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer", "minimum": 1, "maximum": 4 } }, "uniqueItems": true, "description": "[被加數或被減數位數, 加數或減數位數]。" },
+    "presentation": { "type": "string", "enum": ["vertical-blanks", "horizontal-numeric"] },
+    "scaffold": { "type": "string", "enum": ["none", "partial", "full"], "description": "寫進實例 display.scaffold，由 renderer 解讀。" },
+    "context": { "type": "boolean", "description": "是否用情境範本（需 context_pools；沒有可用的池就退回算式）。" },
+    "distinct": { "type": "boolean" },
+    "context_pools": {
+      "type": "object",
+      "properties": {
+        "subjects": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+        "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+        "actions_add": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+        "actions_sub": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

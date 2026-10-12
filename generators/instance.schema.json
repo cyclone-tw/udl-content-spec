@@ -2,15 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:udl-content-spec:v1:generators/instance",
   "title": "題目實例（產生器輸出）",
-  "description": "instantiate(item, { seed }) 的每一筆輸出。形狀與固定題相同，所以可以直接丟給 question-types 的 score()；多了 kind: instance 與追溯欄位（source_item、generator、generator_version、seed、index、variables）。實例不是內容檔，不存進內容包。",
+  "description": "instantiate(item, { seed }) 的每一筆輸出。形狀與固定題相同，所以可以直接丟給 question-types 的 score()；多了 kind: instance 與追溯欄位（source_item、generator、generator_version、seed、index、tier、variables）。實例不是內容檔，不存進內容包。",
   "type": "object",
-  "required": ["kind", "id", "source_item", "type", "generator", "generator_version", "seed", "index", "variables", "stem", "answer", "hints", "feedback"],
+  "required": ["kind", "id", "source_item", "type", "generator", "generator_version", "seed", "index", "variables", "stem", "hints", "feedback"],
   "properties": {
     "kind": { "const": "instance" },
     "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}#[0-9]+$", "description": "<item id>#<index>。" },
     "source_item": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
     "unit": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
-    "type": { "type": "string", "enum": ["numeric"], "description": "目前所有產生器都產數值題；新增其他題型的產生器時擴充。" },
+    "type": { "type": "string", "enum": ["numeric", "blanks"], "description": "產生器目前只產數值題與多格填空（直式）；新增其他題型的產生器時擴充。" },
     "skill": { "type": "string", "minLength": 1 },
     "difficulty": { "$ref": "urn:udl-content-spec:v1:common#/$defs/difficulty" },
     "ladder_ids": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id" } },
@@ -20,6 +20,7 @@
     "generator_version": { "type": "integer", "minimum": 1 },
     "seed": { "type": "string", "minLength": 1 },
     "index": { "type": "integer", "minimum": 0 },
+    "tier": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id", "description": "這題抽到的條件檔檔位（事件要記）。" },
     "variables": { "type": "object", "additionalProperties": { "type": ["number", "string", "boolean"] }, "description": "產生器抽到的變數，給提示置換與事件記錄。" },
     "stem": {
       "type": "object",
@@ -40,7 +41,64 @@
       },
       "additionalProperties": false
     },
-    "input": {
+    "input": { "$ref": "#/$defs/numeric_input" },
+    "unit_label": { "type": "string" },
+    "blanks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "answer"],
+        "properties": {
+          "id": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+          "kind": { "const": "numeric" },
+          "answer": { "type": "number" },
+          "tolerance": {
+            "type": "object",
+            "required": ["type", "value"],
+            "properties": {
+              "type": { "type": "string", "enum": ["nominal", "relative", "geometric"] },
+              "value": { "type": "number", "minimum": 0 }
+            },
+            "additionalProperties": false
+          },
+          "input": { "$ref": "#/$defs/numeric_input" },
+          "unit_label": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "display": {
+      "type": "object",
+      "description": "給 renderer 的呈現提示，不影響計分。",
+      "properties": {
+        "layout": { "type": "string", "enum": ["horizontal", "vertical"] },
+        "operation": { "type": "string", "enum": ["add", "sub"] },
+        "operands": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer" } },
+        "places": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "type": "string", "enum": ["ones", "tens", "hundreds", "thousands"] }, "description": "直式要畫哪幾位，由低到高；與 blanks 的格一一對應。" },
+        "carry_marks": { "type": "boolean", "description": "renderer 可畫進退位記號格；記號不計分。" },
+        "scaffold": { "type": "string", "enum": ["none", "partial", "full"], "description": "鷹架檔：none 純直式；partial 位值標籤＋進退位格＋提示；full 再加圖像與逐位閘門。" }
+      },
+      "additionalProperties": false
+    },
+    "hints": { "$ref": "urn:udl-content-spec:v1:common#/$defs/hints" },
+    "feedback": { "$ref": "urn:udl-content-spec:v1:common#/$defs/feedback" },
+    "meta": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "numeric" } } },
+      "then": { "required": ["answer"], "properties": { "blanks": false } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "blanks" } } },
+      "then": { "required": ["blanks"], "properties": { "answer": false, "tolerance": false, "input": false, "unit_label": false } }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "numeric_input": {
       "type": "object",
       "properties": {
         "min": { "type": "number" },
@@ -48,16 +106,6 @@
         "decimals": { "type": "integer", "minimum": 0, "maximum": 6 }
       },
       "additionalProperties": false
-    },
-    "unit_label": { "type": "string" },
-    "display": {
-      "type": "object",
-      "properties": { "layout": { "type": "string", "enum": ["horizontal", "vertical"] } },
-      "additionalProperties": false
-    },
-    "hints": { "$ref": "urn:udl-content-spec:v1:common#/$defs/hints" },
-    "feedback": { "$ref": "urn:udl-content-spec:v1:common#/$defs/feedback" },
-    "meta": { "type": "object" }
-  },
-  "additionalProperties": false
+    }
+  }
 }

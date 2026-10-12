@@ -1,14 +1,29 @@
 {
   "format_version": 1,
   "id": "u02-add-2digit",
-  "title": "二位數加法",
+  "title": "二位數加減",
   "subject": "math",
   "grade": 2,
   "semester": "上",
-  "curriculum_codes": ["N-2-2"],
-  "ladder_ids": ["n-II-2#b@1"],
+  "curriculum_codes": [
+    "N-2-2"
+  ],
+  "ladder_ids": [
+    "n-I-2#a@2"
+  ],
   "estimated_minutes": 10,
-  "materials": ["m-add-demo"],
-  "items": ["i-numeric-01", "i-gen-add-carry", "i-blanks-math-01"],
-  "pools": []
+  "materials": [
+    "m-add-demo"
+  ],
+  "items": [
+    "i-numeric-01",
+    "i-gen-add-sub-a2",
+    "i-blanks-math-01"
+  ],
+  "pools": [
+    "p-math-subjects",
+    "p-math-items",
+    "p-math-actions-add",
+    "p-math-actions-sub"
+  ]
 }

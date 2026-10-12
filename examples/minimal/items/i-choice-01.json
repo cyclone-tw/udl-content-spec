@@ -6,28 +6,76 @@
   "kind": "fixed",
   "skill": "詞語理解",
   "difficulty": 2,
-  "ladder_ids": ["c-III-2#a@1"],
-  "curriculum_codes": ["5-Ⅲ-2"],
-  "strategy": ["語境線索"],
+  "ladder_ids": [
+    "5-Ⅲ-3#a@6"
+  ],
+  "curriculum_codes": [
+    "5-Ⅲ-3"
+  ],
+  "strategy": [
+    "語境線索"
+  ],
   "stem": {
-    "text": { "text": "「橋上的遊客絡繹不絕」，「絡繹不絕」是什麼意思？", "audio": null }
+    "text": {
+      "text": "「橋上的遊客絡繹不絕」，「絡繹不絕」是什麼意思？",
+      "audio": null
+    }
   },
   "options": [
-    { "id": "a", "text": { "text": "人來人往，接連不斷", "audio": null } },
-    { "id": "b", "text": { "text": "排得整整齊齊", "audio": null } },
-    { "id": "c", "text": { "text": "安安靜靜，沒有人", "audio": null } }
+    {
+      "id": "a",
+      "text": {
+        "text": "人來人往，接連不斷",
+        "audio": null
+      }
+    },
+    {
+      "id": "b",
+      "text": {
+        "text": "排得整整齊齊",
+        "audio": null
+      }
+    },
+    {
+      "id": "c",
+      "text": {
+        "text": "安安靜靜，沒有人",
+        "audio": null
+      }
+    }
   ],
   "answer": "a",
   "shuffle": true,
-  "distractor_pool": { "pool": "p-semantic-01", "pick": 1 },
+  "distractor_pool": {
+    "pool": "p-semantic-01",
+    "pick": 1
+  },
   "hints": [
-    { "text": "想想看：這句話在說「遊客」的樣子。", "audio": null },
-    { "text": "是在說遊客「很多、一直來」，還是「很整齊」？", "audio": null },
-    { "text": "跟「人潮不斷」的意思最接近。", "audio": null }
+    {
+      "text": "想想看：這句話在說「遊客」的樣子。",
+      "audio": null
+    },
+    {
+      "text": "是在說遊客「很多、一直來」，還是「很整齊」？",
+      "audio": null
+    },
+    {
+      "text": "跟「人潮不斷」的意思最接近。",
+      "audio": null
+    }
   ],
   "feedback": {
-    "correct": { "text": "答對了！絡繹不絕就是人來人往、接連不斷。", "audio": null },
-    "retry": { "text": "再想一下：句子說的是「人潮」的樣子喔。", "audio": null }
+    "correct": {
+      "text": "答對了！絡繹不絕就是人來人往、接連不斷。",
+      "audio": null
+    },
+    "retry": {
+      "text": "再想一下：句子說的是「人潮」的樣子喔。",
+      "audio": null
+    }
   },
-  "meta": { "author": "claude-code", "reviewed": false }
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
 }

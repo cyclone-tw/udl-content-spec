@@ -62,7 +62,7 @@ test("最小範例通過（只有語音槽與跨科警告）", async () => {
   assert.ok(r.ok);
   assert.equal(r.counts.units, 2);
   assert.equal(r.counts.items, 9);
-  assert.equal(r.counts.pools, 1);
+  assert.equal(r.counts.pools, 5);
   assert.ok(r.warnings.every((w) => w.includes("語音槽") || w.includes("subject")), r.warnings.join("\n"));
 });
 
@@ -74,11 +74,11 @@ test("--strict 時語音槽 null 算失敗", async () => {
 
 test("同一個池可被兩個單元共用", () =>
   withCopy(async (dir) => {
-    await editJson(dir, "units/u02-add-2digit.json", (o) => { o.pools = ["p-semantic-01"]; });
+    await editJson(dir, "units/u02-add-2digit.json", (o) => { o.pools.push("p-semantic-01"); });
     await rehash(dir);
     const r = await validatePack(dir);
     assert.deepEqual(r.errors, []);
-    assert.equal(r.counts.pools, 1);
+    assert.equal(r.counts.pools, 5);
   }));
 
 test("單元或題目引用不在 pack.pools 的池會報錯", () =>
@@ -114,10 +114,10 @@ test("選擇題正解不在選項裡；選項 id 重複", () =>
 
 test("generated 題不得帶 stem；fixed 題不得帶 generator", () =>
   withCopy(async (dir) => {
-    await editJson(dir, "items/i-gen-add-carry.json", (o) => { o.stem = { text: { text: "x", audio: null } }; });
+    await editJson(dir, "items/i-gen-add-sub-a2.json", (o) => { o.stem = { text: { text: "x", audio: null } }; });
     await editJson(dir, "items/i-numeric-01.json", (o) => { o.generator = "math.x"; });
     const r = await validatePack(dir);
-    assert.ok(r.errors.some((e) => e.startsWith("items/i-gen-add-carry.json/stem")), r.errors.join("\n"));
+    assert.ok(r.errors.some((e) => e.startsWith("items/i-gen-add-sub-a2.json/stem")), r.errors.join("\n"));
     assert.ok(r.errors.some((e) => e.startsWith("items/i-numeric-01.json/generator")), r.errors.join("\n"));
   }));
 
@@ -245,7 +245,7 @@ test("blanks schema：數字、文字、混合格與 1–12 格", async () => {
   for (const key of ["options", "pairs", "answer", "tolerance", "input", "unit_label", "shuffle", "distractor_pool"]) {
     assert.equal(v.item({ ...original, [key]: key === "answer" ? 42 : {} }), false, key);
   }
-  for (const name of ["i-numeric-01", "i-choice-01", "i-tf-01", "i-match-01", "i-gen-add-carry"]) {
+  for (const name of ["i-numeric-01", "i-choice-01", "i-tf-01", "i-match-01", "i-gen-add-sub-a2"]) {
     const item = JSON.parse(await readFile(path.join(EXAMPLE, `items/${name}.json`), "utf8"));
     assert.equal(v.item({ ...item, blanks: [numeric] }), false, name);
   }
@@ -294,7 +294,7 @@ for (const type of ["ordering", "classify"]) test(`${type} schema：數量邊界
   for (const key of ["options", "pairs", "answer", "blanks", "tolerance", "input", "unit_label", "shuffle", "distractor_pool", ...(type === "ordering" ? ["bins", "objects"] : ["sequence"])]) {
     assert.equal(v.item({ ...q, [key]: {} }), false, key);
   }
-  for (const name of ["i-numeric-01", "i-choice-01", "i-tf-01", "i-match-01", "i-blanks-math-01", "i-gen-add-carry"]) {
+  for (const name of ["i-numeric-01", "i-choice-01", "i-tf-01", "i-match-01", "i-blanks-math-01", "i-gen-add-sub-a2"]) {
     const other = JSON.parse(await readFile(path.join(EXAMPLE, `items/${name}.json`), "utf8"));
     for (const field of Object.keys(fields)) assert.equal(v.item({ ...other, [field]: q[field] }), false, `${name}: ${field}`);
   }
