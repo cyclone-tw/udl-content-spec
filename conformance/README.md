@@ -7,9 +7,10 @@ pnpm run validate examples/minimal -- --strict  # 警告也算失敗（例如語
 pnpm run validate examples/minimal -- --ladder-dir ../sped-student-kit/data/ladder  # 另檢查 ladder_ids 存在於 kit 階梯資料
 pnpm run update-files examples/minimal        # 重新產生 pack.json 的 files 清單與 sha256
 pnpm run validate:events events/examples/runner-session.json -- --ladder-dir ../sped-student-kit/data/ladder  # 作答事件檔
+pnpm run validate:audio audio/examples/words.json -- --previous old/words.json  # 音檔包清單；--previous 檢查同一版只新增
 pnpm test
 ```
 
 `validate.mjs` 檢查：每個檔案符合 schema；id 與檔名一致；item／material 的 `unit` 正確；選擇題正解在選項內、id 不重複；池在 pack.pools 載入一次、`distractor_pool` 與單元 pools 只能引用它；教材文中 `【詞|key】` 的 key 在 `vocab`；每題 `ladder_ids` 至少一條；產生題的 `ladder_ids` 之中恰一條有條件檔（`generators/profiles/`）、`generator`／`generator_version` 與條件檔一致、`params` 通過產生器 `params.schema.json` 與條件檔 `checkParams`、`context_pools` 的池存在；`check` 引用的題目在單元；圖片、音檔、語音槽路徑都列在 `files` 且 hash 相符；同一個包內 id 唯一；磁碟上未列在 `files` 的檔案警告。所有讀檔前先確認路徑在 pack 目錄內；`pack.json` 或單一檔案 schema 不合格就跳過該檔的後續檢查，不會拋例外。可從其他程式 `import { validatePack }` 取得 `{ ok, errors, warnings, counts }`。
 
-`validate-events.mjs` 驗證作答事件檔（`udl-attempt-events/v1`）：schema、seq、outcome 與 score 一致、角色與代號、`--ladder-dir`、隱私掃描；細節見 `events/README.md`。內容 lint 待後續 issue。所有檢查在本機跑，不靠 GitHub Actions。
+`validate-events.mjs` 驗證作答事件檔（`udl-attempt-events/v1`）：schema、seq、outcome 與 score 一致、角色與代號、`--ladder-dir`、隱私掃描；細節見 `events/README.md`。`validate-audio.mjs` 驗證音檔包清單（單音、語詞、整課）：schema、鍵與注音一致、檔名規則、相對路徑、重複、合成標示、同一版只新增；細節見 `audio/README.md`。內容 lint 待後續 issue。所有檢查在本機跑，不靠 GitHub Actions。

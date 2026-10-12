@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:audio/words",
+  "title": "語詞包清單 udl-audio-words/v1",
+  "description": "鍵是「詞|注音」，與課次、出版社、學年度無關，跨課跨版本共用。檔名由鍵的雜湊產生。",
+  "type": "object",
+  "required": ["format_version", "format", "pack", "voice", "synthetic", "generated_at", "words"],
+  "additionalProperties": false,
+  "properties": {
+    "format_version": { "const": 1 },
+    "format": { "const": "udl-audio-words" },
+    "pack": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/pack" },
+    "voice": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/voice" },
+    "synthetic": { "type": "boolean" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "words": {
+      "type": "object",
+      "description": "鍵是「詞|注音」，注音每音節一段、半形空白分隔、輕聲點放最前。",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["src", "sha256"],
+        "additionalProperties": false,
+        "properties": {
+          "src": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/relativeSrc" },
+          "sha256": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/sha256" },
+          "duration": { "$ref": "urn:udl-content-spec:v1:audio/common#/$defs/duration" },
+          "source_text": { "type": "string", "minLength": 1, "description": "實際送去合成的文字（通常就是這個詞）。" },
+          "reviewed": {
+            "type": "object",
+            "required": ["by", "at"],
+            "additionalProperties": false,
+            "description": "讀音由人確認過。",
+            "properties": {
+              "by": { "type": "string", "minLength": 1 },
+              "at": { "type": "string", "format": "date" }
+            }
+          }
+        }
+      }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

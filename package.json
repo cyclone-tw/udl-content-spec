@@ -12,7 +12,8 @@
     "validate": "node conformance/validate.mjs",
     "update-files": "node conformance/update-files.mjs",
     "test": "node --test",
-    "validate:events": "node conformance/validate-events.mjs"
+    "validate:events": "node conformance/validate-events.mjs",
+    "validate:audio": "node conformance/validate-audio.mjs"
   },
   "devDependencies": {
     "ajv": "^8.20.0",
