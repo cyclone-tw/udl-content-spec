@@ -1,0 +1,564 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:events/attempt-events",
+  "title": "作答事件檔 udl-attempt-events/v1",
+  "description": "一次活動（session）的作答紀錄。獨立執行器下載的檔、平台每日匯出的檔、朗讀器轉接出來的檔都是這個形狀；kit 只用一種讀法。檔裡只有代號，沒有真名。",
+  "type": "object",
+  "required": [
+    "format_version",
+    "format",
+    "generated_at",
+    "producer",
+    "actor",
+    "context",
+    "events"
+  ],
+  "properties": {
+    "format_version": {
+      "const": 1
+    },
+    "format": {
+      "const": "udl-attempt-events"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "檔案產生時間（ISO 8601）。"
+    },
+    "producer": {
+      "type": "object",
+      "description": "誰產出這個檔：殼的 id 與版本，以及事件粒度。",
+      "required": [
+        "shell",
+        "shell_version",
+        "granularity"
+      ],
+      "properties": {
+        "shell": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+          "description": "殼 id，例如 udl-runner、udl-lesson-reader、rpg-world、udl-platform。"
+        },
+        "shell_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "granularity": {
+          "type": "string",
+          "enum": [
+            "item",
+            "unit"
+          ],
+          "description": "item：每個 answered 對到內容包裡的穩定題目；unit：題目是殼現場生的，只能對到單元層級的 ladder_ids（例如朗讀器轉接）。"
+        }
+      },
+      "additionalProperties": false
+    },
+    "actor": {
+      "type": "object",
+      "description": "誰在作答。只有 student 可帶代號；教師試玩與訪客不帶。除了這兩個欄位不得有別的（擋真名）。",
+      "required": [
+        "role"
+      ],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "student",
+            "teacher",
+            "guest"
+          ]
+        },
+        "student_code": {
+          "$ref": "#/$defs/student_code"
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "role": {
+            "const": "student"
+          }
+        },
+        "type": "object"
+      },
+      "then": {
+        "required": [
+          "student_code"
+        ],
+        "type": "object"
+      },
+      "else": {
+        "not": {
+          "required": [
+            "student_code"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "整個 session 共用的脈絡。",
+      "required": [
+        "session_id",
+        "mode",
+        "pack"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "learn",
+            "practice",
+            "test"
+          ],
+          "description": "學習／練習／測驗；kit 每筆都要看這個。"
+        },
+        "assignment_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "教師指派 id；自由練習或獨立執行器可缺。"
+        },
+        "pack": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1,
+              "description": "內容包版本；朗讀器課包沒有版本時填 unversioned。"
+            }
+          },
+          "additionalProperties": false
+        },
+        "unit_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        "prescription": {
+          "$ref": "#/$defs/prescription"
+        }
+      },
+      "additionalProperties": false
+    },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "student_code": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$",
+      "description": "roster 的代號字串；udl 不解讀。不得是真學號、不得含姓名。"
+    },
+    "ladder_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "能力階梯 id，正本在 kit。"
+    },
+    "prescription": {
+      "type": "object",
+      "description": "這次 session 實際套用的個別調整。欄位名與條件檔的鷹架檔位、課程調整預設一致；缺的欄位表示用殼的預設。",
+      "properties": {
+        "font_scale": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 3
+        },
+        "zhuyin": {
+          "type": "boolean",
+          "description": "是否顯示注音。"
+        },
+        "read_aloud": {
+          "type": "string",
+          "enum": [
+            "off",
+            "on",
+            "student-choice"
+          ],
+          "description": "報讀模式：關、開、學生自選（練習預設）。"
+        },
+        "option_count": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 6,
+          "description": "選擇題實際出的選項數。"
+        },
+        "untimed": {
+          "type": "boolean",
+          "description": "不限時。"
+        },
+        "motion": {
+          "type": "string",
+          "enum": [
+            "full",
+            "reduced"
+          ]
+        },
+        "scaffold": {
+          "type": "string",
+          "enum": [
+            "none",
+            "partial",
+            "full"
+          ],
+          "description": "直式等題型的鷹架檔位。"
+        },
+        "adjustment": {
+          "type": "string",
+          "enum": [
+            "simplify",
+            "reduce",
+            "decompose",
+            "substitute",
+            "not_applicable"
+          ],
+          "description": "課程調整預設，與條件檔 adjustments 同名。"
+        }
+      },
+      "additionalProperties": false
+    },
+    "generated": {
+      "type": "object",
+      "description": "產生題的追溯欄位，照 generators/instance.schema.json；有這些就能重現同一題。",
+      "required": [
+        "generator",
+        "generator_version",
+        "seed",
+        "index"
+      ],
+      "properties": {
+        "generator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generator_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "seed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tier": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+          "description": "抽到的條件檔檔位。"
+        },
+        "hint_variant": {
+          "type": "string",
+          "minLength": 1,
+          "description": "提示範本變體（條件檔 hints.variants 的 key）。"
+        },
+        "variables": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "number",
+              "string",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "event_base": {
+      "type": "object",
+      "required": [
+        "seq",
+        "type",
+        "time"
+      ],
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "同一檔內嚴格遞增。"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "session-started",
+            "material-viewed",
+            "audio-played",
+            "hint-used",
+            "answered",
+            "session-completed"
+          ]
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "event": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/event_base"
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "answered"
+              }
+            },
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/answered"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "hint-used"
+              }
+            },
+            "type": "object"
+          },
+          "then": {
+            "required": [
+              "item_id",
+              "hint_tier"
+            ],
+            "properties": {
+              "item_id": {
+                "$ref": "#/$defs/item_id"
+              },
+              "hint_tier": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "material-viewed"
+              }
+            },
+            "type": "object"
+          },
+          "then": {
+            "required": [
+              "material_id"
+            ],
+            "properties": {
+              "material_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+              },
+              "page": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "audio-played"
+              }
+            },
+            "type": "object"
+          },
+          "then": {
+            "required": [
+              "target"
+            ],
+            "properties": {
+              "target": {
+                "type": "string",
+                "minLength": 1,
+                "description": "播了什麼：material id、item id 或 stem／option／hint 之類的槽名。"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "session-completed"
+              }
+            },
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "summary": {
+                "type": "object",
+                "required": [
+                  "answered",
+                  "correct"
+                ],
+                "properties": {
+                  "answered": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "correct": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "duration_ms": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "item_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "內容包題目 id（固定題）或產生題的 source item id；粒度 unit 時是殼合成的「課次-活動-序號」。"
+    },
+    "answered": {
+      "type": "object",
+      "required": [
+        "item_id",
+        "ladder_ids",
+        "question_type",
+        "type_version",
+        "outcome",
+        "score",
+        "attempt_no",
+        "response_ms",
+        "hint_tier",
+        "read_aloud",
+        "guess_flag"
+      ],
+      "properties": {
+        "seq": {},
+        "type": {},
+        "time": {},
+        "item_id": {
+          "$ref": "#/$defs/item_id"
+        },
+        "ladder_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/ladder_id"
+          }
+        },
+        "curriculum_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "question_type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "題型代碼，與 question-types registry 一致。"
+        },
+        "type_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "correct",
+            "incorrect",
+            "partial",
+            "invalid",
+            "pending-review"
+          ],
+          "description": "照 question-types/result.schema.json。"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "attempt_no": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "同一題在這個 session 的第幾次作答。"
+        },
+        "response_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "從題目出現到送出的毫秒。"
+        },
+        "hint_tier": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "送出前用到的最高提示層；0 沒用。"
+        },
+        "read_aloud": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "這題有沒有用報讀；殼無法得知時填 null，不要猜。"
+        },
+        "guess_flag": {
+          "type": "string",
+          "enum": [
+            "none",
+            "possible-guessing",
+            "flagged"
+          ],
+          "description": "none 正常；possible-guessing 殼的啟發式懷疑亂答；flagged 觸發平台亂答規則（總規劃 §6.7），不計入建議等級。"
+        },
+        "response": {
+          "description": "學生送出的原始作答（題型的 response 形狀）。"
+        },
+        "detail": {
+          "type": "object",
+          "description": "score() 的 detail。"
+        },
+        "generated": {
+          "$ref": "#/$defs/generated"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "format_version": 1,
+  "format": "udl-attempt-events",
+  "generated_at": "2026-10-12T09:30:12.000Z",
+  "producer": {
+    "shell": "udl-runner",
+    "shell_version": "0.1.0",
+    "granularity": "item"
+  },
+  "actor": {
+    "role": "student",
+    "student_code": "fox-07"
+  },
+  "context": {
+    "session_id": "sample-willow-test-20261012T0920",
+    "mode": "test",
+    "assignment_id": "a-2026w41-math",
+    "pack": {
+      "id": "sample-willow",
+      "version": "0.1.0"
+    },
+    "unit_id": "u02-add-2digit",
+    "prescription": {
+      "zhuyin": true,
+      "read_aloud": "on",
+      "untimed": true,
+      "scaffold": "partial",
+      "adjustment": "simplify"
+    }
+  },
+  "events": [
+    {
+      "seq": 1,
+      "type": "session-started",
+      "time": "2026-10-12T09:20:00.000Z"
+    },
+    {
+      "seq": 2,
+      "type": "material-viewed",
+      "time": "2026-10-12T09:20:05.000Z",
+      "material_id": "m-add-2digit-demo",
+      "page": 1
+    },
+    {
+      "seq": 3,
+      "type": "audio-played",
+      "time": "2026-10-12T09:20:40.000Z",
+      "target": "i-gen-add-sub-a2:stem"
+    },
+    {
+      "seq": 4,
+      "type": "answered",
+      "time": "2026-10-12T09:21:30.000Z",
+      "item_id": "i-gen-add-sub-a2",
+      "ladder_ids": [
+        "n-I-2#a@2"
+      ],
+      "curriculum_codes": [
+        "N-2-2"
+      ],
+      "question_type": "blanks",
+      "type_version": 1,
+      "outcome": "correct",
+      "score": 1,
+      "attempt_no": 1,
+      "response_ms": 48200,
+      "hint_tier": 0,
+      "read_aloud": true,
+      "guess_flag": "none",
+      "response": {
+        "blanks": {
+          "ones": 2,
+          "tens": 6
+        }
+      },
+      "detail": {
+        "blanks": [
+          {
+            "id": "ones",
+            "correct": true
+          },
+          {
+            "id": "tens",
+            "correct": true
+          }
+        ]
+      },
+      "generated": {
+        "generator": "math.add-sub",
+        "generator_version": 1,
+        "seed": "demo-2026-10-11",
+        "index": 0,
+        "tier": "add-no-carry",
+        "hint_variant": "default",
+        "variables": {
+          "a": 31,
+          "b": 31,
+          "sum": 62
+        }
+      }
+    },
+    {
+      "seq": 5,
+      "type": "hint-used",
+      "time": "2026-10-12T09:22:10.000Z",
+      "item_id": "i-gen-add-sub-a2",
+      "hint_tier": 1
+    },
+    {
+      "seq": 6,
+      "type": "hint-used",
+      "time": "2026-10-12T09:22:40.000Z",
+      "item_id": "i-gen-add-sub-a2",
+      "hint_tier": 2
+    },
+    {
+      "seq": 7,
+      "type": "answered",
+      "time": "2026-10-12T09:23:05.000Z",
+      "item_id": "i-gen-add-sub-a2",
+      "ladder_ids": [
+        "n-I-2#a@2"
+      ],
+      "curriculum_codes": [
+        "N-2-2"
+      ],
+      "question_type": "blanks",
+      "type_version": 1,
+      "outcome": "partial",
+      "score": 0.5,
+      "attempt_no": 2,
+      "response_ms": 55000,
+      "hint_tier": 2,
+      "read_aloud": true,
+      "guess_flag": "none",
+      "response": {
+        "blanks": {
+          "ones": 3,
+          "tens": 7
+        }
+      },
+      "detail": {
+        "blanks": [
+          {
+            "id": "ones",
+            "correct": true
+          },
+          {
+            "id": "tens",
+            "correct": false
+          }
+        ]
+      },
+      "generated": {
+        "generator": "math.add-sub",
+        "generator_version": 1,
+        "seed": "demo-2026-10-11",
+        "index": 1,
+        "tier": "sub-no-borrow",
+        "hint_variant": "default",
+        "variables": {
+          "a": 58,
+          "b": 25,
+          "diff": 33
+        }
+      }
+    },
+    {
+      "seq": 8,
+      "type": "answered",
+      "time": "2026-10-12T09:23:40.000Z",
+      "item_id": "i-choice-01",
+      "ladder_ids": [
+        "5-Ⅲ-3#a@6"
+      ],
+      "curriculum_codes": [
+        "5-Ⅲ-3"
+      ],
+      "question_type": "choice",
+      "type_version": 1,
+      "outcome": "incorrect",
+      "score": 0,
+      "attempt_no": 1,
+      "response_ms": 4100,
+      "hint_tier": 0,
+      "read_aloud": false,
+      "guess_flag": "none",
+      "response": {
+        "option": "b"
+      },
+      "detail": {
+        "chosen": "b",
+        "answer": "a"
+      }
+    },
+    {
+      "seq": 9,
+      "type": "session-completed",
+      "time": "2026-10-12T09:24:00.000Z",
+      "summary": {
+        "answered": 3,
+        "correct": 1,
+        "duration_ms": 240000
+      }
+    }
+  ]
+}
