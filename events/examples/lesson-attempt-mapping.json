@@ -1,0 +1,13 @@
+{
+  "format": "udl-lesson-attempt-mapping",
+  "format_version": 1,
+  "notes": "課次 → 單元 ladder ids 的對照表（合成範例）。正本之後由 sped-student-kit#39 教科書對碼產生；這裡只定格式。ladder id 必須存在於 kit data/ladder。",
+  "lessons": {
+    "demo-stream-bridge": {
+      "pack": { "id": "sample-willow", "version": "0.1.0" },
+      "unit_id": "u01-stream-bridge",
+      "ladder_ids": ["5-Ⅲ-3#a@6"],
+      "curriculum_codes": ["5-Ⅲ-3"]
+    }
+  }
+}

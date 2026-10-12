@@ -1,0 +1,20 @@
+{
+  "schema": "udl-lesson-attempt/v1",
+  "lessonId": "demo-stream-bridge",
+  "title": "溪橋（合成課文）",
+  "activity": "quiz",
+  "mode": "sent-pic",
+  "events": [
+    { "key": "", "word": "", "kind": "sent-pic", "prompt": "溪水慢慢地流過石橋。", "chosen": "img-bridge", "correct": "img-bridge", "ok": true, "ms": 5200, "at": "2026-10-12T01:10:05.000Z" },
+    { "key": "", "word": "", "kind": "sent-pic", "prompt": "橋上的遊客絡繹不絕。", "chosen": "img-market", "correct": "img-crowd", "ok": false, "ms": 3900, "at": "2026-10-12T01:10:12.000Z" },
+    { "key": "", "word": "", "kind": "pic-sent", "prompt": "img-sunrise", "chosen": "太陽從山後面探出頭來。", "correct": "太陽從山後面探出頭來。", "ok": true, "ms": 7600, "at": "2026-10-12T01:10:25.000Z" },
+    { "key": "", "word": "", "kind": "sent-pic", "prompt": "水很清澈，看得見底。", "chosen": "img-clear", "correct": "img-clear", "ok": true, "ms": 4400, "at": "2026-10-12T01:10:33.000Z" }
+  ],
+  "correct": 3,
+  "total": 4,
+  "startedAt": "2026-10-12T01:10:00.000Z",
+  "endedAt": "2026-10-12T01:10:34.000Z",
+  "durationMs": 34000,
+  "accuracy": 0.75,
+  "guessFlag": "none"
+}
