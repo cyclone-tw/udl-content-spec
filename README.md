@@ -19,7 +19,8 @@ UDL 教學家族（udl-learning、udl-classroom、各教材 repo）共用的**�
 | `generators/` | 數學參數化產生器（種子可重現、條件不符重抽、`{變數}` 提示置換）；內容包只帶參數；`profiles/` 能力指標條件檔決定產生題能出什麼（第一條 `n-I-2#a@2`）；v1：`math.add-sub`（依條件檔；直式多格填空或橫式）、`math.add-2digit-carry`／`no-carry`（保留） | v1（#9、#18） |
 | `events/` | 作答事件契約 `udl-attempt-events/v1`（檔案形狀、六種事件、處方欄位、隱私紅線）、建構器、`udl-lesson-attempt/v1` 轉接器、支持代碼對照草案 | v1（#21） |
 | `runner/` | 獨立執行器：載入內容包、出題、判定、提示、下載事件檔；無登入、無後端 | 待做 |
-| `conformance/` | 驗證器（schema＋引用＋hash＋產生題參數落在能力指標條件檔內，`--ladder-dir` 可對 kit 階梯資料）；事件檔驗證器（`validate:events`，含隱私掃描）；內容 lint 待補；本機執行 | 驗證器 v1（#3、#18、#21） |
+| `audio/` | 音檔包格式：單音（注音音節，ASCII 鍵）、語詞（`詞\|注音`）、整課（連續音軌＋時間表、版本碼）三種清單 schema、鍵規則函式、只新增規則；決策正本在 udl-learning#102 | v1（#25） |
+| `conformance/` | 驗證器（schema＋引用＋hash＋產生題參數落在能力指標條件檔內，`--ladder-dir` 可對 kit 階梯資料）；事件檔驗證器（`validate:events`，含隱私掃描）；音檔包清單驗證器（`validate:audio`）；內容 lint 待補；本機執行 | 驗證器 v1（#3、#18、#21） |
 | `examples/` | 合成範例：國語一課、數學一小單元（最小版） | 最小版（#3） |
 | `docs/` | 本 repo 的設計決定索引（連回正本，不複製） | 本 PR |
 

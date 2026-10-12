@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:audio/common",
+  "title": "音檔包共用定義",
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "音檔或檔案內容的 sha256（小寫十六進位 64 碼）。"
+    },
+    "relativeSrc": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)[^\\\\]+$",
+      "not": {
+        "pattern": "(^|/)\\.\\.?(/|$)"
+      },
+      "description": "包內相對路徑；不得是絕對路徑、完整網址、反斜線，也不得有 `.` 或 `..` 路徑段（取用端自己組網址前綴，不能被帶出包外）。"
+    },
+    "pack": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*(/[A-Za-z0-9._-]+)*$",
+          "description": "包代號，例如 syllables/zh-TW-HsiaoChenNeural。"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v[1-9][0-9]*$",
+          "description": "包版本。同一版只能新增項目；改動或移除既有項目要開下一版。"
+        }
+      }
+    },
+    "voice": {
+      "type": "object",
+      "required": [
+        "name",
+        "engine"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "聲音名稱，例如 zh-TW-HsiaoChenNeural；真人錄音寫錄音者代稱。"
+        },
+        "engine": {
+          "enum": [
+            "edge-tts",
+            "azure-speech",
+            "human",
+            "other"
+          ],
+          "description": "產音來源；決定能否公開散布（見 audio/README.md）。"
+        },
+        "engine_version": {
+          "type": "string"
+        },
+        "rate": {
+          "type": "string",
+          "description": "語速設定，例如 -28%。"
+        }
+      }
+    },
+    "duration": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "秒。"
+    }
+  }
+}

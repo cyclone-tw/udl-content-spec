@@ -1,0 +1,51 @@
+{
+  "format_version": 1,
+  "format": "udl-audio-lesson",
+  "lesson": {
+    "publisher": "example",
+    "grade": 2,
+    "semester": 1,
+    "lesson_no": 3,
+    "id": "example-g2s1-03"
+  },
+  "readings_sha256": "c4b07dff860bfc13a88a711f6a1dc6149e355c303a25d59e1e02c42ff732ccfc",
+  "version_id": "054f1e3892b3",
+  "voice": {
+    "name": "zh-TW-HsiaoChenNeural",
+    "engine": "edge-tts",
+    "engine_version": "7.2.8",
+    "rate": "-12%"
+  },
+  "synthetic": true,
+  "generated_at": "2026-10-12T00:00:00Z",
+  "tracks": [
+    {
+      "track": "faithful",
+      "text_sha256": "02607b1f470e3d59cb6da8ba6e70b516ba8c42bbd132f6613756ba198966e489",
+      "audio": {
+        "src": "faithful.m4a",
+        "sha256": "791c35925c2ea78bdaeb1bfb242c2881161f97de1a66d914598fd356ea050af2",
+        "duration": 12.5
+      },
+      "timeline": {
+        "src": "faithful.track.json",
+        "sha256": "2d8def18335bd67a22ce6571792f0cdb93032165d23f196c90209b91bc406fdc",
+        "format": "udl-reading-track/v1"
+      }
+    },
+    {
+      "track": "simplified",
+      "text_sha256": "3cd279e82c908902536b43b5e0ed5084557d696c2ecfc4e8543ee34ece2cc033",
+      "audio": {
+        "src": "simplified.m4a",
+        "sha256": "d2fb73bebde925fadca50e187d4847ccfe81e0bff84990104b8a44e621e29729",
+        "duration": 9.8
+      },
+      "timeline": {
+        "src": "simplified.track.json",
+        "sha256": "d1b71264ad86c9fd587c632d040d5b3650c667dc33123e977e98e55bfa0272d7",
+        "format": "udl-reading-track/v1"
+      }
+    }
+  ]
+}

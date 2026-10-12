@@ -1,0 +1,44 @@
+{
+  "format_version": 1,
+  "format": "udl-audio-words",
+  "pack": {
+    "id": "words/zh-TW-HsiaoChenNeural",
+    "version": "v1"
+  },
+  "voice": {
+    "name": "zh-TW-HsiaoChenNeural",
+    "engine": "edge-tts",
+    "engine_version": "7.2.8",
+    "rate": "-12%"
+  },
+  "synthetic": true,
+  "generated_at": "2026-10-12T00:00:00Z",
+  "words": {
+    "銀行|ㄧㄣˊ ㄏㄤˊ": {
+      "src": "w-f208b37d311b3bbe.m4a",
+      "sha256": "800955b12a51daad2dd6520cfe492a1334bb6d6337c6d23845051f9e077d285d",
+      "duration": 0.9,
+      "source_text": "銀行",
+      "reviewed": {
+        "by": "teacher-example",
+        "at": "2026-10-12"
+      }
+    },
+    "行走|ㄒㄧㄥˊ ㄗㄡˇ": {
+      "src": "w-b03856b502c0d642.m4a",
+      "sha256": "24a26c0d12746230d7405b58c63a41a068317fec4e251c751e2a617fa5c98763",
+      "duration": 0.9,
+      "source_text": "行走",
+      "reviewed": {
+        "by": "teacher-example",
+        "at": "2026-10-12"
+      }
+    },
+    "綠色|ㄌㄩˋ ㄙㄜˋ": {
+      "src": "w-e77a14b9e7a7124e.m4a",
+      "sha256": "d9e1b744658f0a94af8bd35e8e113d5301d6291e0d29c5cd98b6dc989e120d8a",
+      "duration": 0.9,
+      "source_text": "綠色"
+    }
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "format_version": 1,
+  "format": "udl-audio-syllables",
+  "pack": {
+    "id": "syllables/zh-TW-HsiaoChenNeural",
+    "version": "v1"
+  },
+  "voice": {
+    "name": "zh-TW-HsiaoChenNeural",
+    "engine": "edge-tts",
+    "engine_version": "7.2.8",
+    "rate": "-28%"
+  },
+  "synthetic": true,
+  "generated_at": "2026-10-12T00:00:00Z",
+  "syllables": {
+    "ㄒㄧㄥˊ": {
+      "key": "xing2",
+      "src": "xing2.m4a",
+      "sha256": "86f4532c17eb344dd6c5bdb3f964cb3a20e5c7cfa4129c63155506b93063b09f",
+      "duration": 0.42,
+      "source_text": "形",
+      "check": {
+        "method": "two-reference",
+        "status": "pass",
+        "references": [
+          "形",
+          "型"
+        ]
+      }
+    },
+    "ㄏㄤˊ": {
+      "key": "hang2",
+      "src": "hang2.m4a",
+      "sha256": "03540763e6c18347a6c31d74c28816736af9db738ef565b6f57bbedf0c8d409d",
+      "duration": 0.42,
+      "source_text": "航",
+      "check": {
+        "method": "two-reference",
+        "status": "pass",
+        "references": [
+          "航",
+          "杭"
+        ]
+      }
+    },
+    "ㄌㄩˋ": {
+      "key": "lv4",
+      "src": "lv4.m4a",
+      "sha256": "ef1734ab3c36d22dd46fe0ea1e950ad4fd8d75cf6e70d3048ab7062f691c321c",
+      "duration": 0.42,
+      "source_text": "綠",
+      "check": {
+        "method": "two-reference",
+        "status": "pass",
+        "references": [
+          "綠",
+          "律"
+        ]
+      }
+    },
+    "ㄓ": {
+      "key": "zhi1",
+      "src": "zhi1.m4a",
+      "sha256": "f20eb7cd3917c0abf066857a4f4e0ade7d6850e57270e00866da536522e9f13f",
+      "duration": 0.42,
+      "source_text": "之",
+      "check": {
+        "method": "two-reference",
+        "status": "pass",
+        "references": [
+          "之",
+          "芝"
+        ]
+      }
+    },
+    "ㄑㄧˊ": {
+      "key": "qi2",
+      "src": "qi2.m4a",
+      "sha256": "0613efbda1fadc1be7339d73742bed1b8e003cf267fbd6aec84ff6e0ec1dc980",
+      "duration": 0.4,
+      "source_text": "旗",
+      "check": {
+        "method": "two-reference",
+        "status": "review",
+        "references": [
+          "旗",
+          "棋"
+        ],
+        "note": "兩個代表字聲音不一致，待人聽"
+      }
+    }
+  },
+  "unresolved": [
+    {
+      "zhuyin": "ㄅㄨㄥˋ",
+      "reason": "找不到只有這個讀音的常用字"
+    }
+  ]
+}
