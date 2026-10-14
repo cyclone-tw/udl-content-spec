@@ -18,6 +18,10 @@
       "pattern": "^[a-z0-9][a-z0-9-]{0,63}@((0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|latest)#[a-z0-9][a-z0-9-]{0,63}$",
       "description": "跨包引用：pack@version#id，version 可為 latest。"
     },
+    "card_ref": {
+      "description": "卡片引用：同包的 card id，或跨包 pack@version#id。",
+      "oneOf": [ { "$ref": "#/$defs/id" }, { "$ref": "#/$defs/ref" } ]
+    },
     "relative_path": {
       "type": "string",
       "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$",

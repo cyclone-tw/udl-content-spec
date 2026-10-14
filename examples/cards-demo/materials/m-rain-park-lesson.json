@@ -1,0 +1,40 @@
+{
+  "format_version": 1,
+  "id": "m-rain-park-lesson",
+  "unit": "u-rain-park",
+  "kind": "lesson",
+  "title": {
+    "text": "雨後的公園",
+    "audio": null
+  },
+  "blocks": [
+    {
+      "type": "text",
+      "content": {
+        "text": "雨停了。",
+        "audio": null
+      }
+    },
+    {
+      "type": "text",
+      "content": {
+        "text": "天空出現一道彩虹。",
+        "audio": null
+      }
+    },
+    {
+      "type": "text",
+      "content": {
+        "text": "我們去公園散步。",
+        "audio": null
+      }
+    },
+    {
+      "type": "text",
+      "content": {
+        "text": "大樹下開滿了小花。",
+        "audio": null
+      }
+    }
+  ]
+}

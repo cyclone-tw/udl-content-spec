@@ -1,23 +1,26 @@
 #!/usr/bin/env node
 // 驗證一個內容包目錄：schema、引用、檔案 hash、產生題參數是否落在能力指標條件檔內。
-// 用法：node conformance/validate.mjs <pack-dir> [--json] [--strict] [--ladder-dir <kit data/ladder>]
+// 用法：node conformance/validate.mjs <pack-dir> [--json] [--strict] [--ladder-dir <kit data/ladder>] [--cards-from <卡片庫包目錄>]…
 //   --strict：警告也算失敗（例如語音槽為 null）。
 //   --ladder-dir：kit 的 data/ladder 目錄；給了就檢查所有 ladder_ids 存在於 kit 階梯資料。
+//   --cards-from：跨包綁卡（pack@version#id）要解析的卡片庫包目錄，可給多次；沒給的跨包引用只警告。
 import { readFile, readdir, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
-import { generators, profilesFor, checkParams } from "../generators/index.mjs";
+import { generators, profilesFor, checkParams, INSTANCE_SCHEMA_PATH } from "../generators/index.mjs";
+import { resolveBindings, planSteps, generate, toItemShape, toInstanceShape, correctResponse, profiles as activityProfiles } from "../activities/index.mjs";
+import { score } from "../question-types/index.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root_ = path.join(here, "..");
 const schemaDir = path.join(root_, "schema");
-const SCHEMAS = ["common", "pack", "unit", "material", "item", "pool", "scope"];
+const SCHEMAS = ["common", "pack", "unit", "material", "item", "pool", "scope", "card", "activity-profile"];
 // 與 schema/common.schema.json 的 relative_path 同一條規則；讀檔前先用它過濾。
 export const RELATIVE_PATH = /^(?!\/)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
-const CONTENT_DIRS = ["units", "materials", "items", "pools"];
+const CONTENT_DIRS = ["units", "materials", "items", "pools", "cards"];
 const MEDIA_DIRS = ["audio", "images"];
 
 export async function loadValidators() {
@@ -34,7 +37,11 @@ export async function loadValidators() {
   for (const g of Object.values(generators)) {
     params[g.id] = ajv.compile(JSON.parse(await readFile(path.join(root_, g.paramsSchemaPath), "utf8")));
   }
-  return { ajv, pack: get("pack"), unit: get("unit"), material: get("material"), item: get("item"), pool: get("pool"), scope: get("scope"), params };
+  const instance = ajv.compile(JSON.parse(await readFile(path.join(root_, INSTANCE_SCHEMA_PATH), "utf8")));
+  return {
+    ajv, pack: get("pack"), unit: get("unit"), material: get("material"), item: get("item"), pool: get("pool"), scope: get("scope"),
+    card: get("card"), activityProfile: get("activity-profile"), instance, params,
+  };
 }
 
 /** 讀 kit 的 data/ladder/*.json，回傳所有階梯行為 id 的集合；目錄讀不到就丟錯（參數是人給的）。 */
@@ -97,6 +104,57 @@ export function checkGeneratedItem(item, { validateParams, pools }) {
     if (pools && !pools.has(poolId)) errors.push(`params.context_pools.${key} 引用的池 ${poolId} 不在 pack.json pools`);
   }
   return { errors, warnings };
+}
+
+/**
+ * 卡片自身的一致性（schema 之外）：鍵與內容相符、語詞注音數與字數相同、技能卡的產生器參數合法。純函式，回傳錯誤字串。
+ */
+export function checkCard(card, { validateParams } = {}) {
+  const errors = [];
+  if (card.kind === "char" && card.key !== `${card.char}|${card.zhuyin}`) errors.push(`key 必須是「${card.char}|${card.zhuyin}」`);
+  if (card.kind === "word") {
+    if (card.key !== `${card.word}|${card.zhuyin}`) errors.push(`key 必須是「${card.word}|${card.zhuyin}」（與語詞音檔同鍵）`);
+    const syllables = card.zhuyin.trim().split(/\s+/).length;
+    if (syllables !== [...card.word].length) errors.push(`zhuyin 有 ${syllables} 個音節，語詞有 ${[...card.word].length} 個字`);
+    if (card.example && !card.example.text.includes(card.word)) errors.push("example 例句裡沒有這個語詞（語詞填空會挖不到空）");
+  }
+  if (card.kind === "char" && (card.confusables ?? []).some((c) => c.char === card.char)) errors.push("confusables 不可包含字本身");
+  if (card.kind === "skill") {
+    const item = { id: card.id, ladder_ids: card.ladder_ids, generator: card.generator, generator_version: card.generator_version, params: card.params };
+    errors.push(...checkGeneratedItem(item, { validateParams }).errors);
+  }
+  return errors;
+}
+
+/**
+ * 依單元綁的卡與教材排步驟，並對每個生題步驟實際生一批題：題目要通過題型 schema，正解要拿滿分。
+ */
+export function checkUnitActivities({ unit, cards, materials, pools, validators, seed = "validate" }) {
+  const errors = [];
+  const plan = planSteps({ unit, cards, materials });
+  if (!Array.isArray(unit.activities) && !plan.profile) errors.push(`找不到 ${unit.subject} ${unit.grade} 年級的年級活動設定（activities/profiles/），也沒有寫 activities`);
+  if (unit.activity_profile && !activityProfiles[unit.activity_profile]) errors.push(`activity_profile ${unit.activity_profile} 不存在`);
+  for (const step of plan.steps.filter((x) => x.generates)) {
+    let list;
+    try {
+      list = generate(step.activity, { unit, cards, seed, count: step.count, pools });
+    } catch (err) {
+      errors.push(`活動 ${step.activity} 生題失敗：${err.message}`);
+      continue;
+    }
+    if (!list.length) errors.push(`活動 ${step.activity} 沒有生出任何題目`);
+    for (const q of list) {
+      const shapeOk = q.generator ? validators.instance(toInstanceShape(q)) : validators.item(toItemShape(q));
+      if (!shapeOk) {
+        const errs = q.generator ? validators.instance.errors : validators.item.errors;
+        errors.push(...formatAjvErrors(`活動 ${step.activity} 題目 ${q.id}`, errs));
+        continue;
+      }
+      const r = score(q, correctResponse(q));
+      if (r.outcome !== "correct") errors.push(`活動 ${step.activity} 題目 ${q.id}：正解沒有拿到滿分（${r.outcome}）`);
+    }
+  }
+  return { errors, plan };
 }
 
 function formatAjvErrors(file, errors) {
@@ -177,13 +235,33 @@ async function listFilesIn(root, sub) {
   }
 }
 
-export async function validatePack(dir, { strict = false, ladderDir = null } = {}) {
+/** 讀卡片庫包（--cards-from）：回傳 Map，鍵為 pack@version#id 與 pack@latest#id。只做 schema 檢查，完整驗證請對該包另跑。 */
+export async function loadCardLibrary(dir, v) {
+  const map = new Map();
+  const errors = [];
+  const root = path.resolve(dir);
+  const pack = await readJson(root, "pack.json", errors);
+  if (!pack || !v.pack(pack)) throw new Error(`${dir}: 不是合法的內容包（pack.json）`);
+  for (const id of asArray(pack.cards)) {
+    const card = await readJson(root, `cards/${id}.json`, errors);
+    if (card && v.card(card)) {
+      map.set(`${pack.id}@${pack.version}#${id}`, card);
+      map.set(`${pack.id}@latest#${id}`, card);
+    }
+  }
+  if (errors.length) throw new Error(`${dir}: ${errors.join("；")}`);
+  return map;
+}
+
+export async function validatePack(dir, { strict = false, ladderDir = null, cardsFrom = [] } = {}) {
   const errors = [];
   const warnings = [];
-  const empty = { units: 0, materials: 0, items: 0, pools: 0 };
+  const empty = { units: 0, materials: 0, items: 0, pools: 0, cards: 0 };
   const root = path.resolve(dir);
   const v = await loadValidators();
   const ladderIds = ladderDir ? await loadLadderIds(ladderDir) : null;
+  const library = new Map();
+  for (const libDir of cardsFrom) for (const [k, c] of await loadCardLibrary(libDir, v)) library.set(k, c);
   const checkLadder = (ids, rel) => {
     if (!ladderIds) return;
     for (const id of asArray(ids)) if (!ladderIds.has(id)) errors.push(`${rel}: ladder_id ${id} 不在 kit 階梯資料（${ladderDir}）`);
@@ -245,6 +323,52 @@ export async function validatePack(dir, { strict = false, ladderDir = null } = {
     if (pool.id !== poolId) errors.push(`${rel}: id ${pool.id} 與檔名不符`);
     pools.set(poolId, pool);
     walkSpoken(pool, rel, warnings, null);
+  }
+
+  if (!pack.units.length && !asArray(pack.cards).length) errors.push("pack.json: units 是空的時候，cards 至少要有一張（卡片庫包）");
+
+  // 卡片：包層級；鍵在包內唯一。
+  const cards = new Map();
+  const cardKeys = new Map();
+  for (const cardId of asArray(pack.cards)) {
+    const rel = `cards/${cardId}.json`;
+    if (!claimId("card", cardId, "pack.json cards")) continue;
+    requireListed(rel, "pack.json cards");
+    const card = await readJson(root, rel, errors);
+    if (card === undefined) continue;
+    if (!v.card(card)) {
+      errors.push(...formatAjvErrors(rel, v.card.errors));
+      continue;
+    }
+    if (card.id !== cardId) errors.push(`${rel}: id ${card.id} 與檔名不符`);
+    if (cardKeys.has(card.key)) errors.push(`${rel}: key ${card.key} 與 ${cardKeys.get(card.key)} 重複（同一個字或詞只能有一張卡）`);
+    else cardKeys.set(card.key, rel);
+    errors.push(...checkCard(card, { validateParams: v.params[card.generator] }).map((m) => `${rel}: ${m}`));
+    if (typeof card.image === "string") requireListed(card.image, rel);
+    checkLadder(card.ladder_ids, rel);
+    walkSpoken(card, rel, warnings, null);
+    cards.set(cardId, card);
+  }
+  const lookupCard = (ref) => {
+    if (!ref.includes("#")) return cards.get(ref) ?? null;
+    return library.get(ref) ?? null;
+  };
+  const unresolvedCrossRef = (ref, where) => {
+    if (ref.includes("#") && !library.has(ref)) {
+      warnings.push(`${where}: 跨包卡片 ${ref} 沒有驗證（用 --cards-from 指定卡片庫包）`);
+      return true;
+    }
+    return false;
+  };
+  for (const [cardId, card] of cards) {
+    const rel = `cards/${cardId}.json`;
+    for (const ref of asArray(card.words)) {
+      if (unresolvedCrossRef(ref, rel)) continue;
+      const w = lookupCard(ref);
+      if (!w) errors.push(`${rel}: words 引用的 ${ref} 不存在`);
+      else if (w.kind !== "word") errors.push(`${rel}: words 引用的 ${ref} 不是語詞卡`);
+      else if (!w.word.includes(card.char)) errors.push(`${rel}: 例詞 ${w.word} 不含「${card.char}」`);
+    }
   }
 
   // 單元：schema 不合格就不做後續引用檢查（欄位形狀沒有保證）。
@@ -351,14 +475,30 @@ export async function validatePack(dir, { strict = false, ladderDir = null } = {
     }
   }
 
+  // 綁卡與活動：每個單元依年級設定排步驟，對生題步驟實際生一批題目檢查。
+  for (const { rel, unit } of unitRecords) {
+    const refs = Object.values(unit.bindings ?? {}).flat();
+    const skippedCross = new Set(refs.filter((ref) => unresolvedCrossRef(ref, rel)));
+    const { cards: bound, errors: bindErrors } = resolveBindings(unit, (ref) => (skippedCross.has(ref) ? { kind: "__skip__" } : lookupCard(ref)));
+    errors.push(...bindErrors.filter((m) => !m.includes("__skip__")).map((m) => `${rel}: ${m}`));
+    if (skippedCross.size || bindErrors.length) continue;
+    if (!refs.length && !Array.isArray(unit.activities)) continue;
+    const unitMaterials = [...materials.values()].filter((m) => m.unit === unit.id);
+    const skillDemo = bound.skills.map((s) => s.demo).filter(Boolean);
+    for (const demo of skillDemo) if (!materials.has(demo)) errors.push(`${rel}: 技能卡的示範教材 ${demo} 不在本包教材`);
+    const { errors: actErrors } = checkUnitActivities({ unit, cards: bound, materials: unitMaterials, pools, validators: v });
+    errors.push(...actErrors.map((m) => `${rel}: ${m}`));
+  }
+
   for (const [id, m] of materials) collectAudioPaths(m, `materials/${id}.json`, requireListed);
+  for (const [id, c] of cards) collectAudioPaths(c, `cards/${id}.json`, requireListed);
   for (const [id, it] of items) collectAudioPaths(it, `items/${id}.json`, requireListed);
   for (const [id, pl] of pools) collectAudioPaths(pl, `pools/${id}.json`, requireListed);
 
   // 清單裡有但不在慣例目錄：警告。磁碟上有但未列在清單：警告（manifest 漂移）。
   for (const p of listed.keys()) {
-    const known = /^(units|materials|items|pools)\/[a-z0-9-]+\.json$/.test(p) || /^(audio|images)\//.test(p);
-    if (!known) warnings.push(`pack.json files ${p}: 不在慣例目錄（units/materials/items/pools/audio/images）`);
+    const known = /^(units|materials|items|pools|cards)\/[a-z0-9-]+\.json$/.test(p) || /^(audio|images)\//.test(p);
+    if (!known) warnings.push(`pack.json files ${p}: 不在慣例目錄（units/materials/items/pools/cards/audio/images）`);
   }
   for (const sub of [...CONTENT_DIRS, ...MEDIA_DIRS]) {
     for (const rel of await listFilesIn(root, sub)) {
@@ -368,7 +508,7 @@ export async function validatePack(dir, { strict = false, ladderDir = null } = {
   }
 
   const ok = errors.length === 0 && (!strict || warnings.length === 0);
-  return { ok, errors, warnings, counts: { units: seenUnits.size, materials: materials.size, items: items.size, pools: pools.size } };
+  return { ok, errors, warnings, counts: { units: seenUnits.size, materials: materials.size, items: items.size, pools: pools.size, cards: cards.size } };
 }
 
 export async function validateScopeFile(file) {
@@ -386,15 +526,24 @@ export async function validateScopeFile(file) {
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   // 接受 --ladder-dir <dir> 與 --ladder-dir=<dir> 兩種寫法。
-  const args = process.argv.slice(2).flatMap((a) => (a.startsWith("--ladder-dir=") ? ["--ladder-dir", a.slice("--ladder-dir=".length)] : [a]));
+  const args = process.argv.slice(2).flatMap((a) => {
+    for (const flag of ["--ladder-dir", "--cards-from"]) if (a.startsWith(`${flag}=`)) return [flag, a.slice(flag.length + 1)];
+    return [a];
+  });
   const ladderIdx = args.indexOf("--ladder-dir");
   const ladderDir = ladderIdx >= 0 ? args[ladderIdx + 1] : null;
-  const positional = args.filter((a, i) => !a.startsWith("--") && (ladderIdx < 0 || i !== ladderIdx + 1));
+  const valueIdx = new Set();
+  const cardsFrom = [];
+  args.forEach((a, i) => {
+    if (a === "--ladder-dir" || a === "--cards-from") valueIdx.add(i + 1);
+    if (a === "--cards-from" && args[i + 1]) cardsFrom.push(args[i + 1]);
+  });
+  const positional = args.filter((a, i) => !a.startsWith("--") && !valueIdx.has(i));
   const dir = positional[0];
   const json = args.includes("--json");
   const strict = args.includes("--strict");
   if (!dir || (ladderIdx >= 0 && !ladderDir)) {
-    console.error("用法：node conformance/validate.mjs <pack-dir> [--json] [--strict] [--ladder-dir <kit data/ladder>]");
+    console.error("用法：node conformance/validate.mjs <pack-dir> [--json] [--strict] [--ladder-dir <kit data/ladder>] [--cards-from <卡片庫包目錄>]…");
     process.exit(2);
   }
   const st = await stat(dir).catch(() => null);
@@ -408,10 +557,10 @@ if (isMain) {
   }
   let result;
   try {
-    result = await validatePack(dir, { strict, ladderDir });
+    result = await validatePack(dir, { strict, ladderDir, cardsFrom });
   } catch (err) {
-    // 只有 --ladder-dir 的資料讀不到或壞掉會走到這裡；內容包本身的問題都已是 result.errors。
-    console.error(`無法讀取階梯資料：${err.message}`);
+    // 只有 --ladder-dir 或 --cards-from 的資料讀不到或壞掉會走到這裡；內容包本身的問題都已是 result.errors。
+    console.error(`無法讀取階梯資料或卡片庫：${err.message}`);
     process.exit(2);
   }
   if (json) console.log(JSON.stringify(result, null, 2));
@@ -419,7 +568,7 @@ if (isMain) {
     for (const e of result.errors) console.log(`錯誤  ${e}`);
     for (const w of result.warnings) console.log(`警告  ${w}`);
     const c = result.counts;
-    console.log(`${result.ok ? "通過" : "未通過"}：${c.units} 單元、${c.materials} 教材、${c.items} 題、${c.pools} 池；${result.errors.length} 錯誤、${result.warnings.length} 警告`);
+    console.log(`${result.ok ? "通過" : "未通過"}：${c.units} 單元、${c.materials} 教材、${c.items} 題、${c.pools} 池、${c.cards} 卡；${result.errors.length} 錯誤、${result.warnings.length} 警告`);
   }
   process.exit(result.ok ? 0 : 1);
 }

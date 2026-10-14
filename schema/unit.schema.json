@@ -27,7 +27,26 @@
     "estimated_minutes": { "type": "integer", "minimum": 1 },
     "materials": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
     "items": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
-    "pools": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true }
+    "pools": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
+    "bindings": {
+      "type": "object",
+      "description": "這課綁了哪些卡（同包 id 或跨包 pack@version#id）；練習與測驗依這裡的卡生題（activities/）。",
+      "properties": {
+        "chars": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/card_ref" }, "uniqueItems": true },
+        "words": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/card_ref" }, "uniqueItems": true },
+        "patterns": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/card_ref" }, "uniqueItems": true },
+        "skills": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/card_ref" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "activity_profile": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id", "description": "指定年級活動設定（activities/profiles/）；省略就依科目與年級自動選。" },
+    "activities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "description": "這課自己的步驟清單，整份取代年級活動設定（少用）。",
+      "items": { "$ref": "urn:udl-content-spec:v1:activity-profile#/$defs/step" }
+    }
   },
   "additionalProperties": false
 }

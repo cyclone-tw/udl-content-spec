@@ -1,0 +1,13 @@
+{
+  "format_version": 1,
+  "id": "zh-low",
+  "title": "國語低年級（一、二年級）",
+  "subject": "chinese",
+  "grades": [1, 2],
+  "steps": [
+    { "activity": "read", "label": "聽故事", "phase": "learn" },
+    { "activity": "char-cards", "label": "認字" },
+    { "activity": "word-match", "label": "配對" },
+    { "activity": "quiz", "label": "小測驗", "short": "測驗", "count": 4 }
+  ]
+}

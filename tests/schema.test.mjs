@@ -153,7 +153,7 @@ test("pack.json 不合格時回傳錯誤物件、不拋例外、不做後續檢�
     assert.equal(r.ok, false);
     assert.ok(r.errors.some((e) => e.startsWith("pack.json")), r.errors.join("\n"));
     assert.ok(!r.errors.some((e) => e.includes("檔案不存在")), "pack 不合格時不應做 hash 檢查");
-    assert.deepEqual(r.counts, { units: 0, materials: 0, items: 0, pools: 0 });
+    assert.deepEqual(r.counts, { units: 0, materials: 0, items: 0, pools: 0, cards: 0 });
   }));
 
 test("pack.json 是 false／0 之類的非物件時要有錯誤訊息，不能靜默失敗", () =>

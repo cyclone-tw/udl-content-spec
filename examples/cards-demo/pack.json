@@ -1,0 +1,92 @@
+{
+  "format_version": 1,
+  "id": "sample-cards",
+  "version": "0.1.0",
+  "title": "示範：卡片庫與綁卡單元",
+  "description": "合成範例：生字、語詞、句型、數學技能四種卡；一個國語單元綁卡（含心智圖教材）、一個數學單元綁技能卡。文本原創，不含課文原句、不含學生資料。",
+  "subject": "chinese",
+  "language": "zh-TW",
+  "license": "CC-BY-4.0",
+  "source": {
+    "generated_by": "claude-code",
+    "date": "2026-10-14",
+    "notes": "udl-content-spec examples；文本原創。"
+  },
+  "audio": {
+    "default_voice": "zh-TW-HsiaoChenNeural"
+  },
+  "units": [
+    "u-rain-park",
+    "u-add-skill"
+  ],
+  "cards": [
+    "c-cai3",
+    "c-ting2",
+    "c-yuan2",
+    "pt-kaiman",
+    "sk-add-sub-2digit",
+    "w-caihong",
+    "w-dashu",
+    "w-gongyuan",
+    "w-yuting"
+  ],
+  "pools": [],
+  "files": [
+    {
+      "path": "cards/c-cai3.json",
+      "sha256": "d1c8c9e7c8b1fc2ebbe3fa67c230f3d040c619d913a5af2359b3455e16c07d5e"
+    },
+    {
+      "path": "cards/c-ting2.json",
+      "sha256": "ec979d25813315aada346c217496fda775fe54177f00e5f9d5f38390242d68cc"
+    },
+    {
+      "path": "cards/c-yuan2.json",
+      "sha256": "2fe27574f77de8e6ddb40abbc0d82cde167887c3a7ee97527477767e3bc2c027"
+    },
+    {
+      "path": "cards/pt-kaiman.json",
+      "sha256": "f93e9dda874a2070210941f34741fe1c7a24d237047475b2846f41d28efc7235"
+    },
+    {
+      "path": "cards/sk-add-sub-2digit.json",
+      "sha256": "02943d1b4e62f43d1d8b5865f6ad066d17676882807466e7f0e08135628fa488"
+    },
+    {
+      "path": "cards/w-caihong.json",
+      "sha256": "911731b22a9af37fc3c2aa964598c90c5a19af669d2a2b97a925b091ec918554"
+    },
+    {
+      "path": "cards/w-dashu.json",
+      "sha256": "8831e73bbae2bdcd3704a84d311d33d85f8e16d2855f888a3fae239d1c85f13e"
+    },
+    {
+      "path": "cards/w-gongyuan.json",
+      "sha256": "adc4360da46731f42b02525b4b2fdeec121fbaf8edc4b63f20b1ec83ac9ef227"
+    },
+    {
+      "path": "cards/w-yuting.json",
+      "sha256": "d71d84856f4c252575fb9db07387263aef6a69d230c8ce68cd4bb677aa53ed7a"
+    },
+    {
+      "path": "materials/m-add-sub-demo.json",
+      "sha256": "eb097c8ab09b84fb09ef53d9f3bbdd0cf0ee28455a474a3ce0d8707102a4e043"
+    },
+    {
+      "path": "materials/m-rain-park-lesson.json",
+      "sha256": "d7e59171c756ff8444dcbec4488f1f2eebfa26a05550ad62a2e7beb45cad37a5"
+    },
+    {
+      "path": "materials/m-rain-park-mindmap.json",
+      "sha256": "a92906e729a7e0e98abf78bd101c5bee9d1b2f45a3baa9209a7357af724496cb"
+    },
+    {
+      "path": "units/u-add-skill.json",
+      "sha256": "08aba4b208ac9a53fd9f98e020cc320ddcecfc2fa54e0c4304189748c2124c7f"
+    },
+    {
+      "path": "units/u-rain-park.json",
+      "sha256": "a67ac98f2281e4a9b7def95af3055c61a947ebdc8baebc7a2491c9d792dc13d8"
+    }
+  ]
+}

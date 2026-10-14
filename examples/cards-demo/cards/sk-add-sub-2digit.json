@@ -1,0 +1,58 @@
+{
+  "format_version": 1,
+  "id": "sk-add-sub-2digit",
+  "kind": "skill",
+  "key": "math.add-sub:2digit",
+  "grade_min": 2,
+  "ladder_ids": [
+    "n-I-2#a@2"
+  ],
+  "curriculum_codes": [
+    "N-2-2"
+  ],
+  "title": {
+    "text": "二位數加減（直式）",
+    "audio": null
+  },
+  "explain": {
+    "text": "先算個位，再算十位；不夠減要向十位借。",
+    "audio": null
+  },
+  "generator": "math.add-sub",
+  "generator_version": 1,
+  "params": {
+    "tiers": [
+      "add-no-carry",
+      "add-one-carry",
+      "sub-no-borrow",
+      "sub-one-borrow"
+    ],
+    "weights": {
+      "add-no-carry": 3,
+      "add-one-carry": 7,
+      "sub-no-borrow": 3,
+      "sub-one-borrow": 7
+    },
+    "operations": [
+      "add",
+      "sub"
+    ],
+    "shapes": [
+      [
+        2,
+        2
+      ]
+    ],
+    "presentation": "vertical-blanks",
+    "scaffold": "none",
+    "context": false,
+    "distinct": true
+  },
+  "demo": "m-add-sub-demo",
+  "manipulative": {
+    "kind": "base-ten",
+    "config": {
+      "max_tens": 9
+    }
+  }
+}

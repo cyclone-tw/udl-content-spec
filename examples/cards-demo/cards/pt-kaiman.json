@@ -1,0 +1,57 @@
+{
+  "format_version": 1,
+  "id": "pt-kaiman",
+  "kind": "pattern",
+  "key": "開滿了",
+  "grade_min": 3,
+  "title": {
+    "text": "……開滿了……",
+    "audio": null
+  },
+  "explain": {
+    "text": "說一個地方有很多花。",
+    "audio": null
+  },
+  "examples": [
+    {
+      "chunks": [
+        {
+          "text": "大樹下",
+          "audio": null
+        },
+        {
+          "text": "開滿了",
+          "audio": null
+        },
+        {
+          "text": "小花",
+          "audio": null
+        }
+      ],
+      "sentence": {
+        "text": "大樹下開滿了小花。",
+        "audio": null
+      }
+    },
+    {
+      "chunks": [
+        {
+          "text": "春天的山坡上",
+          "audio": null
+        },
+        {
+          "text": "開滿了",
+          "audio": null
+        },
+        {
+          "text": "黃色的野花",
+          "audio": null
+        }
+      ],
+      "sentence": {
+        "text": "春天的山坡上開滿了黃色的野花。",
+        "audio": null
+      }
+    }
+  ]
+}

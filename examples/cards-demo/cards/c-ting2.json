@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "id": "c-ting2",
+  "kind": "char",
+  "key": "停|ㄊㄧㄥˊ",
+  "grade_min": 2,
+  "ladder_ids": [
+    "4-Ⅱ-1#c@4"
+  ],
+  "char": "停",
+  "zhuyin": "ㄊㄧㄥˊ",
+  "radical": "人",
+  "strokes": 11,
+  "meaning": {
+    "text": "不再動、不再繼續",
+    "audio": null
+  },
+  "words": [
+    "w-yuting"
+  ],
+  "confusables": [
+    {
+      "char": "亭",
+      "why": "形近"
+    },
+    {
+      "char": "聽",
+      "why": "音同"
+    }
+  ]
+}

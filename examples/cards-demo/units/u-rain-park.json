@@ -1,0 +1,38 @@
+{
+  "format_version": 1,
+  "id": "u-rain-park",
+  "title": "雨後的公園",
+  "subject": "chinese",
+  "grade": 4,
+  "semester": "上",
+  "alignment": {
+    "publisher": "示範",
+    "lesson": 1,
+    "note": "合成範例，文本原創。"
+  },
+  "ladder_ids": [
+    "4-Ⅱ-1#c@4"
+  ],
+  "estimated_minutes": 20,
+  "materials": [
+    "m-rain-park-lesson",
+    "m-rain-park-mindmap"
+  ],
+  "items": [],
+  "bindings": {
+    "chars": [
+      "c-cai3",
+      "c-yuan2",
+      "c-ting2"
+    ],
+    "words": [
+      "w-caihong",
+      "w-gongyuan",
+      "w-dashu",
+      "w-yuting"
+    ],
+    "patterns": [
+      "pt-kaiman"
+    ]
+  }
+}

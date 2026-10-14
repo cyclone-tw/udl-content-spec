@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:card",
+  "title": "Card 卡片",
+  "description": "可重複使用的學習卡：生字（char）、語詞（word）、句型（pattern）、數學技能（skill）。同一個字或詞跨課、跨版本只有一張卡；單元用 bindings 綁卡，練習與測驗由 activities/ 依綁定的卡生題。",
+  "type": "object",
+  "required": ["format_version", "id", "kind", "key"],
+  "properties": {
+    "format_version": { "const": 1 },
+    "id": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+    "kind": { "type": "string", "enum": ["char", "word", "pattern", "skill"] },
+    "key": {
+      "type": "string",
+      "minLength": 1,
+      "description": "跨包的穩定鍵。char 必須是「字|注音」、word 必須是「詞|注音」（與 audio 語詞庫同鍵）；pattern、skill 自訂但在卡片庫內唯一。"
+    },
+    "grade_min": { "type": "integer", "minimum": 1, "maximum": 12, "description": "最早出現的年級（給年級設定與老師篩選；不限制使用）。" },
+    "tags": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "ladder_ids": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id" }, "uniqueItems": true },
+    "curriculum_codes": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/curriculum_code" }, "uniqueItems": true },
+    "char": { "type": "string", "minLength": 1, "maxLength": 1, "description": "char：單一漢字（一個 code point）。" },
+    "word": { "type": "string", "minLength": 1, "maxLength": 12, "description": "word：語詞本身。" },
+    "zhuyin": { "type": "string", "minLength": 1, "description": "注音；語詞以空白分隔每個字的注音，數量要與字數相同。" },
+    "radical": { "type": "string", "minLength": 1, "maxLength": 2 },
+    "strokes": { "type": "integer", "minimum": 1, "maximum": 64 },
+    "meaning": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" },
+    "example": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text", "description": "word：含該語詞的例句（語詞填空會把語詞挖空）。" },
+    "image": { "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path" },
+    "words": {
+      "type": "array",
+      "description": "char：這個字的例詞，引用 word 卡（同包 id 或跨包 pack@version#id）。",
+      "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/card_ref" },
+      "uniqueItems": true
+    },
+    "confusables": {
+      "type": "array",
+      "description": "char：容易混淆的字（形近、音同），給選字題當干擾項，也給老師看。",
+      "items": {
+        "type": "object",
+        "required": ["char"],
+        "properties": {
+          "char": { "type": "string", "minLength": 1, "maxLength": 1 },
+          "why": { "type": "string", "enum": ["形近", "音同", "音近", "義近"] }
+        },
+        "additionalProperties": false
+      },
+      "maxItems": 6
+    },
+    "title": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text", "description": "pattern／skill：卡片名稱，例如「……開滿了……」「二位數加減（直式）」。" },
+    "explain": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" },
+    "examples": {
+      "type": "array",
+      "description": "pattern：例句，每句切成 2–8 個詞塊（句型排序直接用）。",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["chunks"],
+        "properties": {
+          "chunks": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" } },
+          "sentence": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "generator": { "type": "string", "minLength": 1, "description": "skill：產生器 id（generators/index.mjs 登錄）。" },
+    "generator_version": { "type": "integer", "minimum": 1 },
+    "params": { "type": "object", "description": "skill：產生器參數；形狀與範圍照產生器 params schema 與能力指標條件檔檢查。" },
+    "demo": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id", "description": "skill：示範教材（material kind demo）的 id，同包。" },
+    "manipulative": {
+      "type": "object",
+      "description": "skill：操作練習用的教具設定（renderer 只用點的，不用拖曳）。",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["base-ten", "counters", "number-line"] },
+        "config": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "meta": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "type": "object", "properties": { "kind": { "const": "char" } }, "required": ["kind"] },
+      "then": {
+        "type": "object",
+        "required": ["char", "zhuyin", "meaning"],
+        "properties": { "word": false, "example": false, "title": false, "explain": false, "examples": false, "generator": false, "generator_version": false, "params": false, "demo": false, "manipulative": false }
+      }
+    },
+    {
+      "if": { "type": "object", "properties": { "kind": { "const": "word" } }, "required": ["kind"] },
+      "then": {
+        "type": "object",
+        "required": ["word", "zhuyin", "meaning"],
+        "properties": { "char": false, "radical": false, "strokes": false, "words": false, "confusables": false, "title": false, "explain": false, "examples": false, "generator": false, "generator_version": false, "params": false, "demo": false, "manipulative": false }
+      }
+    },
+    {
+      "if": { "type": "object", "properties": { "kind": { "const": "pattern" } }, "required": ["kind"] },
+      "then": {
+        "type": "object",
+        "required": ["title", "examples"],
+        "properties": { "char": false, "word": false, "zhuyin": false, "radical": false, "strokes": false, "words": false, "confusables": false, "example": false, "generator": false, "generator_version": false, "params": false, "demo": false, "manipulative": false }
+      }
+    },
+    {
+      "if": { "type": "object", "properties": { "kind": { "const": "skill" } }, "required": ["kind"] },
+      "then": {
+        "type": "object",
+        "required": ["title", "generator", "generator_version", "params", "ladder_ids"],
+        "properties": { "char": false, "word": false, "zhuyin": false, "radical": false, "strokes": false, "words": false, "confusables": false, "example": false, "examples": false }
+      }
+    }
+  ]
+}

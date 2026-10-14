@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "id": "c-yuan2",
+  "kind": "char",
+  "key": "園|ㄩㄢˊ",
+  "grade_min": 2,
+  "ladder_ids": [
+    "4-Ⅱ-1#c@4"
+  ],
+  "char": "園",
+  "zhuyin": "ㄩㄢˊ",
+  "radical": "囗",
+  "strokes": 13,
+  "meaning": {
+    "text": "種花草樹木、讓人休息的地方",
+    "audio": null
+  },
+  "words": [
+    "w-gongyuan"
+  ],
+  "confusables": [
+    {
+      "char": "圓",
+      "why": "音同"
+    },
+    {
+      "char": "遠",
+      "why": "音近"
+    }
+  ]
+}
