@@ -80,6 +80,11 @@
     "feedback": {
       "$ref": "urn:udl-content-spec:v1:common#/$defs/feedback"
     },
+    "read_aloud_scope": {
+      "type": "string",
+      "enum": ["all", "stem", "none"],
+      "description": "報讀範圍：all 題幹與選項都可唸；stem 只唸題幹（識字類選項不唸，否則變成聽音選字）；none 不唸。殼照做，事件照記 read_aloud。省略時殼用預設 all。"
+    },
     "meta": {
       "type": "object",
       "properties": {

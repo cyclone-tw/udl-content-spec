@@ -1,0 +1,24 @@
+{
+  "format_version": 1,
+  "id": "m-rain-park-outro",
+  "unit": "u-rain-park",
+  "kind": "dialogue",
+  "title": {
+    "text": "回報委託",
+    "audio": null
+  },
+  "blocks": [
+    {
+      "type": "dialogue",
+      "lines": [
+        {
+          "speaker": "guild-clerk",
+          "line": {
+            "text": "委託完成，辛苦你了！",
+            "audio": null
+          }
+        }
+      ]
+    }
+  ]
+}

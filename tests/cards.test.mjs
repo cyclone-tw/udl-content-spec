@@ -222,6 +222,7 @@ test("驗證器：跨包綁卡沒給 --cards-from 只警告；給了就解析", 
     await withCopy(async (dir) => {
       await editJson(dir, "units/u-rain-park.json", (u) => {
         u.bindings.words = ["sample-cards@0.1.0#w-caihong", "sample-cards@latest#w-gongyuan"];
+        u.core = ["c-cai3", "sample-cards@0.1.0#w-caihong"];
       });
       await rehash(dir);
       const warned = await validatePack(dir);
@@ -232,4 +233,85 @@ test("驗證器：跨包綁卡沒給 --cards-from 只警告；給了就解析", 
       assert.ok(!has(resolved.warnings, "跨包卡片"));
     });
   });
+});
+
+// ---------- #33：活動 × 年級能力階梯、核心卡、報讀範圍、任務對話 ----------
+
+test("能力階梯：卡片生的題優先用年級設定的 ladders，單元可覆寫，沒有就退回單元", async () => {
+  const { unit, cards, materials } = await loadUnit("u-rain-park");
+  const plan = planSteps({ unit, cards, materials });
+  assert.deepEqual(plan.ladders["char-pick"], ["4-Ⅱ-1#c@4", "4-Ⅱ-4#a"]);
+  assert.equal(plan.ladder_status, "draft");
+  const pick = generate("char-pick", { unit, cards, seed: "l", ladders: plan.ladders });
+  assert.ok(pick.every((q) => q.ladder_ids.join() === "4-Ⅱ-1#c@4,4-Ⅱ-4#a"));
+  const quiz = generate("quiz", { unit, cards, seed: "l", ladders: plan.ladders });
+  for (const q of quiz) assert.deepEqual(q.ladder_ids, plan.ladders[q.quiz_source] ?? unit.ladder_ids, q.quiz_source);
+  const grade3 = planSteps({ unit: { ...unit, grade: 3 }, cards, materials });
+  assert.deepEqual(grade3.ladders["char-pick"], ["4-Ⅱ-1#a@3", "4-Ⅱ-4#a"]);
+  const overridden = planSteps({ unit: { ...unit, ladders: { "char-pick": ["4-Ⅱ-4#a"] } }, cards, materials });
+  assert.deepEqual(overridden.ladders["char-pick"], ["4-Ⅱ-4#a"]);
+  const noMap = generate("sentence-order", { unit, cards, seed: "l", ladders: plan.ladders });
+  assert.ok(noMap.every((q) => q.ladder_ids.join() === unit.ladder_ids.join()));
+});
+
+test("驗證器：卡片生的題沒有任何能力階梯來源就報錯", async () => {
+  await withCopy(async (dir) => {
+    await editJson(dir, "units/u-rain-park.json", (u) => {
+      delete u.ladder_ids;
+      u.activities = [{ activity: "sentence-order", label: "句型" }];
+    });
+    await rehash(dir);
+    const r = await validatePack(dir);
+    assert.ok(has(r.errors, "u-rain-park", "sentence-order", "ladder_ids"), r.errors.join("\n"));
+  });
+});
+
+test("報讀範圍：識字類只唸題幹，句型排序可全唸；步驟可覆寫；數學產生題也帶", async () => {
+  const { unit, cards, materials } = await loadUnit("u-rain-park");
+  assert.ok(generate("char-pick", { unit, cards, seed: "r" }).every((q) => q.read_aloud_scope === "stem"));
+  assert.ok(generate("sentence-order", { unit, cards, seed: "r" }).every((q) => q.read_aloud_scope === "all"));
+  assert.ok(generate("char-pick", { unit, cards, seed: "r", readAloud: "none" }).every((q) => q.read_aloud_scope === "none"));
+  const plan = planSteps({ unit, cards, materials });
+  assert.equal(plan.steps.find((s) => s.activity === "sentence-order").read_aloud_scope, "all");
+  const math = await loadUnit("u-add-skill");
+  assert.ok(generate("skill-practice", { unit: math.unit, cards: math.cards, seed: "r" }).every((q) => q.read_aloud_scope === "stem"));
+});
+
+test("核心卡：coreOnly 只用標了 core 的卡；沒標 core 時丟錯", async () => {
+  const { unit, cards } = await loadUnit("u-rain-park");
+  const core = new Set(unit.core);
+  for (const q of generate("quiz", { unit, cards, seed: "c", coreOnly: true, count: 8 })) {
+    for (const id of q.cards) assert.ok(core.has(id), `${id} 不是核心卡`);
+  }
+  assert.throws(() => generate("quiz", { unit: { ...unit, core: undefined }, cards, seed: "c", coreOnly: true }), /core/);
+});
+
+test("驗證器：core 不在 bindings、quest 指到不存在或非 dialogue 的教材都報錯", async () => {
+  await withCopy(async (dir) => {
+    await editJson(dir, "units/u-rain-park.json", (u) => {
+      u.core.push("w-not-bound");
+      u.quest = { intro: "m-rain-park-lesson", outro: "m-missing" };
+    });
+    await rehash(dir);
+    const r = await validatePack(dir);
+    assert.ok(has(r.errors, "core 的 w-not-bound"));
+    assert.ok(has(r.errors, "quest.intro", "dialogue"));
+    assert.ok(has(r.errors, "quest.outro", "m-missing"));
+  });
+});
+
+test("選字題 needs：只有一張生字卡且沒有易混淆字時不排這一步，也不出測驗", async () => {
+  const { unit, cards } = await loadUnit("u-rain-park");
+  const lone = { chars: [{ ...cards.chars[0], confusables: [] }], words: [], patterns: [], skills: [] };
+  const plan = planSteps({ unit: { ...unit, activities: [{ activity: "char-pick", label: "選字" }, { activity: "quiz", label: "測驗" }] }, cards: lone, materials: [] });
+  assert.deepEqual(plan.steps, []);
+  assert.ok(plan.skipped.some((s) => s.activity === "char-pick" && s.reason.includes("湊不出選項")));
+  const withConfusable = { ...lone, chars: [cards.chars[0]] };
+  assert.ok(generate("char-pick", { unit, cards: withConfusable, seed: 1 }).every((q) => q.options.length >= 2));
+});
+
+test("checkCard：例句重複出現語詞、易混淆字重複都報錯", () => {
+  const sp = (text) => ({ text, audio: null });
+  assert.ok(has(checkCard({ kind: "word", key: "彩虹|ㄘㄞˇ ㄏㄨㄥˊ", word: "彩虹", zhuyin: "ㄘㄞˇ ㄏㄨㄥˊ", meaning: sp("x"), example: sp("彩虹出現了，彩虹很美。") }), "不只一次"));
+  assert.ok(has(checkCard({ kind: "char", key: "彩|ㄘㄞˇ", char: "彩", zhuyin: "ㄘㄞˇ", meaning: sp("x"), confusables: [{ char: "採" }, { char: "採" }] }), "重複"));
 });

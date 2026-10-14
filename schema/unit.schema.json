@@ -39,6 +39,27 @@
       },
       "additionalProperties": false
     },
+    "core": {
+      "type": "array",
+      "description": "核心卡：bindings 之中這課最重要的那些（減量、簡化、寫字只練一部分時用）；標在每課清單，不放卡片本身。",
+      "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/card_ref" },
+      "uniqueItems": true
+    },
+    "ladders": {
+      "type": "object",
+      "description": "覆寫年級活動設定的 ladders：活動 id → 這課該活動練的能力階梯。",
+      "propertyNames": { "$ref": "urn:udl-content-spec:v1:activity-profile#/$defs/activity_id" },
+      "additionalProperties": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id" } }
+    },
+    "quest": {
+      "type": "object",
+      "description": "任務包裝：開場與回報對話（同單元的 dialogue 教材）。RPG 殼接成任務；獨立殼可以忽略。",
+      "properties": {
+        "intro": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+        "outro": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }
+      },
+      "additionalProperties": false
+    },
     "activity_profile": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id", "description": "指定年級活動設定（activities/profiles/）；省略就依科目與年級自動選。" },
     "activities": {
       "type": "array",

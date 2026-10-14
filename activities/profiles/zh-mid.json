@@ -10,5 +10,11 @@
     { "activity": "word-match", "label": "語詞配對", "short": "配對" },
     { "activity": "sentence-order", "label": "句型排序", "short": "排序", "optional": true },
     { "activity": "quiz", "label": "小測驗", "short": "測驗", "count": 5 }
-  ]
+  ],
+  "ladders": {
+    "char-pick": {"3": ["4-Ⅱ-1#a@3", "4-Ⅱ-4#a"], "4": ["4-Ⅱ-1#c@4", "4-Ⅱ-4#a"]},
+    "word-match": {"*": ["3-Ⅱ-1#a"]},
+    "word-cloze": {"*": ["3-Ⅱ-1#a"]}
+  },
+  "ladder_status": "draft"
 }

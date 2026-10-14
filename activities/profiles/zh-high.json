@@ -11,5 +11,9 @@
     { "activity": "word-cloze", "label": "語詞", "count": 4 },
     { "activity": "sentence-order", "label": "句型", "optional": true },
     { "activity": "quiz", "label": "小測驗", "short": "測驗", "count": 6 }
-  ]
+  ],
+  "ladders": {
+    "char-pick": {"5": ["4-Ⅲ-1#a@5"], "6": ["4-Ⅲ-1#c@6"]}
+  },
+  "ladder_status": "draft"
 }

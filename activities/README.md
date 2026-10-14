@@ -22,12 +22,12 @@
 | `char-cards` | 修練 | 否 | 生字卡 | —（renderer 逐張翻卡） |
 | `word-cards` | 修練 | 否 | 語詞卡 | — |
 | `manipulate` | 修練 | 否 | 有 `manipulative` 的技能卡 | — |
-| `char-pick` | 修練 | 是 | 生字卡 | choice：看注音與例詞選字，干擾項優先用卡上的易混淆字 |
+| `char-pick` | 修練 | 是 | 生字卡 ≥ 2 張，或卡上有易混淆字 | choice：看注音與例詞選字，干擾項優先用卡上的易混淆字 |
 | `word-match` | 修練 | 是 | 語詞卡 ≥ 2 | match：語詞 ↔ 意思（最多 4 組） |
 | `word-cloze` | 修練 | 是 | 有例句的語詞卡，語詞卡 ≥ 2 | choice：例句挖空選語詞 |
 | `sentence-order` | 修練 | 是 | 句型卡 | ordering：例句詞塊排序 |
 | `skill-practice` | 修練 | 是 | 技能卡 | 數學產生器實例（numeric／blanks），參數照能力指標條件檔 |
-| `quiz` | 討伐 | 是 | 以上任一種可出題的卡 | 在可用的生題活動之間輪流抽 |
+| `quiz` | 討伐 | 是 | 以上任一種可出題的卡 | 在選字、語詞填空、句型排序、技能練習之間輪流抽；語詞配對只在沒有其他來源時才用（一題就是一整組，放進測驗太重） |
 
 練習與測驗用同一批卡、同一套生題；差別只在平台的流程設定（提示、揭答、重試），題目不變。只有離不開課文的題（閱讀理解）才在單元 `items` 逐課手寫。
 
@@ -42,6 +42,13 @@
 
 形狀見 `schema/activity-profile.schema.json`。單元可用 `activity_profile` 指定別份，或用 `activities` 整份取代；老師之後在指派時隱藏或調整（平台流程設定，不在規格）。
 
+## 能力階梯、報讀範圍、核心卡、任務對話（#33）
+
+- **能力階梯掛在「活動 × 年級」**：年級設定的 `ladders` 寫「活動 → 年級 → ladder_ids」（`"*"` 是其他年級），單元的 `ladders` 可覆寫。卡片生的題優先序：活動 × 年級 → 卡片自己標的 → 單元的；驗證器要求每題至少有一條。同一張卡拿去做選字與做填空練的是不同能力，所以不要把階梯只標在卡片上。內建對照目前是草稿（`ladder_status: "draft"`），驗證器會提醒待 Cyclone 審。
+- **報讀範圍** `read_aloud_scope`：`all`／`stem`／`none`。識字類（選字、配對、填空）預設 `stem`：只唸題幹、不唸選項，否則變成聽音選字；句型排序 `all`；技能練習 `stem`。年級設定的步驟可覆寫；題目實例帶這個欄位，外殼照做、事件照記 `read_aloud`。
+- **核心卡** `unit.core`：bindings 之中這課最重要的卡，標在每課清單、不放卡片。`generate(..., { coreOnly: true })` 只用核心卡（減量、簡化時用）；驗證器另外用核心卡跑一次，湊不出某種題只警告。
+- **任務對話** `unit.quest`：`intro`／`outro` 指向同單元的 `dialogue` 教材；RPG 殼接成任務開場與回報，獨立殼可忽略。
+
 ## 題目實例的追溯欄位
 
-卡片生的題：`kind: "instance"`、`source: "cards"`、`activity`、`activity_version`、`seed`、`index`、`unit`、`cards`（用到的卡 id）；其餘欄位與固定題相同，可直接丟給 `score()`。技能練習沿用數學產生器的實例，另加 `activity`、`activity_version`、`cards`。作答事件記 `activity`＋`seed` 就能重現整批題目。
+卡片生的題：`kind: "instance"`、`source: "cards"`、`activity`、`activity_version`、`seed`、`index`、`unit`、`cards`（用到的卡 id）、`quiz_source`（小測驗裡這題來自哪個活動）；其餘欄位與固定題相同，可直接丟給 `score()`。技能練習沿用數學產生器的實例，另加 `activity`、`activity_version`、`cards`。作答事件記 `activity`＋`seed` 就能重現整批題目。
