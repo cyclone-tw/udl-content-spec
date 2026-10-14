@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { generators, profilesFor, checkParams, INSTANCE_SCHEMA_PATH } from "../generators/index.mjs";
-import { resolveBindings, planSteps, generate, toItemShape, toInstanceShape, correctResponse, profiles as activityProfiles } from "../activities/index.mjs";
+import { resolveBindings, planSteps, generate, toItemShape, toInstanceShape, correctResponse, coreCards, profiles as activityProfiles } from "../activities/index.mjs";
 import { score } from "../question-types/index.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -117,8 +117,10 @@ export function checkCard(card, { validateParams } = {}) {
     const syllables = card.zhuyin.trim().split(/\s+/).length;
     if (syllables !== [...card.word].length) errors.push(`zhuyin 有 ${syllables} 個音節，語詞有 ${[...card.word].length} 個字`);
     if (card.example && !card.example.text.includes(card.word)) errors.push("example 例句裡沒有這個語詞（語詞填空會挖不到空）");
+    else if (card.example && card.example.text.indexOf(card.word) !== card.example.text.lastIndexOf(card.word)) errors.push("example 例句裡這個語詞出現不只一次（語詞填空只挖一個空，題幹會漏答案）");
   }
   if (card.kind === "char" && (card.confusables ?? []).some((c) => c.char === card.char)) errors.push("confusables 不可包含字本身");
+  if (card.kind === "char" && new Set((card.confusables ?? []).map((c) => c.char)).size !== (card.confusables ?? []).length) errors.push("confusables 有重複的字");
   if (card.kind === "skill") {
     const item = { id: card.id, ladder_ids: card.ladder_ids, generator: card.generator, generator_version: card.generator_version, params: card.params };
     errors.push(...checkGeneratedItem(item, { validateParams }).errors);
@@ -131,30 +133,37 @@ export function checkCard(card, { validateParams } = {}) {
  */
 export function checkUnitActivities({ unit, cards, materials, pools, validators, seed = "validate" }) {
   const errors = [];
+  const warnings = [];
   const plan = planSteps({ unit, cards, materials });
+  if (plan.ladder_status === "draft" && plan.steps.some((x) => x.generates && x.ladder_ids)) warnings.push(`年級活動設定的能力階梯對照還是草稿（ladder_status: draft），待 Cyclone 審`);
+  const runs = [{ label: "", coreOnly: false }];
+  if (coreCards(unit, cards)) runs.push({ label: "（只用核心卡）", coreOnly: true });
   if (!Array.isArray(unit.activities) && !plan.profile) errors.push(`找不到 ${unit.subject} ${unit.grade} 年級的年級活動設定（activities/profiles/），也沒有寫 activities`);
   if (unit.activity_profile && !activityProfiles[unit.activity_profile]) errors.push(`activity_profile ${unit.activity_profile} 不存在`);
-  for (const step of plan.steps.filter((x) => x.generates)) {
+  for (const run of runs) for (const step of plan.steps.filter((x) => x.generates)) {
+    const where = `活動 ${step.activity}${run.label}`;
     let list;
     try {
-      list = generate(step.activity, { unit, cards, seed, count: step.count, pools });
+      list = generate(step.activity, { unit, cards, seed, count: step.count, pools, ladders: plan.ladders, readAloud: step.read_aloud_scope, coreOnly: run.coreOnly });
     } catch (err) {
-      errors.push(`活動 ${step.activity} 生題失敗：${err.message}`);
+      // 核心卡太少湊不出某種題，只提醒：老師開「只用核心卡」時這一步會略過。
+      (run.coreOnly ? warnings : errors).push(`${where} 生題失敗：${err.message}`);
       continue;
     }
-    if (!list.length) errors.push(`活動 ${step.activity} 沒有生出任何題目`);
+    if (!list.length) errors.push(`${where} 沒有生出任何題目`);
     for (const q of list) {
       const shapeOk = q.generator ? validators.instance(toInstanceShape(q)) : validators.item(toItemShape(q));
       if (!shapeOk) {
         const errs = q.generator ? validators.instance.errors : validators.item.errors;
-        errors.push(...formatAjvErrors(`活動 ${step.activity} 題目 ${q.id}`, errs));
+        errors.push(...formatAjvErrors(`${where} 題目 ${q.id}`, errs));
         continue;
       }
+      if (!q.ladder_ids?.length) errors.push(`${where} 題目 ${q.id} 沒有 ladder_ids（年級設定 ladders、卡片或單元至少要有一處標能力階梯）`);
       const r = score(q, correctResponse(q));
-      if (r.outcome !== "correct") errors.push(`活動 ${step.activity} 題目 ${q.id}：正解沒有拿到滿分（${r.outcome}）`);
+      if (r.outcome !== "correct") errors.push(`${where} 題目 ${q.id}：正解沒有拿到滿分（${r.outcome}）`);
     }
   }
-  return { errors, plan };
+  return { errors, warnings, plan };
 }
 
 function formatAjvErrors(file, errors) {
@@ -477,6 +486,11 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
 
   // 綁卡與活動：每個單元依年級設定排步驟，對生題步驟實際生一批題目檢查。
   for (const { rel, unit } of unitRecords) {
+    for (const [slot, id] of Object.entries(unit.quest ?? {})) {
+      const m = materials.get(id);
+      if (!asArray(unit.materials).includes(id) || !m) errors.push(`${rel}: quest.${slot} 的 ${id} 不在本單元教材`);
+      else if (m.kind !== "dialogue") errors.push(`${rel}: quest.${slot} 的 ${id} 是 ${m.kind}，要用 dialogue 教材`);
+    }
     const refs = Object.values(unit.bindings ?? {}).flat();
     const skippedCross = new Set(refs.filter((ref) => unresolvedCrossRef(ref, rel)));
     const { cards: bound, errors: bindErrors } = resolveBindings(unit, (ref) => (skippedCross.has(ref) ? { kind: "__skip__" } : lookupCard(ref)));
@@ -486,8 +500,12 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
     const unitMaterials = [...materials.values()].filter((m) => m.unit === unit.id);
     const skillDemo = bound.skills.map((s) => s.demo).filter(Boolean);
     for (const demo of skillDemo) if (!materials.has(demo)) errors.push(`${rel}: 技能卡的示範教材 ${demo} 不在本包教材`);
-    const { errors: actErrors } = checkUnitActivities({ unit, cards: bound, materials: unitMaterials, pools, validators: v });
+    const boundRefs = new Set(refs);
+    for (const ref of asArray(unit.core)) if (!boundRefs.has(ref)) errors.push(`${rel}: core 的 ${ref} 不在 bindings`);
+    for (const ladderIds of Object.values(unit.ladders ?? {})) checkLadder(ladderIds, rel);
+    const { errors: actErrors, warnings: actWarnings } = checkUnitActivities({ unit, cards: bound, materials: unitMaterials, pools, validators: v });
     errors.push(...actErrors.map((m) => `${rel}: ${m}`));
+    warnings.push(...actWarnings.map((m) => `${rel}: ${m}`));
   }
 
   for (const [id, m] of materials) collectAudioPaths(m, `materials/${id}.json`, requireListed);

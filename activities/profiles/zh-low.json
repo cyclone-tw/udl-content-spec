@@ -9,5 +9,9 @@
     { "activity": "char-cards", "label": "認字" },
     { "activity": "word-match", "label": "配對" },
     { "activity": "quiz", "label": "小測驗", "short": "測驗", "count": 4 }
-  ]
+  ],
+  "ladders": {
+    "char-pick": {"1": ["4-Ⅰ-1#a@1"], "2": ["4-Ⅰ-1#c@2"]}
+  },
+  "ladder_status": "draft"
 }

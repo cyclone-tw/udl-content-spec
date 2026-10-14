@@ -34,15 +34,15 @@
   "files": [
     {
       "path": "cards/c-cai3.json",
-      "sha256": "d1c8c9e7c8b1fc2ebbe3fa67c230f3d040c619d913a5af2359b3455e16c07d5e"
+      "sha256": "e6c92a858cd91f9e6b8f7b92ccba463f4cb11469aee75d948ede766a6dcf103c"
     },
     {
       "path": "cards/c-ting2.json",
-      "sha256": "ec979d25813315aada346c217496fda775fe54177f00e5f9d5f38390242d68cc"
+      "sha256": "4611be051a4d10195b7b1eb5a00c92d2e3e26fafb219f37cfdb9f612606fc321"
     },
     {
       "path": "cards/c-yuan2.json",
-      "sha256": "2fe27574f77de8e6ddb40abbc0d82cde167887c3a7ee97527477767e3bc2c027"
+      "sha256": "01fa3ef6e64d98905b0687610d4932c0fb1cf08d0e8b505e47a218848227a9f5"
     },
     {
       "path": "cards/pt-kaiman.json",
@@ -73,6 +73,10 @@
       "sha256": "eb097c8ab09b84fb09ef53d9f3bbdd0cf0ee28455a474a3ce0d8707102a4e043"
     },
     {
+      "path": "materials/m-rain-park-intro.json",
+      "sha256": "8180e392a34ff9d30082f430afefece13aaeb26d30dc401b96f11145b6e9b94f"
+    },
+    {
       "path": "materials/m-rain-park-lesson.json",
       "sha256": "d7e59171c756ff8444dcbec4488f1f2eebfa26a05550ad62a2e7beb45cad37a5"
     },
@@ -81,12 +85,16 @@
       "sha256": "a92906e729a7e0e98abf78bd101c5bee9d1b2f45a3baa9209a7357af724496cb"
     },
     {
+      "path": "materials/m-rain-park-outro.json",
+      "sha256": "9c3e3f6e77d1fcfea51634e1dbbd7b8c421df8407ab6ad5ed492480cf70e6caa"
+    },
+    {
       "path": "units/u-add-skill.json",
       "sha256": "08aba4b208ac9a53fd9f98e020cc320ddcecfc2fa54e0c4304189748c2124c7f"
     },
     {
       "path": "units/u-rain-park.json",
-      "sha256": "a67ac98f2281e4a9b7def95af3055c61a947ebdc8baebc7a2491c9d792dc13d8"
+      "sha256": "88a4cb91382b3922b6a8ea115d978a0a50aec21d9d52f3540342891b8b600d3f"
     }
   ]
 }

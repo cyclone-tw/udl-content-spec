@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "id": "m-rain-park-intro",
+  "unit": "u-rain-park",
+  "kind": "dialogue",
+  "title": {
+    "text": "接下委託",
+    "audio": null
+  },
+  "blocks": [
+    {
+      "type": "dialogue",
+      "lines": [
+        {
+          "speaker": "guild-clerk",
+          "line": {
+            "text": "歡迎回來，冒險者！",
+            "audio": null
+          }
+        },
+        {
+          "speaker": "guild-clerk",
+          "line": {
+            "text": "雨停了，公園裡的小花需要你去看看。",
+            "audio": null
+          }
+        }
+      ]
+    }
+  ]
+}

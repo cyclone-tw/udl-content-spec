@@ -33,7 +33,7 @@ export function resolveBindings(unit, lookup) {
       const card = lookup(ref);
       if (!card) errors.push(`bindings.${group}: 找不到卡片 ${ref}`);
       else if (card.kind !== kind) errors.push(`bindings.${group}: ${ref} 是 ${card.kind} 卡，不是 ${kind}`);
-      else cards[group].push(card);
+      else cards[group].push(ref === card.id ? card : { ...card, __ref: ref });
     }
   }
   return { cards, errors };
@@ -41,6 +41,9 @@ export function resolveBindings(unit, lookup) {
 
 const hasMaterial = (materials, kind) => materials.some((m) => m.kind === kind);
 const wordsWithExample = (cards) => cards.words.filter((w) => w.example && w.example.text.includes(w.word));
+const confusableChars = (ch) => [...new Set((ch.confusables ?? []).map((c) => c.char))].filter((c) => c !== ch.char);
+// 選字題至少要湊得出兩個選項：卡上有易混淆字，或這課有兩個以上的生字。
+const charPickable = (c) => c.chars.length >= 2 || c.chars.some((ch) => confusableChars(ch).length > 0);
 
 // 每個活動：預設段落、是否生題、在什麼條件下才出現（needs 回傳 null 表示可以，字串是不能的理由）。
 const REGISTRY = {
@@ -50,18 +53,52 @@ const REGISTRY = {
   "char-cards": { phase: "practice", needs: (c) => (c.chars.length ? null : "沒有綁生字卡") },
   "word-cards": { phase: "practice", needs: (c) => (c.words.length ? null : "沒有綁語詞卡") },
   manipulate: { phase: "practice", needs: (c) => (c.skills.some((s) => s.manipulative) ? null : "綁的技能卡沒有教具設定") },
-  "char-pick": { phase: "practice", count: 4, generate: genCharPick, needs: (c) => (c.chars.length ? null : "沒有綁生字卡") },
-  "word-match": { phase: "practice", count: 1, generate: genWordMatch, needs: (c) => (c.words.length >= 2 ? null : "綁的語詞卡少於 2 張") },
-  "word-cloze": { phase: "practice", count: 4, generate: genWordCloze, needs: (c) => (wordsWithExample(c).length && c.words.length >= 2 ? null : "沒有含例句的語詞卡，或語詞卡少於 2 張") },
-  "sentence-order": { phase: "practice", count: 2, generate: genSentenceOrder, needs: (c) => (c.patterns.length ? null : "沒有綁句型卡") },
-  "skill-practice": { phase: "practice", count: 5, generate: genSkillPractice, needs: (c) => (c.skills.length ? null : "沒有綁技能卡") },
-  quiz: { phase: "battle", count: 5, generate: genQuiz, needs: (c) => (c.chars.length || c.words.length >= 2 || c.patterns.length || c.skills.length ? null : "沒有可出題的卡") },
+  "char-pick": { phase: "practice", count: 4, readAloud: "stem", generate: genCharPick, needs: (c) => (charPickable(c) ? null : "生字卡少於 2 張，而且卡上沒有易混淆字，湊不出選項") },
+  "word-match": { phase: "practice", count: 1, readAloud: "stem", generate: genWordMatch, needs: (c) => (c.words.length >= 2 ? null : "綁的語詞卡少於 2 張") },
+  "word-cloze": { phase: "practice", count: 4, readAloud: "stem", generate: genWordCloze, needs: (c) => (wordsWithExample(c).length && c.words.length >= 2 ? null : "沒有含例句的語詞卡，或語詞卡少於 2 張") },
+  "sentence-order": { phase: "practice", count: 2, readAloud: "all", generate: genSentenceOrder, needs: (c) => (c.patterns.length ? null : "沒有綁句型卡") },
+  "skill-practice": { phase: "practice", count: 5, readAloud: "stem", generate: genSkillPractice, needs: (c) => (c.skills.length ? null : "沒有綁技能卡") },
+  quiz: { phase: "battle", count: 5, generate: genQuiz, needs: (c) => (quizSources(c).length ? null : "沒有可出題的卡") },
 };
+
+// 綜合小測驗可以抽的來源：每種卡各一個活動；語詞配對只在沒有其他來源時才用（配對一題就是一整組，放進測驗太重）。
+function quizSources(c) {
+  const sources = [];
+  if (charPickable(c)) sources.push("char-pick");
+  if (wordsWithExample(c).length && c.words.length >= 2) sources.push("word-cloze");
+  if (c.patterns.length) sources.push("sentence-order");
+  if (c.skills.length) sources.push("skill-practice");
+  if (!sources.length && c.words.length >= 2) sources.push("word-match");
+  return sources;
+}
 
 /** 已登錄的活動 id。 */
 export const activityIds = Object.freeze(Object.keys(REGISTRY));
 /** 會生題的活動 id。 */
 export const generatingActivities = Object.freeze(Object.keys(REGISTRY).filter((k) => REGISTRY[k].generate));
+
+/**
+ * 活動 × 年級 → 能力階梯：年級設定的 ladders（該年級，沒有就用 "*"），再被單元的 ladders 覆寫。
+ * @returns {Record<string, string[]>}
+ */
+export function resolveLadders({ unit, profile = null }) {
+  const out = {};
+  const grade = String(unit.grade);
+  for (const [activity, byGrade] of Object.entries(profile?.ladders ?? {})) {
+    const ids = byGrade[grade] ?? byGrade["*"];
+    if (ids?.length) out[activity] = [...ids];
+  }
+  for (const [activity, ids] of Object.entries(isPlainObject(unit.ladders) ? unit.ladders : {})) out[activity] = [...ids];
+  return out;
+}
+
+/** 單元的核心卡（bindings 的子集）；沒標就回 null。 */
+export function coreCards(unit, cards) {
+  const core = new Set(Array.isArray(unit.core) ? unit.core : []);
+  if (!core.size) return null;
+  const refOf = (card) => card.__ref ?? card.id;
+  return Object.fromEntries(Object.entries(cards).map(([g, list]) => [g, list.filter((c) => core.has(refOf(c)))]));
+}
 
 /** 依科目與年級找內建的年級活動設定；找不到回 null。 */
 export function profileFor(subject, grade) {
@@ -75,6 +112,9 @@ export function profileFor(subject, grade) {
  */
 export function planSteps({ unit, cards, materials = [], profile = null }) {
   const chosen = Array.isArray(unit.activities) ? null : profile ?? (unit.activity_profile ? profiles[unit.activity_profile] : profileFor(unit.subject, unit.grade));
+  // 單元自己寫 activities 時，能力階梯對照仍用該科該年級的年級設定（再被單元 ladders 覆寫）。
+  const ladderProfile = chosen ?? (unit.activity_profile ? profiles[unit.activity_profile] : profileFor(unit.subject, unit.grade));
+  const ladders = resolveLadders({ unit, profile: ladderProfile });
   const source = Array.isArray(unit.activities) ? unit.activities : chosen?.steps ?? [];
   const steps = [];
   const skipped = [];
@@ -97,37 +137,50 @@ export function planSteps({ unit, cards, materials = [], profile = null }) {
       phase: step.phase ?? def.phase,
       generates: Boolean(def.generate),
       ...(def.generate ? { count: step.count ?? def.count } : {}),
+      ...(def.generate && (step.read_aloud_scope ?? def.readAloud) ? { read_aloud_scope: step.read_aloud_scope ?? def.readAloud } : {}),
+      ...(ladders[step.activity] ? { ladder_ids: ladders[step.activity] } : {}),
       ...(step.optional ? { optional: true } : {}),
     });
   }
-  return { profile: Array.isArray(unit.activities) ? null : chosen?.id ?? null, steps, skipped };
+  return { profile: Array.isArray(unit.activities) ? null : chosen?.id ?? null, ladder_status: ladderProfile?.ladder_status ?? null, ladders, steps, skipped };
 }
 
 /**
  * 為一個步驟生題。
  * @param {string} activity 活動 id（要會生題）。
- * @param {{ unit: object, cards: object, seed: string|number, count?: number, pools?: Map }} ctx
+ * @param {{ unit: object, cards: object, seed: string|number, count?: number, pools?: Map,
+ *   ladders?: Record<string,string[]>, readAloud?: "all"|"stem"|"none", coreOnly?: boolean }} ctx
+ *   ladders：活動 → 能力階梯（planSteps 回傳的 ladders）；readAloud：覆寫報讀範圍；coreOnly：只用單元標的核心卡。
  * @returns {object[]} 題目實例（kind: "instance"）。
  */
-export function generate(activity, { unit, cards, seed, count, pools } = {}) {
+export function generate(activity, { unit, cards: allCards, seed, count, pools, ladders = {}, readAloud, coreOnly = false } = {}) {
   const def = REGISTRY[activity];
   if (!def?.generate) throw new TypeError(`generate: ${JSON.stringify(activity)} 不是會生題的活動`);
   if (seed === undefined || seed === null || seed === "") throw new TypeError("generate: 需要 seed，作答事件才能重現這批題目");
+  let cards = allCards;
+  if (coreOnly) {
+    cards = coreCards(unit, allCards);
+    if (!cards) throw new TypeError(`generate(${activity}): 單元 ${unit.id} 沒有標核心卡（core）`);
+  }
   const reason = def.needs(cards, []);
   if (reason) throw new TypeError(`generate(${activity}): ${reason}`);
   const n = count ?? def.count;
   if (!Number.isInteger(n) || n < 1) throw new TypeError("generate: count 必須是 ≥ 1 的整數");
   const rng = createRng(`${unit.id}|${activity}|${seed}`);
   const parts = def.generate({ unit, cards, rng, count: n, seed: String(seed), pools });
-  return parts.map((part, index) => finish(part, { unit, activity, seed: String(seed), index }));
+  return parts.map((part, index) => finish(part, { unit, activity, seed: String(seed), index, ladders, readAloud }));
 }
 
-function finish(part, { unit, activity, seed, index }) {
+function finish(part, { unit, activity, seed, index, ladders, readAloud }) {
+  const source = part.quiz_source ?? activity;
+  const scope = readAloud ?? REGISTRY[source]?.readAloud ?? "all";
   if (part.kind === "instance" && part.generator) {
-    // 技能練習沿用數學產生器的實例，只補活動追溯欄位。
-    return { ...part, activity, activity_version: ACTIVITIES_VERSION, unit: unit.id };
+    // 技能練習沿用數學產生器的實例（能力階梯由技能卡與條件檔決定），只補活動追溯欄位與報讀範圍。
+    return { ...part, activity, activity_version: ACTIVITIES_VERSION, unit: unit.id, read_aloud_scope: scope };
   }
-  const { cards: used, ladder_ids, ...rest } = part;
+  // 能力階梯優先序：活動 × 年級對照 → 卡片自己標的 → 單元的。
+  const { cards: used, ladder_ids: cardLadders, ...rest } = part;
+  const ladder_ids = ladders[source]?.length ? ladders[source] : cardLadders;
   return {
     kind: "instance",
     id: `${unit.id}-${activity}#${index}`,
@@ -140,6 +193,7 @@ function finish(part, { unit, activity, seed, index }) {
     cards: used,
     ...(ladder_ids?.length ? { ladder_ids } : unit.ladder_ids?.length ? { ladder_ids: [...unit.ladder_ids] } : {}),
     ...(unit.curriculum_codes?.length ? { curriculum_codes: [...unit.curriculum_codes] } : {}),
+    read_aloud_scope: scope,
     ...rest,
   };
 }
@@ -205,8 +259,8 @@ function choiceOptions(correctText, distractorTexts, rng) {
 function genCharPick({ cards, rng, count }) {
   const words = new Map(cards.words.map((w) => [w.id, w]));
   return cycle(cards.chars, count, rng).map((ch) => {
-    const fromCard = (ch.confusables ?? []).map((c) => c.char).filter((c) => c !== ch.char);
-    const fromLesson = cards.chars.map((c) => c.char).filter((c) => c !== ch.char && !fromCard.includes(c));
+    const fromCard = confusableChars(ch);
+    const fromLesson = [...new Set(cards.chars.map((c) => c.char))].filter((c) => c !== ch.char && !fromCard.includes(c));
     const distractors = [...take(fromCard, 2, rng), ...take(fromLesson, 2, rng)].slice(0, 2);
     const example = (ch.words ?? []).map((ref) => words.get(ref)).find((w) => w && w.word.includes(ch.char));
     const prompt = example ? `「${example.word.replaceAll(ch.char, "○")}」的○，注音是「${ch.zhuyin}」，是哪一個字？` : `注音「${ch.zhuyin}」，意思是「${ch.meaning.text}」，是哪一個字？`;
@@ -306,19 +360,14 @@ function genSkillPractice({ unit, cards, rng, count, seed, pools }) {
 
 // 綜合小測驗：在可用的生題活動之間輪流抽，一題一個來源，順序再洗牌。
 function genQuiz({ unit, cards, rng, count, seed, pools }) {
-  const sources = [];
-  if (cards.chars.length) sources.push("char-pick");
-  if (wordsWithExample(cards).length && cards.words.length >= 2) sources.push("word-cloze");
-  if (cards.patterns.length) sources.push("sentence-order");
-  if (cards.skills.length) sources.push("skill-practice");
-  if (!sources.length && cards.words.length >= 2) sources.push("word-match");
+  const sources = quizSources(cards);
   const plan = cycle(sources, count, rng);
   const tally = Object.fromEntries(sources.map((s) => [s, plan.filter((p) => p === s).length]));
   const made = [];
   for (const s of sources) {
     const def = REGISTRY[s];
     const sub = def.generate({ unit, cards, rng: createRng(`${unit.id}|quiz|${s}|${seed}`), count: tally[s], seed: `${seed}|quiz`, pools });
-    made.push(...sub.slice(0, tally[s]).map((q) => ({ ...q, ...(q.generator ? {} : { quiz_source: s }) })));
+    made.push(...sub.slice(0, tally[s]).map((q) => ({ ...q, quiz_source: s })));
   }
   return shuffle(made, rng).slice(0, count);
 }

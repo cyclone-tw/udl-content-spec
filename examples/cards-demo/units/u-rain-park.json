@@ -16,7 +16,9 @@
   "estimated_minutes": 20,
   "materials": [
     "m-rain-park-lesson",
-    "m-rain-park-mindmap"
+    "m-rain-park-mindmap",
+    "m-rain-park-intro",
+    "m-rain-park-outro"
   ],
   "items": [],
   "bindings": {
@@ -34,5 +36,16 @@
     "patterns": [
       "pt-kaiman"
     ]
+  },
+  "core": [
+    "c-cai3",
+    "c-yuan2",
+    "w-caihong",
+    "w-gongyuan",
+    "pt-kaiman"
+  ],
+  "quest": {
+    "intro": "m-rain-park-intro",
+    "outro": "m-rain-park-outro"
   }
 }
