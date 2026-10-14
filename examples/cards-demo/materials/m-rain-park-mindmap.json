@@ -1,0 +1,44 @@
+{
+  "format_version": 1,
+  "id": "m-rain-park-mindmap",
+  "unit": "u-rain-park",
+  "kind": "mindmap",
+  "title": {
+    "text": "雨後的公園",
+    "audio": null
+  },
+  "blocks": [
+    {
+      "type": "mindmap",
+      "root": {
+        "text": {
+          "text": "雨後的公園",
+          "audio": null
+        },
+        "children": [
+          {
+            "label": "天氣",
+            "text": {
+              "text": "雨停了，出現彩虹",
+              "audio": null
+            }
+          },
+          {
+            "label": "地點",
+            "text": {
+              "text": "我們去公園",
+              "audio": null
+            }
+          },
+          {
+            "label": "看到",
+            "text": {
+              "text": "大樹下開滿了小花",
+              "audio": null
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

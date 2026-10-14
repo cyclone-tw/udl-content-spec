@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "id": "w-dashu",
+  "kind": "word",
+  "key": "大樹|ㄉㄚˋ ㄕㄨˋ",
+  "grade_min": 2,
+  "word": "大樹",
+  "zhuyin": "ㄉㄚˋ ㄕㄨˋ",
+  "meaning": {
+    "text": "長得又高又大的樹",
+    "audio": null
+  },
+  "example": {
+    "text": "大樹下有一片涼涼的樹蔭。",
+    "audio": null
+  }
+}

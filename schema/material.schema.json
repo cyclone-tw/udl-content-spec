@@ -28,9 +28,10 @@
         "lesson",
         "simplified",
         "demo",
-        "dialogue"
+        "dialogue",
+        "mindmap"
       ],
-      "description": "lesson 原文；simplified 簡化版；demo 情境示範（數學等）；dialogue 角色對話腳本。"
+      "description": "lesson 原文；simplified 簡化版；demo 情境示範（數學等）；dialogue 角色對話腳本；mindmap 心智圖（只有 mindmap 區塊）。"
     },
     "title": {
       "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
@@ -119,7 +120,8 @@
             "audio",
             "dialogue",
             "math-demo",
-            "check"
+            "check",
+            "mindmap"
           ]
         }
       },
@@ -279,8 +281,49 @@
             "item"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "mindmap"
+            },
+            "root": {
+              "$ref": "#/$defs/mindmap_node"
+            }
+          },
+          "required": [
+            "type",
+            "root"
+          ],
+          "additionalProperties": false
         }
       ]
+    },
+    "mindmap_node": {
+      "type": "object",
+      "description": "心智圖節點：label 是枝幹名稱（例如「天氣」），text 是內容；renderer 一次展開一層。",
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8
+        },
+        "text": {
+          "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+        },
+        "children": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/mindmap_node"
+          }
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

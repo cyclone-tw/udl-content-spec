@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "id": "c-cai3",
+  "kind": "char",
+  "key": "彩|ㄘㄞˇ",
+  "grade_min": 2,
+  "ladder_ids": [
+    "4-Ⅱ-1#c@4"
+  ],
+  "char": "彩",
+  "zhuyin": "ㄘㄞˇ",
+  "radical": "彡",
+  "strokes": 11,
+  "meaning": {
+    "text": "顏色很多、很好看的樣子",
+    "audio": null
+  },
+  "words": [
+    "w-caihong"
+  ],
+  "confusables": [
+    {
+      "char": "採",
+      "why": "音同"
+    },
+    {
+      "char": "菜",
+      "why": "音同"
+    }
+  ]
+}

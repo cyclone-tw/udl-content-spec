@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "id": "w-gongyuan",
+  "kind": "word",
+  "key": "公園|ㄍㄨㄥ ㄩㄢˊ",
+  "grade_min": 2,
+  "word": "公園",
+  "zhuyin": "ㄍㄨㄥ ㄩㄢˊ",
+  "meaning": {
+    "text": "大家可以去散步、玩耍的地方",
+    "audio": null
+  },
+  "example": {
+    "text": "放學後，我們去公園散步。",
+    "audio": null
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "format_version": 1,
+  "id": "u-add-skill",
+  "title": "二位數加減",
+  "subject": "math",
+  "grade": 2,
+  "semester": "上",
+  "ladder_ids": [
+    "n-I-2#a@2"
+  ],
+  "curriculum_codes": [
+    "N-2-2"
+  ],
+  "materials": [
+    "m-add-sub-demo"
+  ],
+  "items": [],
+  "bindings": {
+    "skills": [
+      "sk-add-sub-2digit"
+    ]
+  }
+}

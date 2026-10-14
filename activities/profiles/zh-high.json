@@ -1,0 +1,15 @@
+{
+  "format_version": 1,
+  "id": "zh-high",
+  "title": "國語高年級（五、六年級）",
+  "subject": "chinese",
+  "grades": [5, 6],
+  "steps": [
+    { "activity": "read", "label": "讀課文", "phase": "learn" },
+    { "activity": "mindmap", "label": "心智圖", "phase": "learn", "optional": true },
+    { "activity": "char-cards", "label": "生字" },
+    { "activity": "word-cloze", "label": "語詞", "count": 4 },
+    { "activity": "sentence-order", "label": "句型", "optional": true },
+    { "activity": "quiz", "label": "小測驗", "short": "測驗", "count": 6 }
+  ]
+}

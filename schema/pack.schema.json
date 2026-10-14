@@ -37,9 +37,17 @@
     },
     "units": {
       "type": "array",
+      "description": "單元清單；只放卡片的卡片庫包可以是空陣列（此時 cards 至少一張，驗證器檢查）。",
       "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
-      "minItems": 1,
+      "minItems": 0,
       "uniqueItems": true
+    },
+    "cards": {
+      "type": "array",
+      "description": "本包的卡片（cards/<id>.json）；卡片庫包與一般課包都可以帶卡。",
+      "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+      "uniqueItems": true,
+      "default": []
     },
     "pools": {
       "type": "array",

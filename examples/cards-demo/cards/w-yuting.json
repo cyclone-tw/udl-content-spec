@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "id": "w-yuting",
+  "kind": "word",
+  "key": "雨停|ㄩˇ ㄊㄧㄥˊ",
+  "grade_min": 2,
+  "word": "雨停",
+  "zhuyin": "ㄩˇ ㄊㄧㄥˊ",
+  "meaning": {
+    "text": "不再下雨了",
+    "audio": null
+  },
+  "example": {
+    "text": "等到雨停，我們再出門。",
+    "audio": null
+  }
+}

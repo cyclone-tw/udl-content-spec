@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "id": "w-caihong",
+  "kind": "word",
+  "key": "彩虹|ㄘㄞˇ ㄏㄨㄥˊ",
+  "grade_min": 2,
+  "word": "彩虹",
+  "zhuyin": "ㄘㄞˇ ㄏㄨㄥˊ",
+  "meaning": {
+    "text": "雨後天空出現的彎彎彩色光帶",
+    "audio": null
+  },
+  "example": {
+    "text": "雨停了，天空出現一道彩虹。",
+    "audio": null
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "id": "m-add-sub-demo",
+  "unit": "u-add-skill",
+  "kind": "demo",
+  "title": {
+    "text": "看示範：二位數加法",
+    "audio": null
+  },
+  "blocks": [
+    {
+      "type": "math-demo",
+      "steps": [
+        {
+          "text": {
+            "text": "先算個位：5 加 3 等於 8。",
+            "audio": null
+          },
+          "expression": "25 + 13"
+        },
+        {
+          "text": {
+            "text": "再算十位：2 加 1 等於 3。",
+            "audio": null
+          },
+          "expression": "25 + 13 = 38"
+        }
+      ]
+    }
+  ]
+}

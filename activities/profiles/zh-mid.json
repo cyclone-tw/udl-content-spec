@@ -1,0 +1,14 @@
+{
+  "format_version": 1,
+  "id": "zh-mid",
+  "title": "國語中年級（三、四年級）",
+  "subject": "chinese",
+  "grades": [3, 4],
+  "steps": [
+    { "activity": "read", "label": "讀課文", "phase": "learn" },
+    { "activity": "char-cards", "label": "生字" },
+    { "activity": "word-match", "label": "語詞配對", "short": "配對" },
+    { "activity": "sentence-order", "label": "句型排序", "short": "排序", "optional": true },
+    { "activity": "quiz", "label": "小測驗", "short": "測驗", "count": 5 }
+  ]
+}
