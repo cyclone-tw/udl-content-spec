@@ -1,8 +1,8 @@
 # udl-content-spec
 
-UDL 教學家族（udl-learning、udl-classroom、各教材 repo）共用的**內容規格**：內容包格式、題型與計分、數學參數化出題、課綱碼標籤、作答事件契約、獨立執行器、一致性測試。教材 repo 與平台都以 git tag 版本相依這個 repo；規格本身不含任何教材正本、不含學生資料。
+UDL 教學家族（udl-learning、udl-math 等各教材 repo、udl-audio 的音檔清單）共用的**內容規格**：內容包格式、題型與計分、數學參數化出題、課綱碼標籤、作答事件契約、獨立執行器、一致性測試。教材 repo 與平台都以 git tag 版本相依這個 repo；規格本身不含任何教材正本、不含學生資料。
 
-正本決策在 [udl-learning 總規劃 v1.1](https://github.com/cyclone-tw/udl-learning/blob/main/docs/plans/2026-10-10-material-factory-master-plan.md)（§3 概念模型、§4.4 多教材 repo、§6 呈現契約、§7 kit 接口）；前例研究在 [content-spec prior-art](https://github.com/cyclone-tw/udl-learning/blob/main/docs/research/2026-10-10-content-spec-prior-art.md)。工程 ledger：[udl-learning#67](https://github.com/cyclone-tw/udl-learning/issues/67)。
+正本決策在 [udl-learning 總規劃 v1.1](https://github.com/cyclone-tw/udl-learning/blob/main/docs/plans/2026-10-10-material-factory-master-plan.md)（§3 概念模型、§4.4 多教材 repo、§6 呈現契約、§7 kit 接口）；前例研究在 [content-spec prior-art](https://github.com/cyclone-tw/udl-learning/blob/main/docs/research/2026-10-10-content-spec-prior-art.md)。工程 ledger：[udl-learning#67](https://github.com/cyclone-tw/udl-learning/issues/67)。家族裡每個 repo 的分工與串接見 udl-learning 的 `docs/family-map.md`（私人 repo；給 agent 的入口在 `AGENTS.md` 開頭）。
 
 ## 授權
 

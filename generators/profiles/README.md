@@ -66,4 +66,4 @@ const { params, count } = resolveParams(profile, { adjustment: "simplify", overr
 
 ## 決策來源
 
-Cyclone 2026-10-11 逐題確認，紀錄在 cyclone-tw/udl-content-spec#18。參考既有實作 `block-borrow-adventure`（關卡＝條件檔、老師可調題數與範圍、情境範本＋池、提示依狀態）。
+Cyclone 2026-10-11 逐題確認，紀錄在 cyclone-tw/udl-content-spec#18。參考既有實作：`udl-math` 的 `brick-kingdom`（原 repo 名 `cyclone-math-lab`，本機資料夾舊名 `block-borrow-adventure`；關卡＝條件檔、老師可調題數與範圍、情境範本＋池、提示依狀態）。
