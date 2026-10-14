@@ -2,6 +2,12 @@
 
 所有 coding agent 進本 repo 先讀這份。全域規則（cyclone-agent-config）照常適用；此處只列本 repo 特有規則。
 
+<!-- udl-family-block v1 -->
+> **UDL 教學家族**：本 repo 是家族共用的內容規格（公開）：內容包格式、題型與計分、數學產生器、作答事件、音檔清單格式、驗證器；不含任何教材正本或學生資料。
+> 上游：`udl-learning` 總規劃（決策正本）、`sped-student-kit`（能力階梯，驗證時用 `--ladder-dir`）；下游：`udl-learning`（平台與教材工廠）、各科教材 repo（如 `udl-math`），都以 git tag 版本相依本 repo。
+> 家族地圖正本：`cyclone-tw/udl-learning` 的 `docs/family-map.md`（私人 repo）。要改本 repo 的角色或串接方式，先改地圖。
+<!-- /udl-family-block -->
+
 ## 這個 repo 是什麼
 
 UDL 教學家族共用的內容規格（schema、題型與計分、參數化產生器、事件契約、獨立執行器、一致性測試）。正本決策在 udl-learning 總規劃 v1.1；本 repo 不複製決策文字，只連結。
