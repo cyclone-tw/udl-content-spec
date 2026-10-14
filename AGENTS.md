@@ -4,7 +4,9 @@
 
 <!-- udl-family-block v1 -->
 > **UDL 教學家族**：本 repo 是家族共用的內容規格（公開）：內容包格式、題型與計分、數學產生器、作答事件、音檔清單格式、驗證器；不含任何教材正本或學生資料。
+>
 > 上游：`udl-learning` 總規劃（決策正本）、`sped-student-kit`（能力階梯，驗證時用 `--ladder-dir`）；下游：`udl-learning`（平台與教材工廠）、各科教材 repo（如 `udl-math`），都以 git tag 版本相依本 repo。
+>
 > 家族地圖正本：`cyclone-tw/udl-learning` 的 `docs/family-map.md`（私人 repo）。要改本 repo 的角色或串接方式，先改地圖。
 <!-- /udl-family-block -->
 
