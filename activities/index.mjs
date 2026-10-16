@@ -204,13 +204,40 @@ function rhetoricDistractors(ex, pool, rng) {
   const others = Object.keys(rhetoricDevices).filter((d) => !own.has(d) && !confused.includes(d) && !learned.includes(d));
   return [...take(confused, 1, rng), ...shuffle(learned, rng), ...shuffle(confused, rng), ...shuffle(others, rng)].filter((d, i, a) => a.indexOf(d) === i).slice(0, 2);
 }
-// 分類題：只用一句一種修辭的例句；至少兩種修辭才分得起來，每題 4 到 6 句。
-function rhetoricSortReady(ctx) {
+// 分類題：只用一句一種修辭的例句。題庫是事先分好的幾組（每組 4 到 6 句、2 到 4 種修辭、組與組不重複），
+// 和種子無關，所以題庫筆數固定，同一次測驗不會抽到同一組；種子只決定出題順序與句子排列。
+function rhetoricSortSets(ctx) {
   const single = rhetoricExamples(ctx).filter((x) => x.devices.length === 1);
-  const byDevice = new Map();
-  for (const x of single) byDevice.set(x.devices[0], [...(byDevice.get(x.devices[0]) ?? []), x]);
-  const usable = [...byDevice].filter(([, list]) => list.length >= 1);
-  return usable.length >= 2 && single.length >= 4 ? { byDevice: new Map(usable), single } : null;
+  const order = Object.keys(rhetoricDevices);
+  const left = new Map();
+  for (const x of single) left.set(x.devices[0], [...(left.get(x.devices[0]) ?? []), x]);
+  const sets = [];
+  for (;;) {
+    const avail = [...left].filter(([, l]) => l.length).sort((a, b) => b[1].length - a[1].length || order.indexOf(a[0]) - order.indexOf(b[0])).map(([d]) => d);
+    if (avail.length < 2) break;
+    const first = avail[0];
+    const partner = RHETORIC_CONFUSIONS.filter((p) => p.includes(first)).map((p) => p.find((d) => d !== first)).find((d) => avail.includes(d)) ?? avail.find((d) => d !== first);
+    const chosen = [first, partner];
+    const picked = new Map(chosen.map((d) => [d, []]));
+    const total = () => [...picked.values()].reduce((n, l) => n + l.length, 0);
+    const grab = (d, upto) => { while (picked.get(d).length < upto && left.get(d).length && total() < 6) picked.get(d).push(left.get(d).shift()); };
+    for (const d of chosen) grab(d, 2);
+    for (const d of chosen) if (total() < 4) grab(d, 3);
+    // 每種修辭只有一兩句時再加一種，最多 4 種，湊到 4 句。
+    while (total() < 4 && chosen.length < 4) {
+      const more = avail.find((d) => !chosen.includes(d));
+      if (!more) break;
+      chosen.push(more);
+      picked.set(more, []);
+      grab(more, 3);
+    }
+    if (total() < 4) {
+      for (const d of chosen) left.set(d, [...picked.get(d), ...left.get(d)]);
+      break;
+    }
+    sets.push(chosen.map((d) => ({ device: d, examples: picked.get(d) })));
+  }
+  return sets;
 }
 
 // 課文題：單元手寫的固定題（generate／planSteps 的 items），一律歸「課文」分類。
@@ -250,7 +277,7 @@ const REGISTRY = {
   "mindmap-pick": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => mindmapPickTargets(ctx).length, generate: genMindmapPick, needs: (c, m, ctx) => (mindmapPickTargets({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "心智圖教材沒有兩個以上分支可以出題") },
   "mindmap-order": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => mindmapOrderTargets(ctx).length, generate: genMindmapOrder, needs: (c, m, ctx) => (mindmapOrderTargets({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "心智圖沒有標 ordered、子節點 3 到 8 個的節點") },
   "rhetoric-pick": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => rhetoricExamples(ctx).length, generate: genRhetoricPick, needs: (c, m, ctx) => (rhetoricExamples({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "教材裡沒有修辭例句（rhetoric 區塊）") },
-  "rhetoric-sort": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => { const r = rhetoricSortReady(ctx); return r ? Math.max(1, Math.floor(r.single.length / 4)) : 0; }, generate: genRhetoricSort, needs: (c, m, ctx) => (rhetoricSortReady({ ...ctx, materials: ctx?.materials ?? m }) ? null : "一句一種修辭的例句少於 4 句，或不到兩種修辭") },
+  "rhetoric-sort": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => rhetoricSortSets(ctx).length, generate: genRhetoricSort, needs: (c, m, ctx) => (rhetoricSortSets({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "一句一種修辭的例句湊不出一組（至少 4 句、2 種修辭）") },
   mix: { phase: "practice", count: "all", generate: genMix, needs: () => null },
   "reading-items": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => readingItems(ctx).length, generate: genReadingItems, needs: (c, m, ctx) => (readingItems(ctx).length ? null : "單元沒有手寫的課文題（items 裡的固定題）") },
   quiz: { phase: "battle", count: 5, generate: genQuiz, needs: (c) => (quizSources(c).length ? null : "沒有可出題的卡") },
@@ -694,31 +721,24 @@ function genRhetoricPick({ rng, count, materials }) {
   });
 }
 
-// 修辭分類：把幾句例句分到修辭類型（2 到 3 種，常混淆的優先放在一起，每種最多 2 句）。
+// 修辭分類：把一組 4 到 6 句分到 2 到 4 種修辭（組別見 rhetoricSortSets，常混淆的優先放在同一組）。
 function genRhetoricSort({ rng, count, materials }) {
-  const ready = rhetoricSortReady({ materials });
-  const devices = [...ready.byDevice.keys()];
-  const out = [];
-  for (let n = 0; n < count; n++) {
-    const first = take(devices, 1, rng)[0];
-    const partner = shuffle(RHETORIC_CONFUSIONS.filter((p) => p.includes(first)).map((p) => p.find((d) => d !== first)).filter((d) => ready.byDevice.has(d)), rng)[0];
-    const chosen = [first, ...(partner ? [partner] : []), ...shuffle(devices.filter((d) => d !== first && d !== partner), rng)].slice(0, devices.length >= 3 ? 3 : 2);
-    const picked = chosen.flatMap((d) => take(ready.byDevice.get(d), 2, rng));
-    out.push({
+  return cycle(rhetoricSortSets({ materials }), count, rng).map((set) => {
+    const picked = set.flatMap(({ device, examples }) => examples.map((x) => ({ ...x, device })));
+    return {
       type: "classify",
       cards: [],
       material: picked[0].material,
-      anchor: picked.map((x) => `b${x.index}`).join(","),
+      anchor: picked.map((x) => `${x.material}#b${x.index}`).join(","),
       skill: "修辭",
       difficulty: 2,
       stem: { text: spoken("把每一句放到它用的修辭。") },
-      bins: chosen.map((d) => ({ id: d, label: spoken(rhetoricLabel(d)) })),
-      objects: shuffle(picked, rng).map((x, i) => ({ id: `o${i + 1}`, text: spoken(plainText(x.text.text)), bin: x.devices[0] })),
-      hints: [spoken("一句一句讀，先放你最有把握的。"), spoken(chosen.map((d) => `${rhetoricLabel(d)}：${rhetoricDevices[d].definition}`).join("；")), spoken(`「${plainText(picked[0].text.text)}」是${rhetoricLabel(picked[0].devices[0])}。`)],
+      bins: set.map(({ device }) => ({ id: device, label: spoken(rhetoricLabel(device)) })),
+      objects: shuffle(picked, rng).map((x, i) => ({ id: `o${i + 1}`, text: spoken(plainText(x.text.text)), bin: x.device })),
+      hints: [spoken("一句一句讀，先放你最有把握的。"), spoken(set.map(({ device }) => `${rhetoricLabel(device)}：${rhetoricDevices[device].definition}`).join("；")), spoken(`「${plainText(picked[0].text.text)}」是${rhetoricLabel(picked[0].device)}。`)],
       feedback: { correct: spoken("全部分對了！"), retry: spoken("有一句放錯了，再對照每種修辭的意思。") },
-    });
-  }
-  return out;
+    };
+  });
 }
 
 // 混合練習（#51）：一步裡混合同分類的幾個活動，依 sources 的順序一段一段出（同一種題型放在一起）；

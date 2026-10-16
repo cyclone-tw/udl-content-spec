@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { planSteps, generate, rhetoricDevices, misconceptions, toItemShape, correctResponse } from "../activities/index.mjs";
-import { loadValidators } from "../conformance/validate.mjs";
+import { loadValidators, quizRepeatKey } from "../conformance/validate.mjs";
 import { score } from "../question-types/index.mjs";
 
 const spoken = (text) => ({ text, audio: null });
@@ -21,8 +21,11 @@ const noCards = { chars: [], words: [], patterns: [], skills: [] };
 const materials = [rhetoricMaterial()];
 const label = (d) => rhetoricDevices[d].label;
 
-test("修辭選擇：一句一題，正解是主要修辭；錯的選項不會是這句用到的修辭，常混淆的優先", () => {
-  const list = generate("rhetoric-pick", { unit, cards: noCards, seed: "r", count: "all", materials });
+const PARTNERS = { simile: ["personification", "hyperbole"], repetition: ["parallelism"], personification: ["simile"], hyperbole: ["simile", "sensory"], "rhetorical-question": ["exclamation"] };
+
+test("修辭選擇：一句一題，正解是主要修辭；錯的選項不會是這句用到的修辭，有常混淆的就放一個（換種子都成立）", () => {
+  for (const seed of ["r", "s", "t", "u", "v", "w"]) {
+  const list = generate("rhetoric-pick", { unit, cards: noCards, seed, count: "all", materials });
   assert.equal(list.length, EXAMPLES.length);
   for (const q of list) {
     const ex = EXAMPLES.find(([t]) => q.stem.text.text.includes(t));
@@ -33,29 +36,42 @@ test("修辭選擇：一句一題，正解是主要修辭；錯的選項不會�
       assert.ok(!ex[1].map(label).includes(o.text.text), `${ex[0]}：${o.text.text} 是這句用到的修辭`);
       assert.equal(o.misconception, "rhetoric-mixup");
       assert.ok(!o.feedback.text.includes(`「${answer}」`), "逐選項回饋不直接說出答案");
+      assert.ok(!o.feedback.text.includes(ex[2]), "例句說明 note 不放在錯的選項回饋");
     }
-    if (ex[1][0] === "simile" && ex[1].length === 1) assert.ok(wrong.some((o) => o.text.text === label("personification")), "譬喻題要放擬人當干擾項");
-    if (ex[1][0] === "repetition") assert.ok(wrong.some((o) => o.text.text === label("parallelism")), "類疊題要放排比當干擾項");
+    const partners = (PARTNERS[ex[1][0]] ?? []).filter((d) => !ex[1].includes(d));
+    if (partners.length) assert.ok(wrong.some((o) => partners.map(label).includes(o.text.text)), `${ex[0]}（${seed}）要放一個常混淆的：${wrong.map((o) => o.text.text)}`);
     assert.equal(q.skill, "修辭");
     assert.match(q.feedback.correct.text, new RegExp(answer));
+    assert.ok(q.feedback.correct.text.includes(ex[2]), "答對才看到 note");
+  }
   }
   assert.ok(Object.hasOwn(misconceptions, "rhetoric-mixup"));
 });
 
-test("修辭分類：2 到 3 種修辭、最多 6 句、只用一句一種修辭的例句，正解拿滿分", async () => {
+const TWO_EACH = ["simile", "personification", "hyperbole", "repetition", "parallelism", "quotation"].flatMap((d, k) => [[`原創例句${k}甲。`, [d], "說明"], [`原創例句${k}乙。`, [d], "說明"]]);
+
+test("修辭分類：每組 4 到 6 句、2 到 4 種修辭、只用一句一種修辭的例句；組與組不重複，正解拿滿分", async () => {
   const v = await loadValidators();
-  for (const seed of ["a", "b", "c"]) {
-    const [q] = generate("rhetoric-sort", { unit, cards: noCards, seed, count: 1, materials });
-    assert.ok(q.bins.length >= 2 && q.bins.length <= 3);
-    assert.ok(q.objects.length >= 2 && q.objects.length <= 6);
+  const one = generate("rhetoric-sort", { unit, cards: noCards, seed: "a", count: "all", materials });
+  assert.equal(one.length, 1, "6 句各一種修辭只湊得出一組");
+  const many = generate("rhetoric-sort", { unit, cards: noCards, seed: "a", count: "all", materials: [rhetoricMaterial(TWO_EACH)] });
+  assert.equal(many.length, 3, "12 句、每種 2 句 → 3 組");
+  const seen = new Set();
+  for (const q of [...one, ...many]) {
+    assert.ok(q.bins.length >= 2 && q.bins.length <= 4, `${q.bins.length} 種`);
+    assert.ok(q.objects.length >= 4 && q.objects.length <= 6, `${q.objects.length} 句`);
     assert.ok(!q.objects.some((o) => o.text.text.includes("風輕輕唱著歌")), "兩種修辭的句子不放進分類題");
-    for (const o of q.objects) {
-      const ex = EXAMPLES.find(([t]) => t === o.text.text);
-      assert.equal(o.bin, ex[1][0]);
-    }
-    assert.ok(v.item(toItemShape(q)), JSON.stringify(v.item.errors));
+    assert.ok(q.anchor.split(",").every((a) => /^m-demo-rhetoric#b\d+$/.test(a)), q.anchor);
+    v.item(toItemShape(q)) || assert.fail(JSON.stringify(v.item.errors));
     assert.equal(score(q, correctResponse(q)).outcome, "correct");
   }
+  for (const q of many) for (const o of q.objects) {
+    assert.ok(!seen.has(o.text.text), `${o.text.text} 出現在兩組`);
+    seen.add(o.text.text);
+    assert.equal(o.bin, TWO_EACH.find(([t]) => t === o.text.text)[1][0]);
+  }
+  const quizKeys = many.map(quizRepeatKey);
+  assert.equal(new Set(quizKeys).size, many.length, "不同組不算重複");
 });
 
 test("needs：沒有修辭例句就略過；一句一種的例句不到 4 句不出分類題", () => {
@@ -109,4 +125,24 @@ test("測驗藍圖：來源題庫都是 0（漏傳 materials）時丟錯，不�
   const quiz = plan.steps.find((s) => s.activity === "quiz");
   assert.equal(generate("quiz", { unit, cards: noCards, seed: 1, blueprint: quiz.blueprint, materials }).length, 5);
   assert.throws(() => generate("quiz", { unit, cards: noCards, seed: 1, blueprint: quiz.blueprint }), /漏傳 materials/);
+});
+
+test("同一種子結果相同：修辭選擇、修辭分類、混合練習", () => {
+  for (const [a, extra] of [["rhetoric-pick", {}], ["rhetoric-sort", {}], ["mix", { sources: ["rhetoric-pick", "rhetoric-sort"] }]]) {
+    const run = () => generate(a, { unit, cards: noCards, seed: "same", count: "all", materials, ...extra });
+    assert.deepEqual(run(), run(), a);
+  }
+});
+
+test("混合練習：設定錯誤照樣丟錯，不會被當成條件不足略過（#58）", () => {
+  assert.throws(() => generate("mix", { unit, cards: noCards, seed: 1, materials, sources: ["rhetoric-pick", "quiz"] }), /不能放進混合練習/);
+  assert.throws(() => generate("mix", { unit, cards: noCards, seed: 1, materials, sources: ["rhetoric-pick", "word-meaning"] }), /同一分類/);
+});
+
+test("重複題 key：選擇題同題幹同正解、干擾項不同仍算重複；正解不同就不算（#58）", () => {
+  const q = (answerText, other) => ({ type: "choice", quiz_source: "rhetoric-pick", stem: { text: spoken("「月亮像小船。」這句用了哪一種修辭？") }, answer: "a", options: [{ id: "a", text: spoken(answerText) }, { id: "b", text: spoken(other) }] });
+  assert.equal(quizRepeatKey(q("譬喻", "擬人")), quizRepeatKey({ ...q("譬喻", "誇飾"), options: [{ id: "b", text: spoken("誇飾") }, { id: "a", text: spoken("譬喻") }] }));
+  assert.notEqual(quizRepeatKey(q("譬喻", "擬人")), quizRepeatKey(q("擬人", "譬喻")));
+  const ord = (list) => ({ type: "ordering", quiz_source: "para-order", stem: { text: spoken("排好") }, sequence: list.map((t, i) => ({ id: `s${i}`, text: spoken(t) })) });
+  assert.equal(quizRepeatKey(ord(["一", "二"])), quizRepeatKey(ord(["二", "一"])));
 });
