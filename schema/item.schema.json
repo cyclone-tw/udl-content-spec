@@ -478,6 +478,28 @@
         },
         "alt": {
           "type": "string"
+        },
+        "listen": {
+          "$ref": "#/$defs/listen"
+        }
+      },
+      "additionalProperties": false
+    },
+    "listen": {
+      "type": "object",
+      "description": "聽音題（#36）：只播聲音、不顯示文字的題幹，給聽音選字、選語詞、選注音用。殼放「再聽一次」按鈕；題幹說明仍寫在 stem.text。不是 spoken_text，因為沒有要顯示的文字。",
+      "required": [
+        "audio"
+      ],
+      "properties": {
+        "audio": {
+          "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path",
+          "description": "要播的音檔（包內相對路徑，只收 ASCII），必須列在 pack.json files。單音用共用單音包的檔名（音節鍵，例如 xing2.m4a），驗證器才能做同音字檢查。"
+        },
+        "repeat_max": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "第一次播放之後，最多還能再播幾次；0 表示只播一次，不填不限。"
         }
       },
       "additionalProperties": false

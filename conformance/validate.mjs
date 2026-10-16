@@ -13,6 +13,7 @@ import addFormats from "ajv-formats";
 import { generators, profilesFor, checkParams, INSTANCE_SCHEMA_PATH } from "../generators/index.mjs";
 import { resolveBindings, planSteps, generate, toItemShape, toInstanceShape, correctResponse, coreCards, profiles as activityProfiles } from "../activities/index.mjs";
 import { score } from "../question-types/index.mjs";
+import { AUDIO_EXTS, normalizeZhuyin, syllableKey } from "../audio/index.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root_ = path.join(here, "..");
@@ -125,6 +126,58 @@ export function checkCard(card, { validateParams } = {}) {
     const item = { id: card.id, ladder_ids: card.ladder_ids, generator: card.generator, generator_version: card.generator_version, params: card.params };
     errors.push(...checkGeneratedItem(item, { validateParams }).errors);
   }
+  return errors;
+}
+
+/** 聽音題同音字檢查用的讀音表：字 → 讀音的音節鍵集合，取自生字卡與語詞卡（含 --cards-from 的卡片庫）。 */
+export function readingsFromCards(cards) {
+  const map = new Map();
+  const add = (ch, z) => {
+    const key = syllableKey(z);
+    if (!key) return;
+    if (!map.has(ch)) map.set(ch, new Set());
+    map.get(ch).add(key);
+  };
+  for (const c of cards) {
+    if (c?.kind === "char") add(c.char, c.zhuyin);
+    if (c?.kind === "word") {
+      const chars = [...c.word];
+      const syl = normalizeZhuyin(c.zhuyin).split(" ");
+      if (chars.length === syl.length) chars.forEach((ch, i) => add(ch, syl[i]));
+    }
+  }
+  return map;
+}
+
+/** 聽音檔是單音包的音節檔（檔名就是音節鍵，例如 audio/xing2.m4a）時回傳音節鍵，否則回 null（語詞或無法判斷）。 */
+export function listenSyllableKey(audio) {
+  const base = String(audio ?? "").split("/").pop();
+  const ext = AUDIO_EXTS.find((e) => base.endsWith(e));
+  if (!ext) return null;
+  const stem = base.slice(0, -ext.length);
+  return /^[a-z]+[1-5]$/.test(stem) ? stem : null;
+}
+
+/**
+ * 聽音題的同音字檢查（純函式，回傳錯誤字串）：播單音時，正解以外的選項（含干擾項池會抽進來的項目）不得和播放的音同音。
+ * 只在拿得到讀音時檢查：聽音檔是音節檔、選項是單一個字且讀音表裡有它（或選項本身就是注音）；拿不到就略過。
+ */
+export function checkListenItem(item, { readings = new Map(), pools = new Map() } = {}) {
+  const errors = [];
+  const key = listenSyllableKey(item.stem?.listen?.audio);
+  if (!key || item.type !== "choice") return errors;
+  const check = (text, where) => {
+    const t = String(text ?? "").trim();
+    const chars = [...t];
+    if (chars.length === 1 && readings.get(t)?.has(key)) {
+      errors.push(`${where}「${t}」也讀 ${key}，和播放的單音同音；播單音時選項不得有同音字，要分辨同音字請改播語詞，並在題幹說明寫清楚要選哪個字`);
+    } else if (/^[\u3100-\u312f˙ˊˇˋ]+$/u.test(t) && syllableKey(t) === key) {
+      errors.push(`${where}「${t}」就是播放的音 ${key}；正解以外的選項不得和播放的音相同`);
+    }
+  };
+  for (const o of asArray(item.options)) if (o?.id !== item.answer) check(o?.text?.text, `選項 ${o?.id}`);
+  const pool = item.distractor_pool && pools.get(item.distractor_pool.pool);
+  if (pool) for (const [i, e] of asArray(pool.entries).entries()) check(e?.text?.text, `干擾項池 ${pool.id} 第 ${i + 1} 項`);
   return errors;
 }
 
@@ -358,6 +411,7 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
     walkSpoken(card, rel, warnings, null);
     cards.set(cardId, card);
   }
+  const readings = readingsFromCards([...cards.values(), ...library.values()]);
   const lookupCard = (ref) => {
     if (!ref.includes("#")) return cards.get(ref) ?? null;
     return library.get(ref) ?? null;
@@ -454,6 +508,10 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
         warnings.push(...g.warnings.map((m) => `${rel}: ${m}`));
       }
       if (typeof item.stem?.image === "string") requireListed(item.stem.image, rel);
+      if (item.stem?.listen) {
+        requireListed(item.stem.listen.audio, `${rel}/stem/listen`);
+        errors.push(...checkListenItem(item, { readings, pools }).map((m) => `${rel}: ${m}`));
+      }
       for (const o of [...asArray(item.options), ...asArray(item.sequence), ...asArray(item.objects)]) if (typeof o.image === "string") requireListed(o.image, rel);
       checkLadder(item.ladder_ids, rel);
       items.set(itemId, item);

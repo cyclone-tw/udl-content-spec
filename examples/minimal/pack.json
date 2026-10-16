@@ -3,7 +3,7 @@
   "id": "sample-willow",
   "version": "0.1.0",
   "title": "示範：溪橋旁的小鎮",
-  "description": "合成範例內容包：一個國語單元（原創短文、選擇／是非／配對三題、一個語意混淆池）與一個數學小單元（情境示範、固定計算題、參數化題、依能力指標條件檔出題的加減法直式題與四個情境池）。不含課文原句、不含學生資料。",
+  "description": "合成範例內容包：一個國語單元（原創短文、選擇／是非／配對等題目、一題聽音選字（附三張生字卡與一個靜音佔位音檔）、一個語意混淆池）與一個數學小單元（情境示範、固定計算題、參數化題、依能力指標條件檔出題的加減法直式題與四個情境池）。不含課文原句、不含學生資料。",
   "subject": "chinese",
   "language": "zh-TW",
   "license": "CC-BY-4.0",
@@ -26,7 +26,28 @@
     "p-math-actions-add",
     "p-math-actions-sub"
   ],
+  "cards": [
+    "c-xing2",
+    "c-xing1",
+    "c-zou3"
+  ],
   "files": [
+    {
+      "path": "audio/xing2.m4a",
+      "sha256": "66caf7a5d4627e6ac9d8c380e8648ffea4d064b77d97270a75abecd231511ce4"
+    },
+    {
+      "path": "cards/c-xing1.json",
+      "sha256": "e53568dcfe517354bcdded9743c4cbdeca48fa70e0a60413076738d59d23df73"
+    },
+    {
+      "path": "cards/c-xing2.json",
+      "sha256": "7deb5090479cb8ff832d911d2c190b95ebf9f99721c8bb91533c93f494d0ea28"
+    },
+    {
+      "path": "cards/c-zou3.json",
+      "sha256": "2882fcb1f10611f5bc8116502b4dca440cabe52efca1c935d3cb6976e7cc61e5"
+    },
     {
       "path": "items/i-blanks-chinese-01.json",
       "sha256": "ff50ff9ae46b4e2c6c27e1c6da38cb926ab658a8302aa6e1ad1eb72eaf35d9c0"
@@ -46,6 +67,10 @@
     {
       "path": "items/i-gen-add-sub-a2.json",
       "sha256": "8465a993db2097522762381298a2a34a4f1a10a26eda7c0f7d5f4b5cf2b820c3"
+    },
+    {
+      "path": "items/i-listen-01.json",
+      "sha256": "485b975db647f09a2ab63c9bf9c586e16e4b023fc272a71d349db6c159959d36"
     },
     {
       "path": "items/i-match-01.json",
@@ -93,7 +118,7 @@
     },
     {
       "path": "units/u01-stream-bridge.json",
-      "sha256": "e244b95c17c2370254cc6ea0ce77647a4d10a49d6243ea2b278d0c04a415e982"
+      "sha256": "42021eef13f893b83ff8434f96d700d92495501d62df0179922a831556489d62"
     },
     {
       "path": "units/u02-add-2digit.json",

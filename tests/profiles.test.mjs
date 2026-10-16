@@ -434,7 +434,7 @@ test("--ladder-dir=<dir> 寫法與壞 JSON 的錯誤訊息", async () => {
   const { spawnSync } = await import("node:child_process");
   const dir = await mkdtemp(path.join(tmpdir(), "udl-ladder-eq-"));
   try {
-    await writeFile(path.join(dir, "fake.json"), JSON.stringify([{ id: "n-I-2#a@2" }, { id: "5-Ⅲ-3#a@6" }]));
+    await writeFile(path.join(dir, "fake.json"), JSON.stringify([{ id: "n-I-2#a@2" }, { id: "5-Ⅲ-3#a@6" }, { id: "4-Ⅲ-1#c@6" }]));
     const run = (args) => spawnSync(process.execPath, [path.join(ROOT, "conformance/validate.mjs"), ...args], { encoding: "utf8" });
     const eq = run([EXAMPLE, `--ladder-dir=${dir}`]);
     assert.equal(eq.status, 0, eq.stdout + eq.stderr);

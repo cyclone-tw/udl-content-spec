@@ -1,0 +1,79 @@
+{
+  "format_version": 1,
+  "id": "i-listen-01",
+  "unit": "u01-stream-bridge",
+  "type": "choice",
+  "kind": "fixed",
+  "skill": "認字",
+  "difficulty": 1,
+  "ladder_ids": [
+    "4-Ⅲ-1#c@6"
+  ],
+  "curriculum_codes": [
+    "4-Ⅲ-1"
+  ],
+  "read_aloud_scope": "stem",
+  "stem": {
+    "text": {
+      "text": "聽一聽，選出你聽到的字。",
+      "audio": null
+    },
+    "listen": {
+      "audio": "audio/xing2.m4a",
+      "repeat_max": 3
+    }
+  },
+  "options": [
+    {
+      "id": "a",
+      "text": {
+        "text": "行",
+        "audio": null
+      }
+    },
+    {
+      "id": "b",
+      "text": {
+        "text": "星",
+        "audio": null
+      }
+    },
+    {
+      "id": "c",
+      "text": {
+        "text": "走",
+        "audio": null
+      }
+    }
+  ],
+  "answer": "a",
+  "shuffle": true,
+  "hints": [
+    {
+      "text": "再聽一次，注意聲音是往上揚的。",
+      "audio": null
+    },
+    {
+      "text": "「星」的聲音是平平的，和你聽到的不一樣。",
+      "audio": null
+    },
+    {
+      "text": "這個字可以組成「步行」。",
+      "audio": null
+    }
+  ],
+  "feedback": {
+    "correct": {
+      "text": "答對了！你聽到的是「行」。",
+      "audio": null
+    },
+    "retry": {
+      "text": "沒關係，再聽一次，注意聲音往上揚喔。",
+      "audio": null
+    }
+  },
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
+}

@@ -61,7 +61,7 @@ test("最小範例通過（只有語音槽與跨科警告）", async () => {
   assert.deepEqual(r.errors, []);
   assert.ok(r.ok);
   assert.equal(r.counts.units, 2);
-  assert.equal(r.counts.items, 9);
+  assert.equal(r.counts.items, 10);
   assert.equal(r.counts.pools, 5);
   assert.ok(r.warnings.every((w) => w.includes("語音槽") || w.includes("subject")), r.warnings.join("\n"));
 });
