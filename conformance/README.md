@@ -24,6 +24,8 @@ pnpm test
 - 讀音表也收生字卡易混淆字的 `zhuyin`（#49）。卡片檢查：易混淆字的 `zhuyin` 要是一個合法音節，而且和 `why` 一致（`音同` 要同音，其他標示不得同音）。
 - 音檔來源驗證器管不到：照 udl-learning `docs/reading-audio-production.md`，只用總目錄已登記、人耳確認過的單音或語詞音檔；輕聲與助詞只能用共用助詞庫，不得單獨合成。
 
+練習分類與測驗藍圖（#50）：生題檢查時把單元的手寫固定題一起交給活動層（課文練習 `reading-items`），`quiz` 有藍圖時照 `planSteps` 回傳的藍圖生題。藍圖某一類題庫不夠、出不滿時警告；某一類前面沒有練習步驟時警告；同一次測驗出現重複的題目報錯。沒有綁卡也沒有寫 `activities` 的單元照舊不做生題檢查。
+
 錯誤類型（#43）：選擇題選項的 `misconception` 必須列在 `pack.json` 的 `misconceptions`，或是 `activities/` 的內建錯誤類型（#49；卡片生的題只能用內建代碼）；正解選項帶 `misconception` 報錯。逐選項 `feedback` 是一般 `spoken_text`，語音槽照既有規則檢查（路徑要在 `files`、`null` 警告）。
 
 `validate-events.mjs` 驗證作答事件檔（`udl-attempt-events/v1`）：schema、seq、outcome 與 score 一致、角色與代號、`--ladder-dir`、隱私掃描；細節見 `events/README.md`。`validate-audio.mjs` 驗證音檔包清單（單音、語詞、整課）：schema、鍵與注音一致、檔名規則、相對路徑、重複、合成標示、同一版只新增；細節見 `audio/README.md`。內容 lint 待後續 issue。所有檢查在本機跑，不靠 GitHub Actions。

@@ -188,10 +188,10 @@ export function checkListenItem(item, { readings = new Map(), pools = new Map() 
 /**
  * 依單元綁的卡與教材排步驟，並對每個生題步驟實際生一批題：題目要通過題型 schema，正解要拿滿分。
  */
-export function checkUnitActivities({ unit, cards, materials, pools, validators, readings, seed = "validate" }) {
+export function checkUnitActivities({ unit, cards, materials, pools, validators, readings, items = [], seed = "validate" }) {
   const errors = [];
   const warnings = [];
-  const plan = planSteps({ unit, cards, materials });
+  const plan = planSteps({ unit, cards, materials, items, readings });
   if (plan.ladder_status === "draft" && plan.steps.some((x) => x.generates && x.ladder_ids)) warnings.push(`年級活動設定的能力階梯對照還是草稿（ladder_status: draft），待 Cyclone 審`);
   const runs = [{ label: "", coreOnly: false }];
   if (coreCards(unit, cards)) runs.push({ label: "（只用核心卡）", coreOnly: true });
@@ -201,13 +201,23 @@ export function checkUnitActivities({ unit, cards, materials, pools, validators,
     const where = `活動 ${step.activity}${run.label}`;
     let list;
     try {
-      list = generate(step.activity, { unit, cards, seed, count: step.count, pools, ladders: plan.ladders, readAloud: step.read_aloud_scope, coreOnly: run.coreOnly, readings });
+      list = generate(step.activity, { unit, cards, seed, count: step.blueprint ? undefined : step.count, pools, ladders: plan.ladders, readAloud: step.read_aloud_scope, coreOnly: run.coreOnly, readings, items, blueprint: step.blueprint });
     } catch (err) {
       // 核心卡太少湊不出某種題，只提醒：老師開「只用核心卡」時這一步會略過。
       (run.coreOnly ? warnings : errors).push(`${where} 生題失敗：${err.message}`);
       continue;
     }
     if (!list.length) errors.push(`${where} 沒有生出任何題目`);
+    if (step.blueprint) {
+      // 測驗藍圖（#50）：題庫不夠時題數會少於藍圖，提醒老師；同一次測驗同一題不重複。
+      for (const b of step.blueprint) {
+        const got = list.filter((q) => q.quiz_group === b.group).length;
+        if (got < b.count) warnings.push(`${where} 藍圖「${b.group}」要 ${b.count} 題，題庫只出得了 ${got} 題`);
+      }
+      for (const b of step.blueprint_skipped ?? []) warnings.push(`${where} 藍圖「${b.group}」：${b.reason}`);
+      const keys = list.map((q) => (q.source === "items" ? `items:${q.id}` : `${q.quiz_source}:${(q.cards ?? []).join(",")}`));
+      if (new Set(keys).size !== keys.length) errors.push(`${where} 同一次測驗出現重複的題目`);
+    }
     for (const q of list) {
       const shapeOk = q.generator ? validators.instance(toInstanceShape(q)) : validators.item(toItemShape(q));
       if (!shapeOk) {
@@ -573,7 +583,7 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
     const boundRefs = new Set(refs);
     for (const ref of asArray(unit.core)) if (!boundRefs.has(ref)) errors.push(`${rel}: core 的 ${ref} 不在 bindings`);
     for (const ladderIds of Object.values(unit.ladders ?? {})) checkLadder(ladderIds, rel);
-    const { errors: actErrors, warnings: actWarnings } = checkUnitActivities({ unit, cards: bound, materials: unitMaterials, pools, validators: v, readings });
+    const { errors: actErrors, warnings: actWarnings } = checkUnitActivities({ unit, cards: bound, materials: unitMaterials, pools, validators: v, readings, items: asArray(unit.items).map((id) => items.get(id)).filter(Boolean) });
     errors.push(...actErrors.map((m) => `${rel}: ${m}`));
     warnings.push(...actWarnings.map((m) => `${rel}: ${m}`));
   }

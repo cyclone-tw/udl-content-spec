@@ -8,12 +8,32 @@
     { "activity": "read", "label": "讀課文", "phase": "learn" },
     { "activity": "mindmap", "label": "心智圖", "phase": "learn", "optional": true },
     { "activity": "char-cards", "label": "生字" },
-    { "activity": "word-cloze", "label": "語詞", "count": 4 },
+    { "activity": "listen-char", "label": "聽音選字", "short": "聽字", "count": "all" },
+    { "activity": "char-pick", "label": "看音選字", "short": "選字", "count": "all", "optional": true },
+    { "activity": "word-cards", "label": "語詞卡", "short": "語詞" },
+    { "activity": "listen-word", "label": "聽音選詞", "short": "聽詞", "count": "all" },
+    { "activity": "word-meaning", "label": "語詞解釋", "short": "詞義", "count": "all" },
+    { "activity": "word-cloze", "label": "語詞填空", "short": "填空", "count": 4, "optional": true },
     { "activity": "sentence-order", "label": "句型", "optional": true },
-    { "activity": "quiz", "label": "小測驗", "short": "測驗", "count": 6 }
+    { "activity": "reading-items", "label": "課文練習", "short": "課文", "count": "all" },
+    {
+      "activity": "quiz",
+      "label": "小測驗",
+      "short": "測驗",
+      "blueprint": [
+        { "group": "char", "count": 2 },
+        { "group": "word", "count": 3 },
+        { "group": "reading", "count": 5 }
+      ]
+    }
   ],
   "ladders": {
-    "char-pick": {"5": ["4-Ⅲ-1#a@5"], "6": ["4-Ⅲ-1#c@6"]}
+    "char-pick": {"5": ["4-Ⅲ-1#a@5"], "6": ["4-Ⅲ-1#c@6"]},
+    "listen-char": {"5": ["4-Ⅲ-1#a@5"], "6": ["4-Ⅲ-1#c@6"]},
+    "listen-word": {"5": ["4-Ⅲ-1#a@5"], "6": ["4-Ⅲ-1#c@6"]},
+    "word-meaning": {"*": ["4-Ⅲ-3#b"]},
+    "word-match": {"*": ["4-Ⅲ-3#b"]},
+    "word-cloze": {"*": ["4-Ⅲ-3#b"]}
   },
   "ladder_status": "draft"
 }
