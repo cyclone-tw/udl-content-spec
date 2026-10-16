@@ -487,14 +487,26 @@
     },
     "listen": {
       "type": "object",
-      "description": "聽音題（#36）：只播聲音、不顯示文字的題幹，給聽音選字、選語詞、選注音用。殼放「再聽一次」按鈕；題幹說明仍寫在 stem.text。不是 spoken_text，因為沒有要顯示的文字。",
-      "required": [
-        "audio"
+      "description": "聽音題（#36）：只播聲音、不顯示文字的題幹，給聽音選字、選語詞、選注音用。殼放「再聽一次」按鈕；題幹說明仍寫在 stem.text。不是 spoken_text，因為沒有要顯示的文字。音源三選一：包內音檔 audio、共用單音包 syllable、共用語詞庫 word（#49）。",
+      "oneOf": [
+        { "required": ["audio"] },
+        { "required": ["syllable"] },
+        { "required": ["word"] }
       ],
       "properties": {
         "audio": {
           "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path",
           "description": "要播的音檔（包內相對路徑，只收 ASCII），必須列在 pack.json files。單音用共用單音包的檔名（音節鍵，例如 xing2.m4a），驗證器才能做同音字檢查。"
+        },
+        "syllable": {
+          "type": "string",
+          "pattern": "^[a-z]+[1-4]$",
+          "description": "共用單音包的音節鍵（audio/ 的 syllableKey，例如 ze2；單音包不收輕聲）。殼到目前的單音包找檔，不必放進內容包（#49）。"
+        },
+        "word": {
+          "type": "string",
+          "pattern": "^\\p{Script=Han}+\\|[^|]+$",
+          "description": "共用語詞庫的語詞鍵「詞|注音」（audio/ 的 wordKey，例如 抉擇|ㄐㄩㄝˊ ㄗㄜˊ）。殼依 wordFileStem 到目前的語詞庫找檔（#49）。"
         },
         "repeat_max": {
           "type": "integer",

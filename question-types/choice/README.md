@@ -3,11 +3,11 @@
 ## 題目欄位（來自 `schema/item.schema.json`）
 
 - `options[]`：2 到 6 個，每個 `{ id, text: spoken_text, image?, misconception?, feedback? }`。
-  - `misconception`（可選，#43）：錯誤類型代碼（kebab-case），代表選這個選項是哪一種錯誤想法；代碼必須列在 `pack.json` 的 `misconceptions`（代碼 → 給老師看的中文名）。正解選項不得帶。
+  - `misconception`（可選，#43）：錯誤類型代碼（kebab-case），代表選這個選項是哪一種錯誤想法；代碼必須列在 `pack.json` 的 `misconceptions`（代碼 → 給老師看的中文名），或是 `activities/` 的內建錯誤類型（#49）。正解選項不得帶。
   - `feedback`（可選，#43）：逐選項回饋（`spoken_text`）。殼的顯示規則見 `../README.md` renderer 契約第 7 條。
 - `answer`：正解的 option id。
 - `shuffle`：是否洗牌；`distractor_pool`：從池抽干擾項（抽完後的實例仍是同形的 `options[]`）。
-- `stem.listen`（可選，#36）：聽音選字、選語詞、選注音；只播聲音、不顯示答案字。殼的行為見 `../README.md` renderer 契約第 6 條；計分不變。播單音時選項不得有同音字（驗證器拿得到讀音時檢查，見 `conformance/README.md`）。
+- `stem.listen`（可選，#36）：聽音選字、選語詞、選注音；只播聲音、不顯示答案字。音源是包內 `audio`、共用單音包 `syllable` 或共用語詞庫 `word` 三選一（#49）。殼的行為見 `../README.md` renderer 契約第 6 條；計分不變。播單音時選項不得有同音字（驗證器拿得到讀音時檢查，見 `conformance/README.md`）。
 
 ## 作答格式
 
