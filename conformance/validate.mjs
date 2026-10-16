@@ -11,9 +11,9 @@ import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { generators, profilesFor, checkParams, INSTANCE_SCHEMA_PATH } from "../generators/index.mjs";
-import { resolveBindings, planSteps, generate, toItemShape, toInstanceShape, correctResponse, coreCards, profiles as activityProfiles } from "../activities/index.mjs";
+import { resolveBindings, planSteps, generate, readingsFromCards, misconceptions as builtinMisconceptions, toItemShape, toInstanceShape, correctResponse, coreCards, profiles as activityProfiles } from "../activities/index.mjs";
 import { score } from "../question-types/index.mjs";
-import { AUDIO_EXTS, normalizeZhuyin, syllableKey } from "../audio/index.mjs";
+import { AUDIO_EXTS, syllableKey, wordKey } from "../audio/index.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root_ = path.join(here, "..");
@@ -122,6 +122,18 @@ export function checkCard(card, { validateParams } = {}) {
   }
   if (card.kind === "char" && (card.confusables ?? []).some((c) => c.char === card.char)) errors.push("confusables 不可包含字本身");
   if (card.kind === "char" && new Set((card.confusables ?? []).map((c) => c.char)).size !== (card.confusables ?? []).length) errors.push("confusables 有重複的字");
+  // 易混淆字的讀音（#49）：要是一個合法音節，而且和 why 的標示一致（音同就要同音，其他標示不得同音）。
+  if (card.kind === "char") for (const c of card.confusables ?? []) {
+    if (c.zhuyin === undefined) continue;
+    const key = syllableKey(c.zhuyin);
+    if (!key) {
+      errors.push(`confusables「${c.char}」的 zhuyin ${c.zhuyin} 不是一個合法音節`);
+      continue;
+    }
+    const same = key === syllableKey(card.zhuyin);
+    if (c.why === "音同" && !same) errors.push(`confusables「${c.char}」標音同，但讀音 ${c.zhuyin} 和「${card.char}」${card.zhuyin} 不同`);
+    if (c.why && c.why !== "音同" && same) errors.push(`confusables「${c.char}」讀音和「${card.char}」相同（${c.zhuyin}），why 應標音同`);
+  }
   if (card.kind === "skill") {
     const item = { id: card.id, ladder_ids: card.ladder_ids, generator: card.generator, generator_version: card.generator_version, params: card.params };
     errors.push(...checkGeneratedItem(item, { validateParams }).errors);
@@ -129,25 +141,8 @@ export function checkCard(card, { validateParams } = {}) {
   return errors;
 }
 
-/** 聽音題同音字檢查用的讀音表：字 → 讀音的音節鍵集合，取自生字卡與語詞卡（含 --cards-from 的卡片庫）。 */
-export function readingsFromCards(cards) {
-  const map = new Map();
-  const add = (ch, z) => {
-    const key = syllableKey(z);
-    if (!key) return;
-    if (!map.has(ch)) map.set(ch, new Set());
-    map.get(ch).add(key);
-  };
-  for (const c of cards) {
-    if (c?.kind === "char") add(c.char, c.zhuyin);
-    if (c?.kind === "word") {
-      const chars = [...c.word];
-      const syl = normalizeZhuyin(c.zhuyin).split(" ");
-      if (chars.length === syl.length) chars.forEach((ch, i) => add(ch, syl[i]));
-    }
-  }
-  return map;
-}
+/** 聽音題同音字檢查用的讀音表（實作在 activities/，聽音選字生題也用同一份）。 */
+export { readingsFromCards };
 
 /** 聽音檔是單音包的音節檔（檔名就是音節鍵，例如 audio/xing2.m4a）時回傳音節鍵，否則回 null（語詞或無法判斷）。 */
 export function listenSyllableKey(audio) {
@@ -164,7 +159,16 @@ export function listenSyllableKey(audio) {
  */
 export function checkListenItem(item, { readings = new Map(), pools = new Map() } = {}) {
   const errors = [];
-  const key = listenSyllableKey(item.stem?.listen?.audio);
+  const listen = item.stem?.listen;
+  if (typeof listen?.word === "string") {
+    const [w, z] = listen.word.split("|");
+    try {
+      if (wordKey(w, z) !== listen.word) errors.push(`stem.listen.word「${listen.word}」要寫成正規化的語詞鍵「${wordKey(w, z)}」（注音每音節一個半形空白）`);
+    } catch (err) {
+      errors.push(`stem.listen.word「${listen.word}」不是合法的語詞鍵：${err.message}`);
+    }
+  }
+  const key = typeof listen?.syllable === "string" ? listen.syllable : listenSyllableKey(listen?.audio);
   if (!key || item.type !== "choice") return errors;
   const check = (text, where) => {
     const t = String(text ?? "").trim();
@@ -184,7 +188,7 @@ export function checkListenItem(item, { readings = new Map(), pools = new Map() 
 /**
  * 依單元綁的卡與教材排步驟，並對每個生題步驟實際生一批題：題目要通過題型 schema，正解要拿滿分。
  */
-export function checkUnitActivities({ unit, cards, materials, pools, validators, seed = "validate" }) {
+export function checkUnitActivities({ unit, cards, materials, pools, validators, readings, seed = "validate" }) {
   const errors = [];
   const warnings = [];
   const plan = planSteps({ unit, cards, materials });
@@ -197,7 +201,7 @@ export function checkUnitActivities({ unit, cards, materials, pools, validators,
     const where = `活動 ${step.activity}${run.label}`;
     let list;
     try {
-      list = generate(step.activity, { unit, cards, seed, count: step.count, pools, ladders: plan.ladders, readAloud: step.read_aloud_scope, coreOnly: run.coreOnly });
+      list = generate(step.activity, { unit, cards, seed, count: step.count, pools, ladders: plan.ladders, readAloud: step.read_aloud_scope, coreOnly: run.coreOnly, readings });
     } catch (err) {
       // 核心卡太少湊不出某種題，只提醒：老師開「只用核心卡」時這一步會略過。
       (run.coreOnly ? warnings : errors).push(`${where} 生題失敗：${err.message}`);
@@ -214,6 +218,9 @@ export function checkUnitActivities({ unit, cards, materials, pools, validators,
       if (!q.ladder_ids?.length) errors.push(`${where} 題目 ${q.id} 沒有 ladder_ids（年級設定 ladders、卡片或單元至少要有一處標能力階梯）`);
       const r = score(q, correctResponse(q));
       if (r.outcome !== "correct") errors.push(`${where} 題目 ${q.id}：正解沒有拿到滿分（${r.outcome}）`);
+      // 卡片生的聽音題也做同音字檢查（#36），讀音表含卡片庫；錯誤類型只能用內建代碼（#49）。
+      if (q.stem?.listen) errors.push(...checkListenItem(q, { readings: readings ?? readingsFromCards(Object.values(cards).flat()), pools }).map((m) => `${where} 題目 ${q.id}: ${m}`));
+      for (const o of asArray(q.options)) if (o.misconception !== undefined && !Object.hasOwn(builtinMisconceptions, o.misconception)) errors.push(`${where} 題目 ${q.id}: 選項 ${o.id} 的 misconception ${o.misconception} 不是內建錯誤類型`);
     }
   }
   return { errors, warnings, plan };
@@ -476,7 +483,7 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
         for (const o of item.options) {
           if (o.misconception === undefined) continue;
           if (o.id === item.answer) errors.push(`${rel}: 正解選項 ${o.id} 不得帶 misconception（錯誤類型只標在錯誤選項）`);
-          if (!Object.hasOwn(pack.misconceptions ?? {}, o.misconception)) errors.push(`${rel}: 選項 ${o.id} 的 misconception ${o.misconception} 不在 pack.json misconceptions`);
+          if (!Object.hasOwn(pack.misconceptions ?? {}, o.misconception) && !Object.hasOwn(builtinMisconceptions, o.misconception)) errors.push(`${rel}: 選項 ${o.id} 的 misconception ${o.misconception} 不在 pack.json misconceptions，也不是內建錯誤類型（activities/ 的 misconceptions）`);
         }
       }
       if (item.kind === "fixed" && item.type === "match") {
@@ -514,7 +521,7 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
       }
       if (typeof item.stem?.image === "string") requireListed(item.stem.image, rel);
       if (item.stem?.listen) {
-        requireListed(item.stem.listen.audio, `${rel}/stem/listen`);
+        if (item.stem.listen.audio !== undefined) requireListed(item.stem.listen.audio, `${rel}/stem/listen`);
         errors.push(...checkListenItem(item, { readings, pools }).map((m) => `${rel}: ${m}`));
       }
       for (const o of [...asArray(item.options), ...asArray(item.sequence), ...asArray(item.objects)]) if (typeof o.image === "string") requireListed(o.image, rel);
@@ -566,7 +573,7 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
     const boundRefs = new Set(refs);
     for (const ref of asArray(unit.core)) if (!boundRefs.has(ref)) errors.push(`${rel}: core 的 ${ref} 不在 bindings`);
     for (const ladderIds of Object.values(unit.ladders ?? {})) checkLadder(ladderIds, rel);
-    const { errors: actErrors, warnings: actWarnings } = checkUnitActivities({ unit, cards: bound, materials: unitMaterials, pools, validators: v });
+    const { errors: actErrors, warnings: actWarnings } = checkUnitActivities({ unit, cards: bound, materials: unitMaterials, pools, validators: v, readings });
     errors.push(...actErrors.map((m) => `${rel}: ${m}`));
     warnings.push(...actWarnings.map((m) => `${rel}: ${m}`));
   }

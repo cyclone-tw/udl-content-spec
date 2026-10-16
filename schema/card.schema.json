@@ -34,13 +34,14 @@
     },
     "confusables": {
       "type": "array",
-      "description": "char：容易混淆的字（形近、音同），給選字題當干擾項，也給老師看。",
+      "description": "char：容易混淆的字（形近、音同），給選字題當干擾項，也給老師看；聽音選字只用填了 zhuyin、而且和這個字不同音的。",
       "items": {
         "type": "object",
         "required": ["char"],
         "properties": {
           "char": { "type": "string", "minLength": 1, "maxLength": 1 },
-          "why": { "type": "string", "enum": ["形近", "音同", "音近", "義近"] }
+          "why": { "type": "string", "enum": ["形近", "音同", "音近", "義近"] },
+          "zhuyin": { "type": "string", "minLength": 1, "description": "這個易混淆字的讀音（一個音節；多音字填最常見的）。聽音選字要知道讀音才能避開同音字，沒填的易混淆字不會當聽音選字的干擾項（#49）。" }
         },
         "additionalProperties": false
       },

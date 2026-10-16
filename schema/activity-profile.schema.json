@@ -42,7 +42,7 @@
     },
     "activity_id": {
       "type": "string",
-      "enum": ["read", "mindmap", "demo", "char-cards", "word-cards", "manipulate", "char-pick", "word-match", "word-cloze", "sentence-order", "skill-practice", "quiz"],
+      "enum": ["read", "mindmap", "demo", "char-cards", "word-cards", "manipulate", "char-pick", "word-match", "word-cloze", "listen-char", "listen-word", "word-meaning", "sentence-order", "skill-practice", "quiz"],
       "description": "活動 id，對應 activities/index.mjs 的登錄表。"
     }
   }
