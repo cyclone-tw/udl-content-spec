@@ -74,6 +74,12 @@ interface RendererHandle {
 3. 面向學生的文字一律是 `spoken_text`；`ctx.speech.enabled` 時每段文字旁提供「聽」的觸發。
 4. 觸控目標 ≥ 48px；尊重 `prefers-reduced-motion`；只用原生 Web 技術（AGENTS 技術約定）。
 5. 作答一律送 `response.schema.json` 定義的形狀；數字輸入由 renderer 轉成 `number`，不送字串。
+6. **聽音題（`stem.listen`，#36）由殼負責**，renderer 照常畫選項：
+   - 殼放一顆「再聽一次」按鈕（觸控目標 ≥ 48px），按了就播 `listen.audio`；不顯示任何代替聲音的文字（沒有字幕、不顯示檔名）。
+   - 第一次播放可以在題目出現時自動播（瀏覽器允許時），也可以等學生按。`repeat_max` 是第一次之後還能再播幾次；用完就停用按鈕並用白話告訴學生（例如「已經聽完了，選選看」），不藏起來；不填不限。
+   - `listen` 是題目本身，不受 `read_aloud_scope` 與 `ctx.speech.enabled` 影響，一律可以播；`read_aloud_scope` 仍只管題幹說明（`stem.text`）與選項，識字類用 `stem`，選項不唸。
+   - 每次播放記一筆 `audio-played`，`target: "listen"`；`answered` 不加欄位。
+   - 判分不變：仍是該題型的 `score()`。
 
 ## 版本規則
 

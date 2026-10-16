@@ -1,0 +1,21 @@
+{
+  "format_version": 1,
+  "id": "c-xing2",
+  "kind": "char",
+  "key": "行|ㄒㄧㄥˊ",
+  "grade_min": 1,
+  "char": "行",
+  "zhuyin": "ㄒㄧㄥˊ",
+  "radical": "行",
+  "strokes": 6,
+  "meaning": {
+    "text": "走路",
+    "audio": null
+  },
+  "confusables": [
+    {
+      "char": "形",
+      "why": "音同"
+    }
+  ]
+}

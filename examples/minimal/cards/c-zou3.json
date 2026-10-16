@@ -1,0 +1,15 @@
+{
+  "format_version": 1,
+  "id": "c-zou3",
+  "kind": "char",
+  "key": "走|ㄗㄡˇ",
+  "grade_min": 1,
+  "char": "走",
+  "zhuyin": "ㄗㄡˇ",
+  "radical": "走",
+  "strokes": 7,
+  "meaning": {
+    "text": "用腳一步一步往前移動",
+    "audio": null
+  }
+}

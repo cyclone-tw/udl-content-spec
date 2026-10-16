@@ -20,7 +20,7 @@
 | --- | --- | --- |
 | `session-started` | — | 一次活動開始 |
 | `material-viewed` | `material_id`、`page?` | 看了教材哪一頁（學習模式的紀錄） |
-| `audio-played` | `target` | 播了哪段語音（報讀使用證據） |
+| `audio-played` | `target` | 播了哪段語音（報讀使用證據）；聽音題的「再聽一次」每播一次記一筆，`target: "listen"`（#36） |
 | `hint-used` | `item_id`、`hint_tier` 1–3 | 開了第幾層提示 |
 | `answered` | 見下 | 一次作答與判定 |
 | `session-completed` | `summary?` | 結束與彙總 |

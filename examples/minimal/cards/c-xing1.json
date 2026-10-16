@@ -1,0 +1,15 @@
+{
+  "format_version": 1,
+  "id": "c-xing1",
+  "kind": "char",
+  "key": "星|ㄒㄧㄥ",
+  "grade_min": 1,
+  "char": "星",
+  "zhuyin": "ㄒㄧㄥ",
+  "radical": "日",
+  "strokes": 9,
+  "meaning": {
+    "text": "夜空中會發亮的星星",
+    "audio": null
+  }
+}
