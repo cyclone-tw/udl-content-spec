@@ -34,18 +34,19 @@ async function loadHandItems() {
 test("planSteps：高年級設定的練習步驟帶分類；測驗藍圖只接前面的練習步驟，題數＝藍圖加總", async () => {
   const items = await loadHandItems();
   const plan = planSteps({ unit, cards, items });
-  const byActivity = Object.fromEntries(plan.steps.map((s) => [s.activity, s]));
-  assert.equal(byActivity["listen-char"].group, "char");
-  assert.equal(byActivity["word-meaning"].group, "word");
-  assert.equal(byActivity["reading-items"].group, "reading");
-  assert.equal(byActivity["listen-char"].count, "all");
-  const quiz = byActivity.quiz;
+  const mix = (g) => plan.steps.find((s) => s.activity === "mix" && s.group === g);
+  assert.deepEqual(mix("char").sources, ["listen-char", "char-pick"]);
+  assert.ok(mix("word").sources.includes("word-meaning"));
+  assert.deepEqual(mix("reading").sources, ["reading-items"], "沒有課文資料時只剩手寫題");
+  assert.ok(mix("reading").sources_skipped.some((x) => x.activity === "para-gist"));
+  assert.equal(mix("char").count, "all");
+  const quiz = plan.steps.find((s) => s.activity === "quiz");
   assert.equal(quiz.count, 10);
   assert.deepEqual(quiz.blueprint.map((b) => [b.group, b.count]), [["char", 2], ["word", 3], ["reading", 5]]);
   assert.deepEqual(quiz.blueprint.find((b) => b.group === "char").sources.sort(), ["char-pick", "listen-char"]);
   assert.ok(quiz.blueprint.find((b) => b.group === "word").sources.includes("word-meaning"));
   assert.deepEqual(quiz.blueprint.find((b) => b.group === "reading").sources, ["reading-items"]);
-  for (const b of quiz.blueprint) for (const s of b.sources) assert.ok(plan.steps.some((x) => x.activity === s && x.index < quiz.index), `${s} 要在測驗前的練習裡`);
+  for (const b of quiz.blueprint) for (const s of b.sources) assert.ok(plan.steps.some((x) => (x.activity === s || x.sources?.includes(s)) && x.index < quiz.index), `${s} 要在測驗前的練習裡`);
 });
 
 test("測驗：照藍圖各分類抽題，題目都來自練習活動，同一次不重複；同種子相同、換種子會變", async () => {
@@ -57,7 +58,7 @@ test("測驗：照藍圖各分類抽題，題目都來自練習活動，同一�
   assert.equal(list.length, 10);
   const count = (g) => list.filter((q) => q.quiz_group === g).length;
   assert.deepEqual([count("char"), count("word"), count("reading")], [2, 3, 5]);
-  const practice = new Set(plan.steps.filter((s) => s.phase === "practice").map((s) => s.activity));
+  const practice = new Set(plan.steps.filter((s) => s.phase === "practice").flatMap((s) => s.sources ?? [s.activity]));
   assert.ok(list.every((q) => practice.has(q.quiz_source)));
   const keys = list.map((q) => (q.source === "items" ? q.id : `${q.quiz_source}:${q.cards.join()}`));
   assert.equal(new Set(keys).size, keys.length);
@@ -105,7 +106,7 @@ test("老師調整：單元自己的藍圖題數；只指派某幾類時其他�
   const q = onlyChar.steps.find((s) => s.activity === "quiz");
   assert.deepEqual(q.blueprint.map((b) => b.group), ["char"]);
   assert.equal(q.count, 2);
-  assert.ok(onlyChar.skipped.some((s) => s.activity === "reading-items" && s.reason.includes("reading")));
+  assert.ok(onlyChar.skipped.some((s) => s.activity === "mix" && s.reason.includes("reading")));
 });
 
 test("題庫不夠：課文題少於藍圖時只出得了幾題就幾題，不重複；沒有來源的分類記在 blueprint_skipped", async () => {

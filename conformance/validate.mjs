@@ -197,11 +197,14 @@ export function checkUnitActivities({ unit, cards, materials, pools, validators,
   if (coreCards(unit, cards)) runs.push({ label: "（只用核心卡）", coreOnly: true });
   if (!Array.isArray(unit.activities) && !plan.profile) errors.push(`找不到 ${unit.subject} ${unit.grade} 年級的年級活動設定（activities/profiles/），也沒有寫 activities`);
   if (unit.activity_profile && !activityProfiles[unit.activity_profile]) errors.push(`activity_profile ${unit.activity_profile} 不存在`);
+  // 設定寫錯（不是條件不足）：非 quiz 寫 blueprint、不支援的 count "all"、混合練習的來源不合法（#56、#51）。
+  for (const x of plan.skipped.filter((k) => k.config)) errors.push(`活動 ${x.activity} 設定錯誤：${x.reason}`);
+  for (const step of plan.steps) for (const x of step.sources_skipped ?? []) (x.config ? errors : warnings).push(`活動 ${step.activity}（${step.label}）略過 ${x.activity}：${x.reason}`);
   for (const run of runs) for (const step of plan.steps.filter((x) => x.generates)) {
     const where = `活動 ${step.activity}${run.label}`;
     let list;
     try {
-      list = generate(step.activity, { unit, cards, seed, count: step.blueprint ? undefined : step.count, pools, ladders: plan.ladders, readAloud: step.read_aloud_scope, coreOnly: run.coreOnly, readings, items, blueprint: step.blueprint });
+      list = generate(step.activity, { unit, cards, seed, count: step.blueprint ? undefined : step.count, pools, ladders: plan.ladders, readAloud: step.read_aloud_scope, coreOnly: run.coreOnly, readings, items, blueprint: step.blueprint, materials, sources: step.sources });
     } catch (err) {
       // 核心卡太少湊不出某種題，只提醒：老師開「只用核心卡」時這一步會略過。
       (run.coreOnly ? warnings : errors).push(`${where} 生題失敗：${err.message}`);
@@ -215,7 +218,8 @@ export function checkUnitActivities({ unit, cards, materials, pools, validators,
         if (got < b.count) warnings.push(`${where} 藍圖「${b.group}」要 ${b.count} 題，題庫只出得了 ${got} 題`);
       }
       for (const b of step.blueprint_skipped ?? []) warnings.push(`${where} 藍圖「${b.group}」：${b.reason}`);
-      const keys = list.map((q) => (q.source === "items" ? `items:${q.id}` : `${q.quiz_source}:${(q.cards ?? []).join(",")}`));
+      // 用題目內容判斷重複（#56）：同一張句型卡的不同例句、同一份教材的不同段落都算不同題。
+      const keys = list.map((q) => JSON.stringify([q.quiz_source, q.stem, q.options, q.pairs, q.sequence, q.objects]));
       if (new Set(keys).size !== keys.length) errors.push(`${where} 同一次測驗出現重複的題目`);
     }
     for (const q of list) {
