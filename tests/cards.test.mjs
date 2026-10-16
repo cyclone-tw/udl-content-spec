@@ -105,7 +105,7 @@ test("生題：每個生題活動都產出合格題目，正解拿滿分", async
   const math = await loadUnit("u-add-skill");
   for (const activity of generatingActivities) {
     // 課文類不從卡片生，混合練習要 sources：見 tests/blueprint.test.mjs、tests/reading-data.test.mjs
-    if (["reading-items", "para-gist", "para-order", "mindmap-pick", "mindmap-order", "mix"].includes(activity)) continue;
+    if (["reading-items", "para-gist", "para-order", "mindmap-pick", "mindmap-order", "rhetoric-pick", "rhetoric-sort", "mix"].includes(activity)) continue;
     const ctx = activity === "skill-practice" ? math : activity === "quiz" ? zh : zh;
     const list = generate(activity, { unit: ctx.unit, cards: ctx.cards, seed: "t1" });
     assert.ok(list.length > 0, activity);

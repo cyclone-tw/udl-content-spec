@@ -168,6 +168,51 @@ function mindmapPickDistractors(target, all) {
 }
 const mindmapOrderTargets = (ctx) => mindmapNodes(ctx).filter((x) => x.node.ordered && (x.node.children ?? []).length >= 3 && x.node.children.length <= 8);
 
+// 修辭例句（#51）：任何教材裡的 rhetoric 區塊。
+/** 修辭類型：代碼 → 中文名與給學生的白話說明（schema 的 rhetoric_device）。 */
+export const rhetoricDevices = Object.freeze({
+  simile: Object.freeze({ label: "譬喻", definition: "用另一個相像的東西來比方，常會用到「像、好像、彷彿、是」" }),
+  personification: Object.freeze({ label: "擬人", definition: "把東西當成人來寫，讓它有人的動作、說話或感情" }),
+  hyperbole: Object.freeze({ label: "誇飾", definition: "故意說得比實際更大、更多或更誇張" }),
+  repetition: Object.freeze({ label: "類疊", definition: "同一個字或語詞重複出現" }),
+  parallelism: Object.freeze({ label: "排比", definition: "三句以上句型相似的句子，一句接一句排下來" }),
+  "rhetorical-question": Object.freeze({ label: "設問", definition: "用問句來引起注意或讓人思考" }),
+  quotation: Object.freeze({ label: "引用", definition: "借用別人說過的話、俗語或名言" }),
+  sensory: Object.freeze({ label: "摹寫", definition: "把看到、聽到、聞到、嘗到或摸到的感覺寫出來" }),
+  contrast: Object.freeze({ label: "映襯", definition: "把相反的兩件事放在一起比較" }),
+  antithesis: Object.freeze({ label: "對偶", definition: "上下兩句字數相同、意思相對" }),
+  climax: Object.freeze({ label: "層遞", definition: "一層一層往上或往下推進" }),
+  anadiplosis: Object.freeze({ label: "頂真", definition: "前一句的結尾當下一句的開頭" }),
+  exclamation: Object.freeze({ label: "感嘆", definition: "用感嘆的語氣表達強烈的感情" }),
+});
+// 常被混在一起的修辭：當錯的選項時優先放（最有鑑別力）。
+const RHETORIC_CONFUSIONS = [["simile", "personification"], ["simile", "hyperbole"], ["repetition", "parallelism"], ["parallelism", "antithesis"], ["parallelism", "climax"], ["rhetorical-question", "exclamation"], ["sensory", "hyperbole"]];
+function rhetoricExamples(ctx) {
+  const out = [];
+  for (const m of materialsOf(ctx)) {
+    for (const [i, b] of (Array.isArray(m.blocks) ? m.blocks : []).entries()) {
+      if (b?.type === "rhetoric" && b.text?.text && Array.isArray(b.devices) && b.devices.length && b.devices.every((d) => rhetoricDevices[d])) out.push({ material: m.id, index: i, text: b.text, devices: b.devices, note: b.note });
+    }
+  }
+  return out;
+}
+const rhetoricLabel = (d) => rhetoricDevices[d].label;
+function rhetoricDistractors(ex, pool, rng) {
+  const own = new Set(ex.devices);
+  const confused = RHETORIC_CONFUSIONS.filter((pair) => pair.includes(ex.devices[0])).map((pair) => pair.find((d) => d !== ex.devices[0])).filter((d) => !own.has(d));
+  const learned = [...new Set(pool.flatMap((x) => x.devices))].filter((d) => !own.has(d) && !confused.includes(d));
+  const others = Object.keys(rhetoricDevices).filter((d) => !own.has(d) && !confused.includes(d) && !learned.includes(d));
+  return [...take(confused, 1, rng), ...shuffle(learned, rng), ...shuffle(confused, rng), ...shuffle(others, rng)].filter((d, i, a) => a.indexOf(d) === i).slice(0, 2);
+}
+// 分類題：只用一句一種修辭的例句；至少兩種修辭才分得起來，每題 4 到 6 句。
+function rhetoricSortReady(ctx) {
+  const single = rhetoricExamples(ctx).filter((x) => x.devices.length === 1);
+  const byDevice = new Map();
+  for (const x of single) byDevice.set(x.devices[0], [...(byDevice.get(x.devices[0]) ?? []), x]);
+  const usable = [...byDevice].filter(([, list]) => list.length >= 1);
+  return usable.length >= 2 && single.length >= 4 ? { byDevice: new Map(usable), single } : null;
+}
+
 // 課文題：單元手寫的固定題（generate／planSteps 的 items），一律歸「課文」分類。
 const readingItems = (ctx) => (Array.isArray(ctx?.items) ? ctx.items : []).filter((i) => i && i.kind === "fixed");
 
@@ -181,6 +226,7 @@ export const misconceptions = Object.freeze({
   "shared-char": Object.freeze({ label: "相同字的語詞混淆", note: "語詞裡有一樣的字，就以為意思一樣" }),
   "wrong-paragraph": Object.freeze({ label: "段落重點張冠李戴", note: "把別段的重點當成這一段的" }),
   "wrong-branch": Object.freeze({ label: "心智圖分支放錯", note: "把別的分支的內容放到這一支" }),
+  "rhetoric-mixup": Object.freeze({ label: "修辭類型混淆", note: "把這句的修辭認成另一種（看 detail 的 chosen 與 answer 是哪兩種）" }),
 });
 
 // 每個活動：預設段落、是否生題、在什麼條件下才出現（needs 回傳 null 表示可以，字串是不能的理由）。
@@ -192,7 +238,7 @@ const REGISTRY = {
   "word-cards": { phase: "practice", group: "word", needs: (c) => (c.words.length ? null : "沒有綁語詞卡") },
   manipulate: { phase: "practice", group: "skill", needs: (c) => (c.skills.some((s) => s.manipulative) ? null : "綁的技能卡沒有教具設定") },
   "char-pick": { phase: "practice", group: "char", count: 4, readAloud: "stem", pool: (c) => c.chars.length, generate: genCharPick, needs: (c) => (charPickable(c) ? null : "生字卡少於 2 張，而且卡上沒有易混淆字，湊不出選項") },
-  "word-match": { phase: "practice", group: "word", count: 1, readAloud: "stem", pool: (c) => Math.ceil(c.words.length / 4), generate: genWordMatch, needs: (c) => (c.words.length >= 2 ? null : "綁的語詞卡少於 2 張") },
+  "word-match": { phase: "practice", group: "word", heavy: true, count: 1, readAloud: "stem", pool: (c) => Math.ceil(c.words.length / 4), generate: genWordMatch, needs: (c) => (c.words.length >= 2 ? null : "綁的語詞卡少於 2 張") },
   "word-cloze": { phase: "practice", group: "word", count: 4, readAloud: "stem", pool: (c) => wordsWithExample(c).length, generate: genWordCloze, needs: (c) => (wordsWithExample(c).length && c.words.length >= 2 ? null : "沒有含例句的語詞卡，或語詞卡少於 2 張") },
   "listen-char": { phase: "practice", group: "char", count: 4, readAloud: "stem", pool: (c, ctx) => listenCharPool(c, ctx).length, generate: genListenChar, needs: (c, m, ctx) => (c.chars.some((ch) => listenCharReady(ch, c, mergeReadings(readingsFromCards(allBound(c)), ctx?.readings))) ? null : "湊不出和生字不同音的干擾字（易混淆字要填 zhuyin，或多綁幾張生字卡）") },
   "listen-word": { phase: "practice", group: "word", count: 4, readAloud: "stem", pool: (c, ctx) => listenWordPool(c, ctx).length, generate: genListenWord, needs: (c) => (listenWordReady(c) ? null : "綁的語詞卡少於 2 張，或語詞全都同音") },
@@ -203,6 +249,8 @@ const REGISTRY = {
   "para-order": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => paraOrderChunks(ctx).length, generate: genParaOrder, needs: (c, m, ctx) => (paraOrderChunks({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "課文教材（lesson）填了段落大意 gist 的段落少於 3 段") },
   "mindmap-pick": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => mindmapPickTargets(ctx).length, generate: genMindmapPick, needs: (c, m, ctx) => (mindmapPickTargets({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "心智圖教材沒有兩個以上分支可以出題") },
   "mindmap-order": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => mindmapOrderTargets(ctx).length, generate: genMindmapOrder, needs: (c, m, ctx) => (mindmapOrderTargets({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "心智圖沒有標 ordered、子節點 3 到 8 個的節點") },
+  "rhetoric-pick": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => rhetoricExamples(ctx).length, generate: genRhetoricPick, needs: (c, m, ctx) => (rhetoricExamples({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "教材裡沒有修辭例句（rhetoric 區塊）") },
+  "rhetoric-sort": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => { const r = rhetoricSortReady(ctx); return r ? Math.max(1, Math.floor(r.single.length / 4)) : 0; }, generate: genRhetoricSort, needs: (c, m, ctx) => (rhetoricSortReady({ ...ctx, materials: ctx?.materials ?? m }) ? null : "一句一種修辭的例句少於 4 句，或不到兩種修辭") },
   mix: { phase: "practice", count: "all", generate: genMix, needs: () => null },
   "reading-items": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => readingItems(ctx).length, generate: genReadingItems, needs: (c, m, ctx) => (readingItems(ctx).length ? null : "單元沒有手寫的課文題（items 裡的固定題）") },
   quiz: { phase: "battle", count: 5, generate: genQuiz, needs: (c) => (quizSources(c).length ? null : "沒有可出題的卡") },
@@ -360,7 +408,10 @@ function resolveBlueprint(entries, steps, wanted) {
   const skipped = [];
   for (const { group, count } of entries) {
     if (wanted && !wanted.has(group)) continue;
-    const sources = [...new Set(steps.filter((x) => x.generates && x.group === group && x.activity !== "quiz").flatMap((x) => (x.activity === "mix" ? x.sources : [x.activity])).filter((a) => REGISTRY[a]?.pool))];
+    const all = [...new Set(steps.filter((x) => x.generates && x.group === group && x.activity !== "quiz").flatMap((x) => (x.activity === "mix" ? x.sources : [x.activity])).filter((a) => REGISTRY[a]?.pool))];
+    // 一題就是一整組的活動（語詞配對）放進測驗太重：同分類有別的來源就不用它（#58）。
+    const light = all.filter((a) => !REGISTRY[a].heavy);
+    const sources = light.length ? light : all;
     if (sources.length) blueprint.push({ group, count, sources });
     else skipped.push({ group, reason: `前面沒有「${group}」分類的練習步驟，這部分不出題` });
   }
@@ -376,6 +427,9 @@ function resolveBlueprint(entries, steps, wanted) {
  *   ladders：活動 → 能力階梯（planSteps 回傳的 ladders）；readAloud：覆寫報讀範圍；coreOnly：只用單元標的核心卡。
  *   readings：額外的讀音表（例如整個卡片庫的 readingsFromCards），聽音選字用來多避開同音字、多認得干擾字的讀音。
  *   audio：有預錄音檔的單音鍵、語詞鍵；給了就只對有音檔的卡出聽音題，不給視為都有。
+ *   items：單元的手寫題（課文練習）；materials：單元的教材（段落大意、心智圖、修辭例句）。
+ *   blueprint：quiz 用，照 planSteps 的 step.blueprint；sources：mix 用，照 planSteps 的 step.sources。
+ *   重現一批題目要同樣的 unit、cards、seed、count，以及 blueprint／sources／items／materials（#58）。
  * @returns {object[]} 題目實例（kind: "instance"）。
  */
 export function generate(activity, { unit, cards: allCards, seed, count, pools, ladders = {}, readAloud, coreOnly = false, readings, audio, items, blueprint, materials, sources } = {}) {
@@ -390,7 +444,7 @@ export function generate(activity, { unit, cards: allCards, seed, count, pools, 
   const ctx = { readings, audio, items, materials };
   if (blueprint !== undefined && activity !== "quiz") throw new TypeError(`generate(${activity}): 只有 quiz 收 blueprint`);
   if (blueprint !== undefined) checkBlueprint(blueprint);
-  else if (activity === "mix") checkMixSources(sources, cards, ctx);
+  else if (activity === "mix") sources = usableMixSources(sources, cards, ctx);
   else {
     const reason = def.needs(cards, [], ctx);
     if (reason) throw new TypeError(`generate(${activity}): ${reason}`);
@@ -407,16 +461,22 @@ export function generate(activity, { unit, cards: allCards, seed, count, pools, 
   return parts.map((part, index) => finish(part, { unit, activity, seed: String(seed), index, ladders, readAloud }));
 }
 
-function checkMixSources(sources, cards, ctx) {
+// 混合練習的來源：設定錯誤丟錯；條件不足的來源略過（例如只用核心卡時湊不出選字題，#58），全部都不行才丟錯。
+function usableMixSources(sources, cards, ctx) {
   if (!Array.isArray(sources) || !sources.length) throw new TypeError("generate(mix): 需要 sources（planSteps 回傳的 step.sources）");
   const groups = new Set();
+  const usable = [];
+  const reasons = [];
   for (const s of sources) {
     if (!REGISTRY[s]?.pool || s === "mix" || s === "quiz") throw new TypeError(`generate(mix): ${s} 不能放進混合練習`);
     groups.add(REGISTRY[s].group);
     const reason = REGISTRY[s].needs(cards, ctx.materials ?? [], ctx);
-    if (reason) throw new TypeError(`generate(mix): ${s}：${reason}`);
+    if (reason) reasons.push(`${s}：${reason}`);
+    else usable.push(s);
   }
   if (groups.size > 1) throw new TypeError("generate(mix): sources 要是同一分類");
+  if (!usable.length) throw new TypeError(`generate(mix): 來源都湊不出題（${reasons.join("；")}）`);
+  return usable;
 }
 
 function checkBlueprint(blueprint) {
@@ -610,6 +670,55 @@ function genMindmapOrder({ rng, count, materials }) {
     hints: [spoken("先找最早發生的那一個。"), spoken("想一想：哪一步要先做完，下一步才能做？"), spoken(`第一個是「${nodeText(t.node.children[0])}」。`)],
     feedback: { correct: spoken("排對了！"), retry: spoken("回到課文或心智圖，照發生的先後再排一次。") },
   }));
+}
+
+// 修辭選擇：這句用了哪一種修辭；錯的選項先放一個常混淆的，再用這課學過的修辭。
+function genRhetoricPick({ rng, count, materials }) {
+  const pool = rhetoricExamples({ materials });
+  return cycle(pool, count, rng).map((ex) => {
+    const answer = ex.devices[0];
+    const distractors = rhetoricDistractors(ex, pool, rng).map((d) => ({ text: spoken(rhetoricLabel(d)), misconception: "rhetoric-mixup", feedback: `「${rhetoricLabel(d)}」是${rhetoricDevices[d].definition}。再讀一次這句，看看有沒有這樣寫？` }));
+    return {
+      type: "choice",
+      cards: [],
+      material: ex.material,
+      anchor: `b${ex.index}`,
+      skill: "修辭",
+      difficulty: 2,
+      stem: { text: spoken(`「${plainText(ex.text.text)}」這句用了哪一種修辭？`) },
+      ...taggedOptions({ text: spoken(rhetoricLabel(answer)) }, distractors, rng),
+      shuffle: false,
+      hints: [spoken("先想一想：這句是在比方、在問問題、在重複，還是把東西當成人來寫？"), spoken("把每個選項的意思想一遍，再對照這句話。"), spoken(ex.note?.text ? `提示：${ex.note.text}` : `這種修辭是：${rhetoricDevices[answer].definition}。`)],
+      feedback: { correct: spoken(`對了，是「${rhetoricLabel(answer)}」。${ex.note?.text ?? rhetoricDevices[answer].definition}`), retry: spoken("再讀一次這句，想想它是怎麼寫的。") },
+    };
+  });
+}
+
+// 修辭分類：把幾句例句分到修辭類型（2 到 3 種，常混淆的優先放在一起，每種最多 2 句）。
+function genRhetoricSort({ rng, count, materials }) {
+  const ready = rhetoricSortReady({ materials });
+  const devices = [...ready.byDevice.keys()];
+  const out = [];
+  for (let n = 0; n < count; n++) {
+    const first = take(devices, 1, rng)[0];
+    const partner = shuffle(RHETORIC_CONFUSIONS.filter((p) => p.includes(first)).map((p) => p.find((d) => d !== first)).filter((d) => ready.byDevice.has(d)), rng)[0];
+    const chosen = [first, ...(partner ? [partner] : []), ...shuffle(devices.filter((d) => d !== first && d !== partner), rng)].slice(0, devices.length >= 3 ? 3 : 2);
+    const picked = chosen.flatMap((d) => take(ready.byDevice.get(d), 2, rng));
+    out.push({
+      type: "classify",
+      cards: [],
+      material: picked[0].material,
+      anchor: picked.map((x) => `b${x.index}`).join(","),
+      skill: "修辭",
+      difficulty: 2,
+      stem: { text: spoken("把每一句放到它用的修辭。") },
+      bins: chosen.map((d) => ({ id: d, label: spoken(rhetoricLabel(d)) })),
+      objects: shuffle(picked, rng).map((x, i) => ({ id: `o${i + 1}`, text: spoken(plainText(x.text.text)), bin: x.devices[0] })),
+      hints: [spoken("一句一句讀，先放你最有把握的。"), spoken(chosen.map((d) => `${rhetoricLabel(d)}：${rhetoricDevices[d].definition}`).join("；")), spoken(`「${plainText(picked[0].text.text)}」是${rhetoricLabel(picked[0].devices[0])}。`)],
+      feedback: { correct: spoken("全部分對了！"), retry: spoken("有一句放錯了，再對照每種修辭的意思。") },
+    });
+  }
+  return out;
 }
 
 // 混合練習（#51）：一步裡混合同分類的幾個活動，依 sources 的順序一段一段出（同一種題型放在一起）；
@@ -845,6 +954,7 @@ function genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, rea
   const made = [];
   for (const { group, count, sources } of blueprint) {
     const cap = Object.fromEntries(sources.map((s) => [s, REGISTRY[s].pool(cards, ctx)]));
+    if (Object.values(cap).every((n) => n === 0)) throw new TypeError(`generate(quiz): 藍圖「${group}」的來源題庫都是 0（是不是漏傳 materials 或 items？）`);
     const tally = allocate(sources, count, cap, rng);
     for (const s of sources) {
       if (!tally[s]) continue;

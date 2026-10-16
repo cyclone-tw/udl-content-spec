@@ -29,9 +29,10 @@
         "simplified",
         "demo",
         "dialogue",
-        "mindmap"
+        "mindmap",
+        "rhetoric"
       ],
-      "description": "lesson 原文；simplified 簡化版；demo 情境示範（數學等）；dialogue 角色對話腳本；mindmap 心智圖（只有 mindmap 區塊）。"
+      "description": "lesson 原文；simplified 簡化版；demo 情境示範（數學等）；dialogue 角色對話腳本；mindmap 心智圖（只有 mindmap 區塊）；rhetoric 修辭例句（rhetoric 區塊，#51）。"
     },
     "title": {
       "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
@@ -121,7 +122,8 @@
             "dialogue",
             "math-demo",
             "check",
-            "mindmap"
+            "mindmap",
+            "rhetoric"
           ]
         }
       },
@@ -301,6 +303,37 @@
             "root"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "修辭例句（#51）：一句例句、用了哪些修辭（第一個是主要的）、給學生的說明。修辭題從這裡出：這句用了哪一種修辭、把句子分到修辭類型。",
+          "properties": {
+            "type": {
+              "const": "rhetoric"
+            },
+            "text": {
+              "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+            },
+            "devices": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/rhetoric_device"
+              }
+            },
+            "note": {
+              "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text",
+              "description": "為什麼是這種修辭（白話），答對後給學生看。"
+            }
+          },
+          "required": [
+            "type",
+            "text",
+            "devices"
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -332,6 +365,25 @@
         }
       },
       "additionalProperties": false
+    },
+    "rhetoric_device": {
+      "type": "string",
+      "enum": [
+        "simile",
+        "personification",
+        "hyperbole",
+        "repetition",
+        "parallelism",
+        "rhetorical-question",
+        "quotation",
+        "sensory",
+        "contrast",
+        "antithesis",
+        "climax",
+        "anadiplosis",
+        "exclamation"
+      ],
+      "description": "修辭類型（#51）：simile 譬喻、personification 擬人、hyperbole 誇飾、repetition 類疊、parallelism 排比、rhetorical-question 設問、quotation 引用、sensory 摹寫、contrast 映襯、antithesis 對偶、climax 層遞、anadiplosis 頂真、exclamation 感嘆。中文名與說明在 activities/ 的 rhetoricDevices。"
     }
   }
 }
