@@ -473,6 +473,11 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
         const ids = new Set(item.options.map((o) => o.id));
         if (ids.size !== item.options.length) errors.push(`${rel}: options id 重複`);
         if (!ids.has(item.answer)) errors.push(`${rel}: answer ${item.answer} 不在 options`);
+        for (const o of item.options) {
+          if (o.misconception === undefined) continue;
+          if (o.id === item.answer) errors.push(`${rel}: 正解選項 ${o.id} 不得帶 misconception（錯誤類型只標在錯誤選項）`);
+          if (!Object.hasOwn(pack.misconceptions ?? {}, o.misconception)) errors.push(`${rel}: 選項 ${o.id} 的 misconception ${o.misconception} 不在 pack.json misconceptions`);
+        }
       }
       if (item.kind === "fixed" && item.type === "match") {
         const ids = new Set(item.pairs.map((p) => p.id));

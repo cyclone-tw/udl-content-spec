@@ -22,4 +22,6 @@ pnpm test
 - 只檢查 `choice`；`match` 帶 `listen` 時不做同音字檢查。
 - 音檔來源驗證器管不到：照 udl-learning `docs/reading-audio-production.md`，只用總目錄已登記、人耳確認過的單音或語詞音檔；輕聲與助詞只能用共用助詞庫，不得單獨合成。
 
+錯誤類型（#43）：選擇題選項的 `misconception` 必須列在 `pack.json` 的 `misconceptions`；正解選項帶 `misconception` 報錯。逐選項 `feedback` 是一般 `spoken_text`，語音槽照既有規則檢查（路徑要在 `files`、`null` 警告）。
+
 `validate-events.mjs` 驗證作答事件檔（`udl-attempt-events/v1`）：schema、seq、outcome 與 score 一致、角色與代號、`--ladder-dir`、隱私掃描；細節見 `events/README.md`。`validate-audio.mjs` 驗證音檔包清單（單音、語詞、整課）：schema、鍵與注音一致、檔名規則、相對路徑、重複、合成標示、同一版只新增；細節見 `audio/README.md`。內容 lint 待後續 issue。所有檢查在本機跑，不靠 GitHub Actions。

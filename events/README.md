@@ -25,7 +25,7 @@
 | `answered` | 見下 | 一次作答與判定 |
 | `session-completed` | `summary?` | 結束與彙總 |
 
-`answered` 必帶：`item_id`、`ladder_ids`（至少一條）、`question_type`／`type_version`、`outcome`／`score`（照 `question-types/result.schema.json`）、`attempt_no`、`response_ms`、`hint_tier`（0–3，送出前用到的最高層）、`read_aloud`（true／false；殼不知道就 `null`，不要猜）、`guess_flag`（`none`／`possible-guessing`／`flagged`）。可帶：`curriculum_codes`、`response`（原始作答）、`detail`（score 的 detail）、`generated`（產生題追溯：`generator`、`generator_version`、`seed`、`index`、`tier`、`hint_variant`、`variables`，有這些就能重現同一題）。
+`answered` 必帶：`item_id`、`ladder_ids`（至少一條）、`question_type`／`type_version`、`outcome`／`score`（照 `question-types/result.schema.json`）、`attempt_no`、`response_ms`、`hint_tier`（0–3，送出前用到的最高層）、`read_aloud`（true／false；殼不知道就 `null`，不要猜）、`guess_flag`（`none`／`possible-guessing`／`flagged`）。可帶：`curriculum_codes`、`response`（原始作答）、`detail`（score 的 detail；選擇題答錯且選項有標錯誤類型時含 `misconception`，#43）、`generated`（產生題追溯：`generator`、`generator_version`、`seed`、`index`、`tier`、`hint_variant`、`variables`，有這些就能重現同一題）。
 
 `context.prescription` 記這次實際套用的調整：`font_scale`、`zhuyin`、`read_aloud`（off／on／student-choice）、`option_count`、`untimed`、`motion`、`scaffold`（none／partial／full）、`adjustment`（simplify／reduce／decompose／substitute／not_applicable，與條件檔同名）。缺的欄位表示用殼預設。
 

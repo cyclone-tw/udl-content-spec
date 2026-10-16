@@ -56,6 +56,20 @@
       "uniqueItems": true,
       "default": []
     },
+    "misconceptions": {
+      "type": "object",
+      "description": "錯誤類型代碼表（#43）：代碼 → 給老師看的中文名。選擇題錯誤選項的 misconception 只能用這裡列出的代碼；教師報表據此把代碼翻成中文。",
+      "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["label"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1, "description": "給老師看的中文名，例如「看到動詞就以為是擬人」。" },
+          "note": { "type": "string", "description": "給老師或出題者的補充說明。" }
+        },
+        "additionalProperties": false
+      }
+    },
     "files": {
       "type": "array",
       "description": "包內除 pack.json 以外的每個檔案與 sha256；用 update-files 產生。",
