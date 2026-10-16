@@ -38,6 +38,13 @@
           "oneOf": [{ "type": "integer", "minimum": 1, "maximum": 30 }, { "const": "all" }],
           "description": "生題活動的題數；省略用活動預設。\"all\"：題庫有幾筆就出幾題，每筆輪到一次（練習用，#50）。"
         },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/activity_id" },
+          "description": "只給 mix：這一步混合哪些同分類的生題活動（#51）。例如課文練習混合段落大意、心智圖、手寫課文題。"
+        },
         "blueprint": {
           "type": "array",
           "minItems": 1,
@@ -64,7 +71,7 @@
     },
     "activity_id": {
       "type": "string",
-      "enum": ["read", "mindmap", "demo", "char-cards", "word-cards", "manipulate", "char-pick", "word-match", "word-cloze", "listen-char", "listen-word", "word-meaning", "reading-items", "sentence-order", "skill-practice", "quiz"],
+      "enum": ["read", "mindmap", "demo", "char-cards", "word-cards", "manipulate", "char-pick", "word-match", "word-cloze", "listen-char", "listen-word", "word-meaning", "reading-items", "para-gist", "para-order", "mindmap-pick", "mindmap-order", "mix", "sentence-order", "skill-practice", "quiz"],
       "description": "活動 id，對應 activities/index.mjs 的登錄表。"
     }
   }

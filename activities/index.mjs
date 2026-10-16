@@ -117,6 +117,57 @@ function listenWordPool(c, ctx) {
 }
 const wordMeaningOthers = (c, w) => c.words.filter((x) => x.id !== w.id && x.meaning.text !== w.meaning.text);
 const wordMeaningPool = (c) => c.words.filter((w) => wordMeaningOthers(c, w).length);
+// 課文資料（#51）：lesson 教材的段落（text 區塊依序是第 1、2…段）與段落大意 gist；心智圖節點。
+const plainText = (t) => String(t ?? "").replace(/【([^|】]+)\|[^】]*】/g, "$1");
+const materialsOf = (ctx) => (Array.isArray(ctx?.materials) ? ctx.materials : []);
+function paragraphs(ctx) {
+  const lesson = materialsOf(ctx).find((m) => m.kind === "lesson");
+  if (!lesson) return [];
+  return (Array.isArray(lesson.blocks) ? lesson.blocks : []).filter((b) => b?.type === "text" && b.content).map((b, i) => ({ material: lesson.id, n: i + 1, text: plainText(b.content.text), gist: b.gist }));
+}
+function gistedParagraphs(ctx) {
+  const seen = new Set();
+  return paragraphs(ctx).filter((p) => p.gist?.text && !seen.has(p.gist.text) && seen.add(p.gist.text));
+}
+const PARA_ORDER_MAX = 6;
+function paraOrderChunks(ctx) {
+  const list = gistedParagraphs(ctx);
+  if (list.length < 3) return [];
+  if (list.length <= 8) return [list];
+  const chunks = [];
+  for (let i = 0; i < list.length; i += PARA_ORDER_MAX) chunks.push(list.slice(i, i + PARA_ORDER_MAX));
+  if (chunks.length > 1 && chunks.at(-1).length < 3) chunks.at(-2).push(...chunks.pop());
+  return chunks.filter((c) => c.length >= 3 && c.length <= 8);
+}
+// 心智圖：攤平成 { node, parent, depth, path }；path 是從根算起的子節點索引，給追溯用。
+function mindmapNodes(ctx) {
+  const out = [];
+  for (const m of materialsOf(ctx).filter((x) => x.kind === "mindmap")) {
+    for (const [bi, b] of (Array.isArray(m.blocks) ? m.blocks : []).entries()) {
+      if (b?.type !== "mindmap" || !b.root) continue;
+      const walk = (node, parent, depth, path) => {
+        out.push({ material: m.id, node, parent, depth, path });
+        (node.children ?? []).forEach((c, i) => walk(c, node, depth + 1, [...path, i]));
+      };
+      walk(b.root, null, 0, [bi]);
+    }
+  }
+  return out;
+}
+const nodeText = (n) => plainText(n.text.text);
+const branchName = (n) => n.label ?? nodeText(n);
+function mindmapPickTargets(ctx) {
+  const all = mindmapNodes(ctx);
+  return all.filter((x) => x.parent && (x.parent.children ?? []).length >= 2 && mindmapPickDistractors(x, all).length > 0);
+}
+function mindmapPickDistractors(target, all) {
+  const siblings = new Set((target.parent.children ?? []).map(nodeText));
+  const pool = all.filter((x) => x.parent && x.parent !== target.parent && !siblings.has(nodeText(x.node)) && x.node !== target.parent);
+  const sameDepth = pool.filter((x) => x.depth === target.depth);
+  return (sameDepth.length ? sameDepth : pool).filter((x, i, a) => a.findIndex((y) => nodeText(y.node) === nodeText(x.node)) === i);
+}
+const mindmapOrderTargets = (ctx) => mindmapNodes(ctx).filter((x) => x.node.ordered && (x.node.children ?? []).length >= 3 && x.node.children.length <= 8);
+
 // 課文題：單元手寫的固定題（generate／planSteps 的 items），一律歸「課文」分類。
 const readingItems = (ctx) => (Array.isArray(ctx?.items) ? ctx.items : []).filter((i) => i && i.kind === "fixed");
 
@@ -128,6 +179,8 @@ export const misconceptions = Object.freeze({
   "form-alike": Object.freeze({ label: "形近混淆", note: "選了長得像、讀音不同的字" }),
   "sound-alike": Object.freeze({ label: "音近混淆", note: "選了讀音接近的字或語詞" }),
   "shared-char": Object.freeze({ label: "相同字的語詞混淆", note: "語詞裡有一樣的字，就以為意思一樣" }),
+  "wrong-paragraph": Object.freeze({ label: "段落重點張冠李戴", note: "把別段的重點當成這一段的" }),
+  "wrong-branch": Object.freeze({ label: "心智圖分支放錯", note: "把別的分支的內容放到這一支" }),
 });
 
 // 每個活動：預設段落、是否生題、在什麼條件下才出現（needs 回傳 null 表示可以，字串是不能的理由）。
@@ -146,6 +199,11 @@ const REGISTRY = {
   "word-meaning": { phase: "practice", group: "word", count: 4, readAloud: "all", pool: (c) => wordMeaningPool(c).length, generate: genWordMeaning, needs: (c) => (wordMeaningReady(c) ? null : "綁的語詞卡少於 2 張，或解釋全都相同") },
   "sentence-order": { phase: "practice", group: "word", count: 2, readAloud: "all", pool: (c) => c.patterns.reduce((n, p) => n + p.examples.length, 0), generate: genSentenceOrder, needs: (c) => (c.patterns.length ? null : "沒有綁句型卡") },
   "skill-practice": { phase: "practice", group: "skill", count: 5, readAloud: "stem", generate: genSkillPractice, needs: (c) => (c.skills.length ? null : "沒有綁技能卡") },
+  "para-gist": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => gistedParagraphs(ctx).length, generate: genParaGist, needs: (c, m, ctx) => (gistedParagraphs({ ...ctx, materials: ctx?.materials ?? m }).length >= 2 ? null : "課文教材（lesson）填了段落大意 gist 的段落少於 2 段") },
+  "para-order": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => paraOrderChunks(ctx).length, generate: genParaOrder, needs: (c, m, ctx) => (paraOrderChunks({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "課文教材（lesson）填了段落大意 gist 的段落少於 3 段") },
+  "mindmap-pick": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => mindmapPickTargets(ctx).length, generate: genMindmapPick, needs: (c, m, ctx) => (mindmapPickTargets({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "心智圖教材沒有兩個以上分支可以出題") },
+  "mindmap-order": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => mindmapOrderTargets(ctx).length, generate: genMindmapOrder, needs: (c, m, ctx) => (mindmapOrderTargets({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "心智圖沒有標 ordered、子節點 3 到 8 個的節點") },
+  mix: { phase: "practice", count: "all", generate: genMix, needs: () => null },
   "reading-items": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => readingItems(ctx).length, generate: genReadingItems, needs: (c, m, ctx) => (readingItems(ctx).length ? null : "單元沒有手寫的課文題（items 裡的固定題）") },
   quiz: { phase: "battle", count: 5, generate: genQuiz, needs: (c) => (quizSources(c).length ? null : "沒有可出題的卡") },
 };
@@ -205,7 +263,7 @@ export function planSteps({ unit, cards, materials = [], profile = null, items, 
   const ladderProfile = chosen ?? (unit.activity_profile ? profiles[unit.activity_profile] : profileFor(unit.subject, unit.grade));
   const ladders = resolveLadders({ unit, profile: ladderProfile });
   const source = Array.isArray(unit.activities) ? unit.activities : chosen?.steps ?? [];
-  const ctx = { items, readings };
+  const ctx = { items, readings, materials };
   // groups：老師只指派某幾類練習時，其他分類的步驟拿掉，測驗藍圖也只留這幾類（#50）。
   const wanted = Array.isArray(groups) ? new Set(groups) : null;
   const steps = [];
@@ -216,8 +274,27 @@ export function planSteps({ unit, cards, materials = [], profile = null, items, 
       skipped.push({ activity: step.activity, reason: "未登錄的活動" });
       continue;
     }
-    if (wanted && def.group && !wanted.has(def.group)) {
-      skipped.push({ activity: step.activity, reason: `這次沒有指派「${def.group}」分類` });
+    if (step.blueprint && step.activity !== "quiz") {
+      skipped.push({ activity: step.activity, reason: "只有 quiz 可以寫 blueprint", config: true });
+      continue;
+    }
+    if (step.count === "all" && !def.pool && step.activity !== "mix") {
+      skipped.push({ activity: step.activity, reason: "這個活動不支援 count \"all\"", config: true });
+      continue;
+    }
+    let group = def.group;
+    let sources;
+    let sourcesSkipped = [];
+    if (step.activity === "mix") {
+      // 混合練習（#51）：sources 要是同一分類、會算題庫的活動；條件不足的來源略過並記下理由。
+      ({ group, sources, skipped: sourcesSkipped } = resolveMix(step, cards, materials, ctx));
+      if (!sources.length) {
+        skipped.push({ activity: step.activity, reason: sourcesSkipped.map((x) => `${x.activity}：${x.reason}`).join("；") || "沒有可以混合的活動", ...(sourcesSkipped.some((x) => x.config) ? { config: true } : {}) });
+        continue;
+      }
+    }
+    if (wanted && group && !wanted.has(group)) {
+      skipped.push({ activity: step.activity, reason: `這次沒有指派「${group}」分類` });
       continue;
     }
     let blueprint;
@@ -229,7 +306,7 @@ export function planSteps({ unit, cards, materials = [], profile = null, items, 
         skipped.push({ activity: step.activity, reason: "測驗藍圖的分類都沒有對應的練習步驟" });
         continue;
       }
-    } else {
+    } else if (step.activity !== "mix") {
       const reason = def.needs(cards, materials, ctx);
       if (reason) {
         skipped.push({ activity: step.activity, reason });
@@ -243,8 +320,10 @@ export function planSteps({ unit, cards, materials = [], profile = null, items, 
       label: step.label,
       short: step.short ?? step.label,
       phase: step.phase ?? def.phase,
-      ...(def.group ? { group: def.group } : {}),
+      ...(group ? { group } : {}),
       generates: Boolean(def.generate),
+      ...(sources ? { sources } : {}),
+      ...(sourcesSkipped.length ? { sources_skipped: sourcesSkipped } : {}),
       ...(def.generate ? { count } : {}),
       ...(blueprint ? { blueprint } : {}),
       ...(blueprintSkipped.length ? { blueprint_skipped: blueprintSkipped } : {}),
@@ -256,13 +335,32 @@ export function planSteps({ unit, cards, materials = [], profile = null, items, 
   return { profile: Array.isArray(unit.activities) ? null : chosen?.id ?? null, ladder_status: ladderProfile?.ladder_status ?? null, ladders, steps, skipped };
 }
 
-// 藍圖的每個分類 → 前面練習步驟裡同分類、會生題的活動；沒有來源的分類略過並說明。
+function resolveMix(step, cards, materials, ctx) {
+  const sources = [];
+  const skipped = [];
+  const groups = new Set();
+  for (const s of step.sources ?? []) {
+    const d = REGISTRY[s];
+    if (!d?.pool || s === "mix" || s === "quiz") {
+      skipped.push({ activity: s, reason: "不能放進混合練習（要是會算題庫的練習活動）", config: true });
+      continue;
+    }
+    groups.add(d.group);
+    const reason = d.needs(cards, materials, ctx);
+    if (reason) skipped.push({ activity: s, reason });
+    else sources.push(s);
+  }
+  if (groups.size > 1) return { group: null, sources: [], skipped: [{ activity: "mix", reason: `sources 要是同一分類，這裡混了 ${[...groups].join("、")}`, config: true }] };
+  return { group: [...groups][0] ?? null, sources, skipped };
+}
+
+// 藍圖的每個分類 → 前面練習步驟裡同分類、會算題庫的活動（混合練習展開成它的來源）；沒有來源的分類略過並說明。
 function resolveBlueprint(entries, steps, wanted) {
   const blueprint = [];
   const skipped = [];
   for (const { group, count } of entries) {
     if (wanted && !wanted.has(group)) continue;
-    const sources = [...new Set(steps.filter((x) => x.generates && x.group === group && x.activity !== "quiz").map((x) => x.activity))];
+    const sources = [...new Set(steps.filter((x) => x.generates && x.group === group && x.activity !== "quiz").flatMap((x) => (x.activity === "mix" ? x.sources : [x.activity])).filter((a) => REGISTRY[a]?.pool))];
     if (sources.length) blueprint.push({ group, count, sources });
     else skipped.push({ group, reason: `前面沒有「${group}」分類的練習步驟，這部分不出題` });
   }
@@ -280,7 +378,7 @@ function resolveBlueprint(entries, steps, wanted) {
  *   audio：有預錄音檔的單音鍵、語詞鍵；給了就只對有音檔的卡出聽音題，不給視為都有。
  * @returns {object[]} 題目實例（kind: "instance"）。
  */
-export function generate(activity, { unit, cards: allCards, seed, count, pools, ladders = {}, readAloud, coreOnly = false, readings, audio, items, blueprint } = {}) {
+export function generate(activity, { unit, cards: allCards, seed, count, pools, ladders = {}, readAloud, coreOnly = false, readings, audio, items, blueprint, materials, sources } = {}) {
   const def = REGISTRY[activity];
   if (!def?.generate) throw new TypeError(`generate: ${JSON.stringify(activity)} 不是會生題的活動`);
   if (seed === undefined || seed === null || seed === "") throw new TypeError("generate: 需要 seed，作答事件才能重現這批題目");
@@ -289,22 +387,36 @@ export function generate(activity, { unit, cards: allCards, seed, count, pools, 
     cards = coreCards(unit, allCards);
     if (!cards) throw new TypeError(`generate(${activity}): 單元 ${unit.id} 沒有標核心卡（core）`);
   }
-  const ctx = { readings, audio, items };
+  const ctx = { readings, audio, items, materials };
   if (blueprint !== undefined && activity !== "quiz") throw new TypeError(`generate(${activity}): 只有 quiz 收 blueprint`);
   if (blueprint !== undefined) checkBlueprint(blueprint);
+  else if (activity === "mix") checkMixSources(sources, cards, ctx);
   else {
     const reason = def.needs(cards, [], ctx);
     if (reason) throw new TypeError(`generate(${activity}): ${reason}`);
   }
   let n = blueprint ? blueprint.reduce((t, b) => t + b.count, 0) : count ?? def.count;
   if (n === "all") {
-    if (!def.pool) throw new TypeError(`generate(${activity}): 不支援 count "all"`);
-    n = def.pool(cards, ctx);
+    if (activity === "mix") n = sources.reduce((t, s) => t + REGISTRY[s].pool(cards, ctx), 0);
+    else if (!def.pool) throw new TypeError(`generate(${activity}): 不支援 count "all"`);
+    else n = def.pool(cards, ctx);
   }
   if (!Number.isInteger(n) || n < 1) throw new TypeError("generate: count 必須是 ≥ 1 的整數或 \"all\"");
   const rng = createRng(`${unit.id}|${activity}|${seed}`);
-  const parts = def.generate({ unit, cards, rng, count: n, seed: String(seed), pools, readings, audio, items, blueprint });
+  const parts = def.generate({ unit, cards, rng, count: n, seed: String(seed), pools, readings, audio, items, blueprint, materials, sources });
   return parts.map((part, index) => finish(part, { unit, activity, seed: String(seed), index, ladders, readAloud }));
+}
+
+function checkMixSources(sources, cards, ctx) {
+  if (!Array.isArray(sources) || !sources.length) throw new TypeError("generate(mix): 需要 sources（planSteps 回傳的 step.sources）");
+  const groups = new Set();
+  for (const s of sources) {
+    if (!REGISTRY[s]?.pool || s === "mix" || s === "quiz") throw new TypeError(`generate(mix): ${s} 不能放進混合練習`);
+    groups.add(REGISTRY[s].group);
+    const reason = REGISTRY[s].needs(cards, ctx.materials ?? [], ctx);
+    if (reason) throw new TypeError(`generate(mix): ${s}：${reason}`);
+  }
+  if (groups.size > 1) throw new TypeError("generate(mix): sources 要是同一分類");
 }
 
 function checkBlueprint(blueprint) {
@@ -317,7 +429,7 @@ function checkBlueprint(blueprint) {
 }
 
 function finish(part, { unit, activity, seed, index, ladders, readAloud }) {
-  const source = part.quiz_source ?? activity;
+  const source = part.mix_source ?? part.quiz_source ?? activity;
   const scope = readAloud ?? REGISTRY[source]?.readAloud ?? "all";
   if (part.kind === "instance" && part.generator) {
     // 技能練習沿用數學產生器的實例（能力階梯由技能卡與條件檔決定），只補活動追溯欄位與報讀範圍。
@@ -334,7 +446,7 @@ function finish(part, { unit, activity, seed, index, ladders, readAloud }) {
   return {
     kind: "instance",
     id: `${unit.id}-${activity}#${index}`,
-    source: "cards",
+    source: part.material ? "materials" : "cards",
     activity,
     activity_version: ACTIVITIES_VERSION,
     seed,
@@ -353,13 +465,13 @@ function finish(part, { unit, activity, seed, index, ladders, readAloud }) {
  */
 export function toItemShape(instance, { id = "x-check" } = {}) {
   if (instance.generator) throw new TypeError("toItemShape: 數學產生器的實例請用 generators/instance.schema.json 驗證");
-  const { kind, id: _id, source, activity, activity_version, seed, index, cards, unit, quiz_source, quiz_group, item, ...rest } = instance;
+  const { kind, id: _id, source, activity, activity_version, seed, index, cards, unit, quiz_source, quiz_group, mix_source, item, material, anchor, ...rest } = instance;
   return { format_version: 1, id, unit: unit ?? "x-unit", kind: "fixed", ...rest };
 }
 
 /** 數學產生器實例去掉活動追溯欄位，回到 generators/instance.schema.json 的形狀。 */
 export function toInstanceShape(instance) {
-  const { cards, activity, activity_version, quiz_source, quiz_group, ...rest } = instance;
+  const { cards, activity, activity_version, quiz_source, quiz_group, mix_source, ...rest } = instance;
   return rest;
 }
 
@@ -420,6 +532,100 @@ function taggedOptions(correct, distractors, rng) {
   return { options, answer: OPTION_IDS[all.findIndex((d) => d.right)] };
 }
 const asSet = (v) => (v === undefined || v === null ? null : new Set(v));
+
+// ---------- 課文資料生題（#51） ----------
+// 段落大意：第 N 段在說什麼；錯的選項用別段的大意，一個取最近的段（最容易混），一個隨機。
+function genParaGist({ rng, count, materials }) {
+  const list = gistedParagraphs({ materials });
+  return cycle(list, count, rng).map((p) => {
+    const others = list.filter((x) => x.n !== p.n);
+    const near = [...others].sort((a, b) => Math.abs(a.n - p.n) - Math.abs(b.n - p.n) || a.n - b.n)[0];
+    const rest = shuffle(others.filter((x) => x !== near), rng);
+    const distractors = [near, ...rest].slice(0, 2).map((x) => ({ text: structuredClone(x.gist), misconception: "wrong-paragraph", feedback: `這是第 ${x.n} 段的重點。再讀一次第 ${p.n} 段。` }));
+    return {
+      type: "choice",
+      cards: [],
+      material: p.material,
+      anchor: `p${p.n}`,
+      skill: "段落大意",
+      difficulty: 2,
+      stem: { text: spoken(`第 ${p.n} 段：「${p.text}」這一段主要在說什麼？`) },
+      ...taggedOptions({ text: structuredClone(p.gist) }, distractors, rng),
+      shuffle: false,
+      hints: [spoken("先找這一段一直提到的人、事、物。"), spoken("想一想：這一段發生了什麼事，或作者說了什麼想法？"), spoken(`正確的選項開頭是「${[...p.gist.text].slice(0, 4).join("")}」。`)],
+      feedback: { correct: spoken(`對了，第 ${p.n} 段主要在說：${p.gist.text}`), retry: spoken(`再讀一次第 ${p.n} 段，找出最重要的那件事。`) },
+    };
+  });
+}
+
+// 段落排序：把段落大意照課文順序排好（超過 8 段時切成幾組連續的段落）。
+function genParaOrder({ rng, count, materials }) {
+  return cycle(paraOrderChunks({ materials }), count, rng).map((chunk) => ({
+    type: "ordering",
+    cards: [],
+    material: chunk[0].material,
+    anchor: `p${chunk[0].n}-p${chunk.at(-1).n}`,
+    skill: "文章結構",
+    difficulty: 2,
+    stem: { text: spoken(chunk[0].n === 1 && chunk.length === gistedParagraphs({ materials }).length ? "把段落大意照課文的順序排好。" : `把第 ${chunk[0].n} 到第 ${chunk.at(-1).n} 段的大意照順序排好。`) },
+    sequence: chunk.map((x, i) => ({ id: `s${i + 1}`, text: structuredClone(x.gist) })),
+    hints: [spoken("先想課文一開始在說什麼。"), spoken("想一想事情發生的先後，或作者先說什麼、再說什麼。"), spoken(`第一個是「${chunk[0].gist.text}」。`)],
+    feedback: { correct: spoken("排對了！課文就是照這個順序寫的。"), retry: spoken("回到課文，一段一段對對看。") },
+  }));
+}
+
+// 心智圖挖空：這一支除了已經有的，還少了哪一個；錯的選項用別的分支（同一層優先）的內容。
+function genMindmapPick({ rng, count, materials }) {
+  const all = mindmapNodes({ materials });
+  return cycle(mindmapPickTargets({ materials }), count, rng).map((t) => {
+    const shown = t.parent.children.filter((c) => c !== t.node).map(nodeText);
+    const distractors = take(mindmapPickDistractors(t, all), 2, rng).map((x) => ({ text: structuredClone(x.node.text), misconception: "wrong-branch", feedback: `「${nodeText(x.node)}」是「${branchName(x.parent)}」那一支的內容。` }));
+    return {
+      type: "choice",
+      cards: [],
+      material: t.material,
+      anchor: `n${t.path.join(".")}`,
+      skill: "內容結構",
+      difficulty: 2,
+      stem: { text: spoken(t.depth === 1 ? `心智圖「${branchName(t.parent)}」的主要分支有：${shown.join("、")}。還少了哪一支？` : `心智圖「${branchName(t.parent)}」這一支有：${shown.join("、")}。還少了哪一個？`) },
+      ...taggedOptions({ text: structuredClone(t.node.text) }, distractors, rng),
+      shuffle: false,
+      hints: [spoken("先想一想「" + branchName(t.parent) + "」這一支在說什麼。"), spoken("哪一個選項和這一支已經有的內容是同一類？"), spoken(`答案和「${shown[0]}」放在同一支。`)],
+      feedback: { correct: spoken(`對了，「${nodeText(t.node)}」屬於「${branchName(t.parent)}」。`), retry: spoken("回到心智圖，看看每一支在說什麼。") },
+    };
+  });
+}
+
+// 心智圖排序：標了 ordered 的節點，把它的子節點照順序排好（例如做事的步驟）。
+function genMindmapOrder({ rng, count, materials }) {
+  return cycle(mindmapOrderTargets({ materials }), count, rng).map((t) => ({
+    type: "ordering",
+    cards: [],
+    material: t.material,
+    anchor: `n${t.path.join(".")}`,
+    skill: "內容結構",
+    difficulty: 2,
+    stem: { text: spoken(`「${branchName(t.node)}」照先後順序排好。`) },
+    sequence: t.node.children.map((c, i) => ({ id: `s${i + 1}`, text: structuredClone(c.text) })),
+    hints: [spoken("先找最早發生的那一個。"), spoken("想一想：哪一步要先做完，下一步才能做？"), spoken(`第一個是「${nodeText(t.node.children[0])}」。`)],
+    feedback: { correct: spoken("排對了！"), retry: spoken("回到課文或心智圖，照發生的先後再排一次。") },
+  }));
+}
+
+// 混合練習（#51）：一步裡混合同分類的幾個活動，依 sources 的順序一段一段出（同一種題型放在一起）；
+// count "all" 是各來源題庫加總，每筆輪到一次；給數字時輪流分給各來源，不超過各自的題庫。
+function genMix({ unit, cards, rng, count, seed, pools, sources, items, readings, audio, materials }) {
+  const ctx = { items, readings, audio, materials };
+  const cap = Object.fromEntries(sources.map((s) => [s, REGISTRY[s].pool(cards, ctx)]));
+  const tally = allocate(sources, count, cap, rng);
+  const made = [];
+  for (const s of sources) {
+    if (!tally[s]) continue;
+    const sub = REGISTRY[s].generate({ unit, cards, rng: createRng(`${unit.id}|mix|${s}|${seed}`), count: tally[s], seed: `${seed}|mix`, pools, items, readings, audio, materials });
+    made.push(...sub.slice(0, tally[s]).map((q) => ({ ...q, mix_source: s })));
+  }
+  return made;
+}
 
 // ---------- 生題 ----------
 function genCharPick({ cards, rng, count }) {
@@ -634,15 +840,15 @@ function allocate(sources, count, cap, rng) {
   return tally;
 }
 
-function genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, readings, audio }) {
-  const ctx = { items, readings, audio };
+function genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, readings, audio, materials }) {
+  const ctx = { items, readings, audio, materials };
   const made = [];
   for (const { group, count, sources } of blueprint) {
     const cap = Object.fromEntries(sources.map((s) => [s, REGISTRY[s].pool(cards, ctx)]));
     const tally = allocate(sources, count, cap, rng);
     for (const s of sources) {
       if (!tally[s]) continue;
-      const sub = REGISTRY[s].generate({ unit, cards, rng: createRng(`${unit.id}|quiz|${group}|${s}|${seed}`), count: tally[s], seed: `${seed}|quiz`, pools, items, readings, audio });
+      const sub = REGISTRY[s].generate({ unit, cards, rng: createRng(`${unit.id}|quiz|${group}|${s}|${seed}`), count: tally[s], seed: `${seed}|quiz`, pools, items, readings, audio, materials });
       made.push(...sub.slice(0, tally[s]).map((q) => ({ ...q, quiz_source: s, quiz_group: group })));
     }
   }
@@ -650,8 +856,8 @@ function genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, rea
 }
 
 // 綜合小測驗：在可用的生題活動之間輪流抽，一題一個來源，順序再洗牌。
-function genQuiz({ unit, cards, rng, count, seed, pools, blueprint, items, readings, audio }) {
-  if (blueprint) return genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, readings, audio });
+function genQuiz({ unit, cards, rng, count, seed, pools, blueprint, items, readings, audio, materials }) {
+  if (blueprint) return genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, readings, audio, materials });
   const sources = quizSources(cards);
   const plan = cycle(sources, count, rng);
   const tally = Object.fromEntries(sources.map((s) => [s, plan.filter((p) => p === s).length]));
