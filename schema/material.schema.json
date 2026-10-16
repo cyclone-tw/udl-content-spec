@@ -149,6 +149,15 @@
             "gist": {
               "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text",
               "description": "這一段的段落大意（給學生的白話一句，#51）；lesson 教材的段落有填，就能出「這段在說什麼」與段落排序題。"
+            },
+            "gist_span": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "這句 gist 涵蓋幾個自然段（本區塊加後面幾段，預設 1）：出版社的意義段常跨好幾段（#60）。"
+            },
+            "preface": {
+              "type": "boolean",
+              "description": "前言：不編段號、不出段落大意題（#60）。"
             }
           },
           "required": [

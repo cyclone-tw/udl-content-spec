@@ -188,3 +188,50 @@ test("驗證器：同一張句型卡的兩個例句在同一次測驗不算重�
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+// ---------- #60：意義段（gist_span）與前言（preface） ----------
+const LONG = "小芽每天放學都去看花盆，".repeat(12);
+const spanLesson = () => ({
+  format_version: 1, id: "m-span-lesson", unit: "u-seed", kind: "lesson", title: spoken("小芽的花"),
+  blocks: [
+    { type: "text", content: spoken("前言：小芽是三年級的學生。"), preface: true },
+    { type: "text", content: spoken("小芽想種花。"), gist: spoken("小芽想種花") },
+    { type: "text", content: spoken("她找來花盆。"), gist: spoken("小芽準備材料並種下種子"), gist_span: 3 },
+    { type: "image", src: "images/pot.png", alt: "花盆" },
+    { type: "text", content: spoken("她倒進泥土。") },
+    { type: "text", content: spoken("她放進種子。") },
+    { type: "text", content: spoken(LONG), gist: spoken("小芽每天照顧花") },
+  ],
+});
+
+test("意義段：一句大意涵蓋好幾段，前言不編段號、插圖不影響段號；太長的段落只引開頭（#60）", () => {
+  const ms = [spanLesson()];
+  const list = generate("para-gist", { unit, cards: noCards, seed: "s", count: "all", materials: ms });
+  assert.equal(list.length, 3);
+  const byAnchor = Object.fromEntries(list.map((q) => [q.anchor, q]));
+  assert.deepEqual(Object.keys(byAnchor).sort(), ["p1", "p2-p4", "p5"]);
+  assert.match(byAnchor["p2-p4"].stem.text.text, /^第 2 到 4 段：「她找來花盆。她倒進泥土。她放進種子。」這幾段主要在說什麼？$/);
+  assert.match(byAnchor.p5.stem.text.text, /^回到課文讀第 5 段（從「小芽每天放學都去看花盆，/);
+  assert.ok(list.every((q) => !q.stem.text.text.includes("前言")));
+  const wrong = byAnchor.p1.options.find((o) => o.id !== byAnchor.p1.answer && o.text.text === "小芽準備材料並種下種子");
+  assert.match(wrong.feedback.text, /第 2 到 4 段的重點/);
+  const [order] = generate("para-order", { unit, cards: noCards, seed: "s", count: "all", materials: ms });
+  assert.deepEqual(order.sequence.map((x) => x.text.text), ["小芽想種花", "小芽準備材料並種下種子", "小芽每天照顧花"]);
+});
+
+test("驗證器：gist_span 超出課文、意義段重疊、前言帶大意都報錯（#60）", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "udl-span-"));
+  try {
+    const set = (mutate) => demoGrade6(dir, { mutateLesson: (l) => { l.blocks.forEach((b) => { delete b.gist; }); mutate(l); } });
+    await set((l) => { l.blocks[0].gist = spoken("一"); l.blocks[0].gist_span = 9; });
+    assert.ok((await validatePack(dir)).errors.some((e) => e.includes("gist_span 9 超出課文")));
+    await set((l) => { l.blocks[0].gist = spoken("一"); l.blocks[0].gist_span = 2; l.blocks[1].gist = spoken("二"); });
+    assert.ok((await validatePack(dir)).errors.some((e) => e.includes("已經在前一個意義段")));
+    await set((l) => { l.blocks[0].preface = true; l.blocks[0].gist = spoken("一"); });
+    assert.ok((await validatePack(dir)).errors.some((e) => e.includes("前言（preface）")));
+    await set((l) => { l.blocks[0].gist = spoken("一"); l.blocks[0].gist_span = 2; l.blocks[2].gist = spoken("三"); l.blocks[2].gist_span = 2; });
+    assert.deepEqual((await validatePack(dir)).errors, []);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

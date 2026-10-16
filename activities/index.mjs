@@ -120,14 +120,32 @@ const wordMeaningPool = (c) => c.words.filter((w) => wordMeaningOthers(c, w).len
 // 課文資料（#51）：lesson 教材的段落（text 區塊依序是第 1、2…段）與段落大意 gist；心智圖節點。
 const plainText = (t) => String(t ?? "").replace(/【([^|】]+)\|[^】]*】/g, "$1");
 const materialsOf = (ctx) => (Array.isArray(ctx?.materials) ? ctx.materials : []);
+// 自然段：text 區塊依序編號，前言（preface）不編號（#60）。
 function paragraphs(ctx) {
   const lesson = materialsOf(ctx).find((m) => m.kind === "lesson");
   if (!lesson) return [];
-  return (Array.isArray(lesson.blocks) ? lesson.blocks : []).filter((b) => b?.type === "text" && b.content).map((b, i) => ({ material: lesson.id, n: i + 1, text: plainText(b.content.text), gist: b.gist }));
+  return (Array.isArray(lesson.blocks) ? lesson.blocks : []).filter((b) => b?.type === "text" && b.content && !b.preface).map((b, i) => ({ material: lesson.id, n: i + 1, text: plainText(b.content.text), gist: b.gist, span: Number.isInteger(b.gist_span) && b.gist_span > 1 ? b.gist_span : 1 }));
 }
+// 意義段：一句段落大意涵蓋 gist_span 個自然段（#60）；last 是最後一段的編號，text 是這幾段接起來。
 function gistedParagraphs(ctx) {
+  const list = paragraphs(ctx);
   const seen = new Set();
-  return paragraphs(ctx).filter((p) => p.gist?.text && !seen.has(p.gist.text) && seen.add(p.gist.text));
+  const out = [];
+  for (const p of list) {
+    if (!p.gist?.text || seen.has(p.gist.text)) continue;
+    seen.add(p.gist.text);
+    const covered = list.filter((x) => x.n >= p.n && x.n < p.n + p.span);
+    out.push({ material: p.material, n: p.n, last: covered.at(-1).n, text: covered.map((x) => x.text).join(""), gist: p.gist });
+  }
+  return out;
+}
+const paraRange = (u) => (u.n === u.last ? `第 ${u.n} 段` : `第 ${u.n} 到 ${u.last} 段`);
+// 題幹引段落原文；太長（超過 120 字）就只引開頭一句，請學生回課文讀。
+const PARA_QUOTE_MAX = 120;
+function paraQuote(u) {
+  if ([...u.text].length <= PARA_QUOTE_MAX) return `${paraRange(u)}：「${u.text}」`;
+  const head = [...u.text.split(/(?<=[。！？])/u)[0]].slice(0, 30).join("");
+  return `回到課文讀${paraRange(u)}（從「${head}」開始）。`;
 }
 const PARA_ORDER_MAX = 6;
 function paraOrderChunks(ctx) {
@@ -628,19 +646,20 @@ function genParaGist({ rng, count, materials }) {
     const others = list.filter((x) => x.n !== p.n);
     const near = [...others].sort((a, b) => Math.abs(a.n - p.n) - Math.abs(b.n - p.n) || a.n - b.n)[0];
     const rest = shuffle(others.filter((x) => x !== near), rng);
-    const distractors = [near, ...rest].slice(0, 2).map((x) => ({ text: structuredClone(x.gist), misconception: "wrong-paragraph", feedback: `這是第 ${x.n} 段的重點。再讀一次第 ${p.n} 段。` }));
+    const many = p.n !== p.last;
+    const distractors = [near, ...rest].slice(0, 2).map((x) => ({ text: structuredClone(x.gist), misconception: "wrong-paragraph", feedback: `這是${paraRange(x)}的重點。再讀一次${paraRange(p)}。` }));
     return {
       type: "choice",
       cards: [],
       material: p.material,
-      anchor: `p${p.n}`,
+      anchor: many ? `p${p.n}-p${p.last}` : `p${p.n}`,
       skill: "段落大意",
       difficulty: 2,
-      stem: { text: spoken(`第 ${p.n} 段：「${p.text}」這一段主要在說什麼？`) },
+      stem: { text: spoken(`${paraQuote(p)}${many ? "這幾段" : "這一段"}主要在說什麼？`) },
       ...taggedOptions({ text: structuredClone(p.gist) }, distractors, rng),
       shuffle: false,
-      hints: [spoken("先找這一段一直提到的人、事、物。"), spoken("想一想：這一段發生了什麼事，或作者說了什麼想法？"), spoken(`正確的選項開頭是「${[...p.gist.text].slice(0, 4).join("")}」。`)],
-      feedback: { correct: spoken(`對了，第 ${p.n} 段主要在說：${p.gist.text}`), retry: spoken(`再讀一次第 ${p.n} 段，找出最重要的那件事。`) },
+      hints: [spoken(`先找${many ? "這幾段" : "這一段"}一直提到的人、事、物。`), spoken(`想一想：${many ? "這幾段" : "這一段"}發生了什麼事，或作者說了什麼想法？`), spoken(`正確的選項開頭是「${[...p.gist.text].slice(0, 4).join("")}」。`)],
+      feedback: { correct: spoken(`對了，${paraRange(p)}主要在說：${p.gist.text}`), retry: spoken(`再讀一次${paraRange(p)}，找出最重要的那件事。`) },
     };
   });
 }
@@ -651,10 +670,10 @@ function genParaOrder({ rng, count, materials }) {
     type: "ordering",
     cards: [],
     material: chunk[0].material,
-    anchor: `p${chunk[0].n}-p${chunk.at(-1).n}`,
+    anchor: `p${chunk[0].n}-p${chunk.at(-1).last}`,
     skill: "文章結構",
     difficulty: 2,
-    stem: { text: spoken(chunk[0].n === 1 && chunk.length === gistedParagraphs({ materials }).length ? "把段落大意照課文的順序排好。" : `把第 ${chunk[0].n} 到第 ${chunk.at(-1).n} 段的大意照順序排好。`) },
+    stem: { text: spoken(chunk[0].n === 1 && chunk.length === gistedParagraphs({ materials }).length ? "把段落大意照課文的順序排好。" : `把第 ${chunk[0].n} 到第 ${chunk.at(-1).last} 段的大意照順序排好。`) },
     sequence: chunk.map((x, i) => ({ id: `s${i + 1}`, text: structuredClone(x.gist) })),
     hints: [spoken("先想課文一開始在說什麼。"), spoken("想一想事情發生的先後，或作者先說什麼、再說什麼。"), spoken(`第一個是「${chunk[0].gist.text}」。`)],
     feedback: { correct: spoken("排對了！課文就是照這個順序寫的。"), retry: spoken("回到課文，一段一段對對看。") },

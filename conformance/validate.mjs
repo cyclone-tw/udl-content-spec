@@ -568,6 +568,18 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
       walkSpoken(material, rel, warnings, vocabKeys);
       const vocab = isObject(material.vocab) ? material.vocab : {};
       for (const key of vocabKeys) if (!vocab[key]) errors.push(`${rel}: 文中標記的詞語 key「${key}」不在 vocab`);
+      // 段落大意的意義段（#60）：gist_span 不得超出課文、意義段不得重疊、前言不帶段落大意。
+      const numbered = material.blocks.map((b, i) => ({ b, i })).filter(({ b }) => b.type === "text" && !b.preface);
+      let coveredUntil = -1;
+      for (const [k, { b, i }] of numbered.entries()) {
+        if (b.gist_span !== undefined && b.gist === undefined) errors.push(`${rel}/blocks/${i}: 有 gist_span 卻沒有 gist`);
+        if (b.gist === undefined) continue;
+        if (k <= coveredUntil) errors.push(`${rel}/blocks/${i}: 這一段已經在前一個意義段（gist_span）裡，不能再有自己的 gist`);
+        const span = b.gist_span ?? 1;
+        if (k + span > numbered.length) errors.push(`${rel}/blocks/${i}: gist_span ${span} 超出課文（後面只剩 ${numbered.length - k} 段）`);
+        coveredUntil = Math.max(coveredUntil, k + span - 1);
+      }
+      for (const [i, b] of material.blocks.entries()) if (b.type === "text" && b.preface && (b.gist !== undefined || b.gist_span !== undefined)) errors.push(`${rel}/blocks/${i}: 前言（preface）不編段號，不能有 gist／gist_span`);
       for (const [i, b] of material.blocks.entries()) {
         if (b.type === "check" && !asArray(unit.items).includes(b.item)) errors.push(`${rel}/blocks/${i}: check 引用的 item ${b.item} 不在單元 items`);
         if ((b.type === "image" || b.type === "audio") && typeof b.src === "string") requireListed(b.src, `${rel}/blocks/${i}`);
