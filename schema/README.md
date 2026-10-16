@@ -7,7 +7,7 @@
 | `common.schema.json` | 共用型別：`id`（kebab-case）、`semver`、`ref`（`pack@version#id`）、`relative_path`、**`spoken_text`**（`text`＋語音槽 `audio`）、`ladder_id`／`curriculum_code`、三層 `hints`、`feedback`、`difficulty`、`subject` |
 | `pack.schema.json` | `pack.json`：`format_version`、`id`、`version`、`title`、`subject`、`language`、`license`、`source`、`audio.default_voice`、`units`、`pools`（包層級，可跨單元共用）、`misconceptions`（錯誤類型代碼 → 給老師看的中文名，#43）、`files`（路徑＋sha256） |
 | `unit.schema.json` | 單元：對齊資訊、`ladder_ids`／`curriculum_codes`、`materials`／`items` 引用、`pools`（本單元用到的池，須在 pack.pools）；`bindings` 綁卡、`activity_profile`／`activities` 選步驟（#31）；`core` 核心卡、`ladders` 覆寫活動能力階梯、`quest` 任務開場與回報對話（#33） |
-| `material.schema.json` | 教材：`kind`（lesson／simplified／demo／dialogue／mindmap）、`zhuyin_map`、`vocab`（`【詞|key】` 標記的 key）、`blocks`（text／image／audio／dialogue／math-demo／check／mindmap 節點樹）；text 區塊可選 `gist` 段落大意、心智圖節點可選 `ordered`（#51） |
+| `material.schema.json` | 教材：`kind`（lesson／simplified／demo／dialogue／mindmap／rhetoric）、`zhuyin_map`、`vocab`（`【詞|key】` 標記的 key）、`blocks`（text／image／audio／dialogue／math-demo／check／mindmap 節點樹）；text 區塊可選 `gist` 段落大意、心智圖節點可選 `ordered`；`rhetoric` 區塊是修辭例句：`text`、`devices`（修辭類型代碼，第一個是主要的）、`note`（#51） |
 | `item.schema.json` | 題目：共用欄位＋`kind`（fixed／generated）＋`type`（choice／true-false／match／numeric）的條件欄位；generated 只帶 `generator`、`generator_version`、`params`、`count`；選用 `read_aloud_scope`（all／stem／none，#33）；`stem.listen`（聽音題：音源 `audio`／`syllable`／`word` 三選一、`repeat_max` 可選，#36、#49）；選擇題 `options[]` 可選 `misconception`（錯誤類型代碼）與 `feedback`（逐選項回饋，#43） |
 | `pool.schema.json` | 干擾項池 |
 | `scope.schema.json` | 範圍選擇器：`include`／`exclude` 的 pack＋version＋units／materials／items／標籤 |

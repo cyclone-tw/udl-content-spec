@@ -12,7 +12,7 @@
     { "activity": "word-cards", "label": "語詞卡", "short": "語詞" },
     { "activity": "mix", "label": "語詞練習", "short": "詞語", "sources": ["listen-word", "word-meaning", "word-match", "word-cloze"], "count": "all" },
     { "activity": "sentence-order", "label": "句型", "optional": true },
-    { "activity": "mix", "label": "課文練習", "short": "課文", "sources": ["para-gist", "para-order", "mindmap-pick", "mindmap-order", "reading-items"], "count": "all" },
+    { "activity": "mix", "label": "課文練習", "short": "課文", "sources": ["para-gist", "para-order", "mindmap-pick", "mindmap-order", "rhetoric-pick", "rhetoric-sort", "reading-items"], "count": "all" },
     {
       "activity": "quiz",
       "label": "小測驗",
@@ -34,7 +34,9 @@
     "para-gist": {"*": ["5-Ⅲ-6#a"]},
     "para-order": {"*": ["5-Ⅲ-6#a"]},
     "mindmap-pick": {"*": ["5-Ⅲ-6#b"]},
-    "mindmap-order": {"*": ["5-Ⅲ-6#b"]}
+    "mindmap-order": {"*": ["5-Ⅲ-6#b"]},
+    "rhetoric-pick": {"*": ["6-Ⅲ-6#a"]},
+    "rhetoric-sort": {"*": ["6-Ⅲ-6#a"]}
   },
   "ladder_status": "draft"
 }

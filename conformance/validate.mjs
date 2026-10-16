@@ -186,6 +186,15 @@ export function checkListenItem(item, { readings = new Map(), pools = new Map() 
 }
 
 /**
+ * 同一次測驗的重複題判斷用的 key（#56、#58）：選擇題看題幹＋正解（干擾項與順序是亂數抽的，不算）；
+ * 其他題型看題幹與內容、不看順序。
+ */
+export function quizRepeatKey(q) {
+  const texts = (list) => (list ?? []).map((x) => JSON.stringify([x.text?.text ?? x.left?.text, x.right?.text, x.bin])).sort();
+  return JSON.stringify([q.quiz_source, q.stem?.text?.text, q.stem?.listen, q.type === "choice" ? q.options.find((o) => o.id === q.answer)?.text?.text : null, texts(q.pairs), texts(q.sequence), texts(q.objects)]);
+}
+
+/**
  * 依單元綁的卡與教材排步驟，並對每個生題步驟實際生一批題：題目要通過題型 schema，正解要拿滿分。
  */
 export function checkUnitActivities({ unit, cards, materials, pools, validators, readings, items = [], seed = "validate" }) {
@@ -218,8 +227,8 @@ export function checkUnitActivities({ unit, cards, materials, pools, validators,
         if (got < b.count) warnings.push(`${where} 藍圖「${b.group}」要 ${b.count} 題，題庫只出得了 ${got} 題`);
       }
       for (const b of step.blueprint_skipped ?? []) warnings.push(`${where} 藍圖「${b.group}」：${b.reason}`);
-      // 用題目內容判斷重複（#56）：同一張句型卡的不同例句、同一份教材的不同段落都算不同題。
-      const keys = list.map((q) => JSON.stringify([q.quiz_source, q.stem, q.options, q.pairs, q.sequence, q.objects]));
+      // 用題目內容判斷重複（#56、#58）：選擇題看題幹＋正解（干擾項與順序是亂數抽的，不算）；其他題型看內容、不看順序。
+      const keys = list.map(quizRepeatKey);
       if (new Set(keys).size !== keys.length) errors.push(`${where} 同一次測驗出現重複的題目`);
     }
     for (const q of list) {
