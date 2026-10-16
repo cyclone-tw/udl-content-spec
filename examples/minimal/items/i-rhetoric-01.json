@@ -1,0 +1,84 @@
+{
+  "format_version": 1,
+  "id": "i-rhetoric-01",
+  "unit": "u01-stream-bridge",
+  "type": "choice",
+  "kind": "fixed",
+  "skill": "修辭辨識",
+  "difficulty": 2,
+  "ladder_ids": [
+    "6-Ⅲ-6#a"
+  ],
+  "curriculum_codes": [
+    "6-Ⅲ-6"
+  ],
+  "stem": {
+    "text": {
+      "text": "「月亮像一艘小船，掛在天上。」這句話用了哪一種修辭？",
+      "audio": null
+    }
+  },
+  "options": [
+    {
+      "id": "a",
+      "text": {
+        "text": "譬喻",
+        "audio": null
+      }
+    },
+    {
+      "id": "b",
+      "text": {
+        "text": "擬人",
+        "audio": null
+      },
+      "misconception": "personification-verb",
+      "feedback": {
+        "text": "擬人要讓東西像人一樣有動作或感情。這句是在比較什麼像什麼？",
+        "audio": null
+      }
+    },
+    {
+      "id": "c",
+      "text": {
+        "text": "誇飾",
+        "audio": null
+      },
+      "misconception": "beauty-as-exaggeration",
+      "feedback": {
+        "text": "誇飾是故意說得比實際更大或更小。這句有把什麼說得特別誇張嗎？再找找「像」字。",
+        "audio": null
+      }
+    }
+  ],
+  "answer": "a",
+  "shuffle": true,
+  "hints": [
+    {
+      "text": "先找找看，句子裡有沒有「像」這個字。",
+      "audio": null
+    },
+    {
+      "text": "句子把月亮和什麼東西放在一起比？",
+      "audio": null
+    },
+    {
+      "text": "把一樣東西比成另一樣東西，就是「譬喻」。",
+      "audio": null
+    }
+  ],
+  "feedback": {
+    "correct": {
+      "text": "答對了！把月亮比成小船，這是譬喻。",
+      "audio": null
+    },
+    "retry": {
+      "text": "再讀一次句子，找找看月亮被比成什麼。",
+      "audio": null
+    }
+  },
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
+}

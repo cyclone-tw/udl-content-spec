@@ -523,6 +523,14 @@
           },
           "image": {
             "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path"
+          },
+          "misconception": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id",
+            "description": "錯誤類型代碼（#43）：選這個選項代表哪一種錯誤想法；必須列在 pack.json misconceptions。正解選項不得帶。"
+          },
+          "feedback": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text",
+            "description": "逐選項回饋（#43）：練習模式選到這個錯誤選項時，殼優先顯示這段，沒有才用題目的 feedback.retry。"
           }
         },
         "additionalProperties": false

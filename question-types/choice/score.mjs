@@ -19,8 +19,9 @@ export function score(question, response) {
   if (!question.options.some((o) => o && o.id === chosen)) return invalid(type, version, "unknown-option", { option: chosen });
 
   const correct = chosen === question.answer;
-  return result(type, version, correct ? "correct" : "incorrect", correct ? 1 : 0, {
-    chosen,
-    answer: question.answer,
-  });
+  const detail = { chosen, answer: question.answer };
+  // 錯誤類型（#43）：選到帶 misconception 的錯誤選項時照抄代碼，給事件與教師報表統計。
+  const misconception = question.options.find((o) => o && o.id === chosen).misconception;
+  if (!correct && isId(misconception)) detail.misconception = misconception;
+  return result(type, version, correct ? "correct" : "incorrect", correct ? 1 : 0, detail);
 }

@@ -3,7 +3,7 @@
   "id": "sample-willow",
   "version": "0.1.0",
   "title": "示範：溪橋旁的小鎮",
-  "description": "合成範例內容包：一個國語單元（原創短文、選擇／是非／配對等題目、一題聽音選字（附三張生字卡與一個靜音佔位音檔）、一個語意混淆池）與一個數學小單元（情境示範、固定計算題、參數化題、依能力指標條件檔出題的加減法直式題與四個情境池）。不含課文原句、不含學生資料。",
+  "description": "合成範例內容包：一個國語單元（原創短文、選擇／是非／配對等題目、一題聽音選字（附三張生字卡與一個靜音佔位音檔）、一題修辭選擇題（錯誤選項標錯誤類型並帶逐選項回饋）、一個語意混淆池）與一個數學小單元（情境示範、固定計算題、參數化題、依能力指標條件檔出題的加減法直式題與四個情境池）。不含課文原句、不含學生資料。",
   "subject": "chinese",
   "language": "zh-TW",
   "license": "CC-BY-4.0",
@@ -31,6 +31,16 @@
     "c-xing1",
     "c-zou3"
   ],
+  "misconceptions": {
+    "personification-verb": {
+      "label": "看到動詞就以為是擬人",
+      "note": "把句中的動作（例如「掛」）當成擬人，沒注意句子是在比較什麼像什麼。"
+    },
+    "beauty-as-exaggeration": {
+      "label": "以為寫得美就是誇飾",
+      "note": "把優美的描寫當成故意誇大。"
+    }
+  },
   "files": [
     {
       "path": "audio/xing2.m4a",
@@ -85,6 +95,10 @@
       "sha256": "c538d3c2b9ebaaf7d06104dabd764586d1c1eee8bb48030c7393d621cd711644"
     },
     {
+      "path": "items/i-rhetoric-01.json",
+      "sha256": "97dcc3c448dd42ca42a2ca552d05b3a4a793c233ef71b34e63cb616151bf6db1"
+    },
+    {
       "path": "items/i-tf-01.json",
       "sha256": "2428f2e3f4158d2d1952509c05246577568f1e6be9a41b811dc3686b8accfb1d"
     },
@@ -118,7 +132,7 @@
     },
     {
       "path": "units/u01-stream-bridge.json",
-      "sha256": "42021eef13f893b83ff8434f96d700d92495501d62df0179922a831556489d62"
+      "sha256": "b946280cc1c06526223187ccced0a4d6d1529243b631b6a4b8dc027723db9f4f"
     },
     {
       "path": "units/u02-add-2digit.json",

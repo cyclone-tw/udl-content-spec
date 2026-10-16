@@ -80,6 +80,10 @@ interface RendererHandle {
    - `listen` 是題目本身，不受 `read_aloud_scope` 與 `ctx.speech.enabled` 影響，一律可以播；`read_aloud_scope` 仍只管題幹說明（`stem.text`）與選項，識字類用 `stem`，選項不唸。
    - 每次播放記一筆 `audio-played`，`target: "listen"`；`answered` 不加欄位。
    - 判分不變：仍是該題型的 `score()`。
+7. **逐選項回饋（`options[].feedback`，#43）由殼負責**：
+   - 練習模式答錯時，殼優先顯示學生選到的那個選項的 `feedback`；那個選項沒有才用題目的 `feedback.retry`。答對照舊用 `feedback.correct`。
+   - 測驗模式不即時顯示任何回饋（總規劃 §6.1）；測驗結束、整批回看時可以顯示逐選項回饋。
+   - 逐選項回饋是面向學生的文字，照規則 3 提供「聽」；`misconception` 代碼與中文名是給老師看的，不顯示給學生。
 
 ## 版本規則
 
