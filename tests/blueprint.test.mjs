@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { planSteps, generate, profiles, toItemShape, correctResponse } from "../activities/index.mjs";
+import { planSteps, generate, profiles, toItemShape, correctResponse, misconceptions } from "../activities/index.mjs";
 import { validatePack, loadValidators } from "../conformance/validate.mjs";
 import { score } from "../question-types/index.mjs";
 
@@ -180,6 +180,31 @@ test("驗證器：六年級單元綁卡＋手寫題，照高年級設定生題�
     const r = await validatePack(dir);
     assert.deepEqual(r.errors, []);
     assert.ok(r.warnings.some((w) => w.includes("藍圖「reading」要 5 題，題庫只出得了 3 題")), r.warnings.join("\n"));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("驗證器：手寫題用 pack.json 的錯誤類型，被抽進課文練習與測驗也不報錯（#63）", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "udl-items-codes-"));
+  try {
+    await cp(DEMO, dir, { recursive: true });
+    await mkdir(path.join(dir, "items"));
+    const u = await rd(dir, "units/u-rain-park.json");
+    u.grade = 6;
+    u.items = ["i-rhetoric-01"];
+    await writeFile(path.join(dir, "units/u-rain-park.json"), JSON.stringify(u, null, 2));
+    const it = await rd(MINIMAL, "items/i-rhetoric-01.json");
+    it.unit = u.id;
+    await writeFile(path.join(dir, "items/i-rhetoric-01.json"), JSON.stringify(it, null, 2));
+    const pack = await rd(dir, "pack.json");
+    pack.misconceptions = (await rd(MINIMAL, "pack.json")).misconceptions;
+    pack.files.push({ path: "items/i-rhetoric-01.json", sha256: "" });
+    for (const f of pack.files) f.sha256 = createHash("sha256").update(await readFile(path.join(dir, f.path))).digest("hex");
+    await writeFile(path.join(dir, "pack.json"), JSON.stringify(pack, null, 2));
+    const r = await validatePack(dir);
+    assert.deepEqual(r.errors, []);
+    assert.ok(it.options.some((o) => o.misconception && !Object.hasOwn(misconceptions, o.misconception)), "測試題要用到非內建代碼");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

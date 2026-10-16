@@ -243,7 +243,8 @@ export function checkUnitActivities({ unit, cards, materials, pools, validators,
       if (r.outcome !== "correct") errors.push(`${where} 題目 ${q.id}：正解沒有拿到滿分（${r.outcome}）`);
       // 卡片生的聽音題也做同音字檢查（#36），讀音表含卡片庫；錯誤類型只能用內建代碼（#49）。
       if (q.stem?.listen) errors.push(...checkListenItem(q, { readings: readings ?? readingsFromCards(Object.values(cards).flat()), pools }).map((m) => `${where} 題目 ${q.id}: ${m}`));
-      for (const o of asArray(q.options)) if (o.misconception !== undefined && !Object.hasOwn(builtinMisconceptions, o.misconception)) errors.push(`${where} 題目 ${q.id}: 選項 ${o.id} 的 misconception ${o.misconception} 不是內建錯誤類型`);
+      // 手寫題（source: items）的代碼已在逐題檢查對過 pack.json，這裡只管自動生的題（#63）。
+      if (q.source !== "items") for (const o of asArray(q.options)) if (o.misconception !== undefined && !Object.hasOwn(builtinMisconceptions, o.misconception)) errors.push(`${where} 題目 ${q.id}: 選項 ${o.id} 的 misconception ${o.misconception} 不是內建錯誤類型`);
     }
   }
   return { errors, warnings, plan };
