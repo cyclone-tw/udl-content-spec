@@ -7,36 +7,49 @@
 | 函式 | 做什麼 |
 | --- | --- |
 | `resolveBindings(unit, lookup)` | 把 `bindings` 的卡片引用換成卡片物件；同包 id 或跨包 `pack@version#id` 都交給 `lookup` |
-| `planSteps({ unit, cards, materials, profile? })` | 年級活動設定（或單元自己的 `activities`）× 綁定的卡 × 有的教材 → 步驟清單（進度條的關卡）；條件不足的步驟放進 `skipped` 並寫理由 |
-| `generate(activity, { unit, cards, seed, count?, pools? })` | 生題；同一單元＋同一組卡＋同一個種子，結果永遠相同 |
+| `planSteps({ unit, cards, materials, profile?, items?, readings?, groups? })` | 年級活動設定（或單元自己的 `activities`）× 綁定的卡 × 有的教材與手寫題 → 步驟清單（進度條的關卡）；條件不足的步驟放進 `skipped` 並寫理由。`groups` 只留這幾類練習（#50） |
+| `generate(activity, { unit, cards, seed, count?, pools?, items?, blueprint?, readings?, audio? })` | 生題；同一單元＋同一組卡（與手寫題）＋同一個種子，結果永遠相同 |
 
 `toItemShape()`、`toInstanceShape()` 把實例轉回固定題／產生器實例形狀給 schema 驗證；`correctResponse()` 產生正解作答（驗證器確認正解拿滿分）。
 
 ## 活動登錄表
 
-| 活動 | 段落 | 生題 | 需要 | 產出題型 |
-| --- | --- | --- | --- | --- |
-| `read` | 讀委託 | 否 | lesson 或 simplified 教材 | — |
-| `mindmap` | 讀委託 | 否 | mindmap 教材 | — |
-| `demo` | 讀委託 | 否 | demo 教材 | — |
-| `char-cards` | 修練 | 否 | 生字卡 | —（renderer 逐張翻卡） |
-| `word-cards` | 修練 | 否 | 語詞卡 | — |
-| `manipulate` | 修練 | 否 | 有 `manipulative` 的技能卡 | — |
-| `char-pick` | 修練 | 是 | 生字卡 ≥ 2 張，或卡上有易混淆字 | choice：看注音與例詞選字，干擾項優先用卡上的易混淆字 |
-| `word-match` | 修練 | 是 | 語詞卡 ≥ 2 | match：語詞 ↔ 意思（最多 4 組） |
-| `word-cloze` | 修練 | 是 | 有例句的語詞卡，語詞卡 ≥ 2 | choice：例句挖空選語詞 |
-| `listen-char` | 修練 | 是 | 至少一張生字卡湊得出「讀音已知、不同音」的干擾字 | choice＋`stem.listen.syllable`：播單音選字（#49）。干擾項先用卡上填了 `zhuyin` 的易混淆字，再用同課生字；同音字一律不用，讀音不明的字不用 |
-| `listen-word` | 修練 | 是 | 語詞卡 ≥ 2，且不全同音 | choice＋`stem.listen.word`：播語詞選語詞（#49）。干擾項是同課其他語詞，同音語詞不用；有同音字的優先放一個 |
-| `word-meaning` | 修練 | 是 | 語詞卡 ≥ 2，且解釋不全相同 | choice：看語詞（有例句就帶例句）選解釋（#49）。干擾項是同課其他語詞的解釋，有相同字的語詞優先放一個 |
-| `sentence-order` | 修練 | 是 | 句型卡 | ordering：例句詞塊排序 |
-| `skill-practice` | 修練 | 是 | 技能卡 | 數學產生器實例（numeric／blanks），參數照能力指標條件檔 |
-| `quiz` | 討伐 | 是 | 以上任一種可出題的卡 | 在選字、語詞填空、句型排序、技能練習之間輪流抽；語詞配對只在沒有其他來源時才用（一題就是一整組，放進測驗太重） |
-
-聽音選字、聽音選語詞、語詞解釋暫不進小測驗與內建年級設定：放進去會改變既有單元的生題結果，與練習分類、測驗藍圖一起在 #50 處理；單元現在可以用 `activities` 自己選用。
+| 活動 | 段落 | 分類 | 生題 | 需要 | 產出題型 |
+| --- | --- | --- | --- | --- | --- |
+| `read` | 讀委託 | — | 否 | lesson 或 simplified 教材 | — |
+| `mindmap` | 讀委託 | — | 否 | mindmap 教材 | — |
+| `demo` | 讀委託 | — | 否 | demo 教材 | — |
+| `char-cards` | 修練 | 識字 | 否 | 生字卡 | —（renderer 逐張翻卡） |
+| `word-cards` | 修練 | 語詞 | 否 | 語詞卡 | — |
+| `manipulate` | 修練 | 技能 | 否 | 有 `manipulative` 的技能卡 | — |
+| `char-pick` | 修練 | 識字 | 是 | 生字卡 ≥ 2 張，或卡上有易混淆字 | choice：看注音與例詞選字，干擾項優先用卡上的易混淆字 |
+| `word-match` | 修練 | 語詞 | 是 | 語詞卡 ≥ 2 | match：語詞 ↔ 意思（最多 4 組） |
+| `word-cloze` | 修練 | 語詞 | 是 | 有例句的語詞卡，語詞卡 ≥ 2 | choice：例句挖空選語詞 |
+| `listen-char` | 修練 | 識字 | 是 | 至少一張生字卡湊得出「讀音已知、不同音」的干擾字 | choice＋`stem.listen.syllable`：播單音選字（#49）。干擾項先用卡上填了 `zhuyin` 的易混淆字，再用同課生字；同音字一律不用，讀音不明的字不用 |
+| `listen-word` | 修練 | 語詞 | 是 | 語詞卡 ≥ 2，且不全同音 | choice＋`stem.listen.word`：播語詞選語詞（#49）。干擾項是同課其他語詞，同音語詞不用；有同音字的優先放一個 |
+| `word-meaning` | 修練 | 語詞 | 是 | 語詞卡 ≥ 2，且解釋不全相同 | choice：看語詞（有例句就帶例句）選解釋（#49）。干擾項是同課其他語詞的解釋，有相同字的語詞優先放一個 |
+| `sentence-order` | 修練 | 語詞 | 是 | 句型卡 | ordering：例句詞塊排序 |
+| `skill-practice` | 修練 | 技能 | 是 | 技能卡 | 數學產生器實例（numeric／blanks），參數照能力指標條件檔 |
+| `reading-items` | 修練 | 課文 | 是 | 單元 `items` 裡有手寫的固定題 | 手寫題照抄（題型不限），預設 `count: "all"`：每題輪到一次（#50） |
+| `quiz` | 討伐 | — | 是 | 有藍圖：前面有對應分類的練習步驟；沒有藍圖：以上任一種可出題的卡 | 有藍圖時照分類從練習題庫抽（見下）；沒有藍圖時在選字、語詞填空、句型排序、技能練習之間輪流抽；語詞配對只在沒有其他來源時才用（一題就是一整組，放進測驗太重） |
 
 卡片生的選擇題最多三個選項（正解＋兩個干擾項，湊不到兩個就少一個）；卡比題數少時循環使用，每輪重新洗牌，所以題數不少於卡數時每張卡都會輪到。
 
-練習與測驗用同一批卡、同一套生題；差別只在平台的流程設定（提示、揭答、重試），題目不變。只有離不開課文的題（閱讀理解）才在單元 `items` 逐課手寫。
+練習與測驗用同一批卡、同一套生題；差別只在平台的流程設定（提示、揭答、重試），題目不變。只有離不開課文的題（閱讀理解）才在單元 `items` 逐課手寫，由 `reading-items` 放進練習與測驗。
+
+## 練習分類與測驗藍圖（#50）
+
+Cyclone 2026-10-16（udl-learning#189）：練習要能分類，老師可以只指派其中一類；測驗題從練習題庫抽，不另外出題。
+
+- **分類**：每個練習活動屬一類，`char` 識字、`word` 語詞、`reading` 課文、`skill` 數學技能（上表「分類」欄）。`planSteps` 回傳的步驟帶 `group`；`planSteps({ groups: ["char"] })` 只留這幾類的練習，教學步驟不受影響，測驗也只考這幾類。
+- **題庫與 `count: "all"`**：每個生題活動知道自己的題庫有幾筆（例如聽音選字＝湊得出題的生字數、課文練習＝手寫題數）。步驟的 `count` 寫 `"all"` 時，有幾筆就出幾題，每筆輪到一次。技能練習的題目由產生器無限生，不支援 `"all"`。
+- **測驗藍圖** `blueprint`：只給 `quiz`，例如 `[{ "group": "char", "count": 2 }, …]`。`planSteps` 把每一類接到**本課測驗之前、同分類、會生題的練習步驟**，回傳 `step.blueprint`（含 `sources`）與加總後的 `count`；呼叫端把 `step.blueprint` 原樣傳給 `generate("quiz", { blueprint, items })`。
+  - 每一類的題數輪流分給該類的來源活動，每個來源不超過它的題庫筆數，所以同一次測驗不會重複出同一題；題庫不夠時就少出幾題，驗證器會提醒。
+  - 某一類前面沒有練習步驟：這一類略過，記在 `step.blueprint_skipped`；全部都略過時這一步放進 `skipped`。
+  - 題目實例帶 `quiz_source`（來自哪個活動）與 `quiz_group`（哪一類）；同一個種子抽到同一批，換種子就換一批。
+  - 老師改題數：單元的 `activities` 可寫自己的藍圖；平台指派時也可以直接改 `blueprint` 各類的 `count` 再呼叫 `generate`（平台流程設定）。
+  - 沒有 `blueprint` 的 `quiz` 照舊（中、低年級與數學）。
+- **課文題** `reading-items`：單元 `items` 裡的固定題一律歸「課文」；產生器模板（`kind: "generated"`）不算。實例照抄題目內容，`id` 不變（報表照題目統計），`source: "items"`、`item` 記原題 id；報讀範圍以題目自己標的 `read_aloud_scope` 為先，沒標用 `all`。
 
 ## 年級活動設定（`profiles/`）
 
@@ -44,7 +57,7 @@
 | --- | --- | --- |
 | `zh-low` | 國語一、二 | 聽故事 → 認字 → 配對 → 小測驗 |
 | `zh-mid` | 國語三、四 | 讀課文 → 生字 → 語詞配對 → 句型排序 → 小測驗 |
-| `zh-high` | 國語五、六 | 讀課文 → 心智圖 → 生字 → 語詞 → 句型 → 小測驗 |
+| `zh-high` | 國語五、六 | 讀課文 → 心智圖 → 生字卡 → 聽音選字 → 看音選字（可關）→ 語詞卡 → 聽音選詞 → 語詞解釋 → 語詞填空（可關）→ 句型（可關）→ 課文練習 → 小測驗（藍圖：識字 2、語詞 3、課文 5，#50） |
 | `math-elementary` | 數學一到六 | 看示範 → 操作練習 → 計算練習 → 小測驗 |
 
 形狀見 `schema/activity-profile.schema.json`。單元可用 `activity_profile` 指定別份，或用 `activities` 整份取代；老師之後在指派時隱藏或調整（平台流程設定，不在規格）。
@@ -72,5 +85,7 @@
   標了錯誤類型的選項都帶套句型的逐選項回饋；同課其他生字或語詞當干擾項時不標。`score()` 的 `detail.misconception` 與 `answered` 事件照 #43 帶出。手寫題也可以直接用這些代碼，不必在 `pack.json` 重列。
 
 ## 題目實例的追溯欄位
+
+課文題（#50）：`kind: "instance"`、`source: "items"`、`item`（原題 id，`id` 不變）、`activity`、`activity_version`、`seed`、`index`、`unit`；其餘欄位照抄手寫題。測驗藍圖抽出的題另帶 `quiz_group`。
 
 卡片生的題：`kind: "instance"`、`source: "cards"`、`activity`、`activity_version`、`seed`、`index`、`unit`、`cards`（用到的卡 id）、`quiz_source`（小測驗裡這題來自哪個活動）；其餘欄位與固定題相同，可直接丟給 `score()`。技能練習沿用數學產生器的實例，另加 `activity`、`activity_version`、`cards`。作答事件記 `activity`＋`seed` 就能重現整批題目。

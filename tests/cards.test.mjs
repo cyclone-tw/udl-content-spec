@@ -104,6 +104,7 @@ test("生題：每個生題活動都產出合格題目，正解拿滿分", async
   const zh = await loadUnit("u-rain-park");
   const math = await loadUnit("u-add-skill");
   for (const activity of generatingActivities) {
+    if (activity === "reading-items") continue; // 課文題不從卡片生，見 tests/blueprint.test.mjs
     const ctx = activity === "skill-practice" ? math : activity === "quiz" ? zh : zh;
     const list = generate(activity, { unit: ctx.unit, cards: ctx.cards, seed: "t1" });
     assert.ok(list.length > 0, activity);

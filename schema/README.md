@@ -12,7 +12,7 @@
 | `pool.schema.json` | 干擾項池 |
 | `scope.schema.json` | 範圍選擇器：`include`／`exclude` 的 pack＋version＋units／materials／items／標籤 |
 | `card.schema.json` | 卡片（#31）：`char` 生字（鍵 `字|注音`；易混淆字 `confusables[]` 可填 `zhuyin`，聽音選字才能避開同音字，#49）、`word` 語詞（鍵 `詞|注音`，與音檔語詞庫同鍵）、`pattern` 句型（例句切詞塊）、`skill` 數學技能（引用產生器與參數）；同一個字或詞只有一張卡 |
-| `activity-profile.schema.json` | 年級活動設定（#31）：某科某些年級一課預設有哪些步驟、屬讀委託／修練／討伐哪一段、報讀範圍；`ladders` 活動 × 年級 → 能力階梯（#33）；內建設定在 `activities/profiles/` |
+| `activity-profile.schema.json` | 年級活動設定（#31）：某科某些年級一課預設有哪些步驟、屬讀委託／修練／討伐哪一段、報讀範圍；`ladders` 活動 × 年級 → 能力階梯（#33）；步驟 `count` 可寫 `"all"`（題庫有幾筆出幾題）、`quiz` 的 `blueprint` 測驗藍圖（各練習分類抽幾題，#50）；內建設定在 `activities/profiles/` |
 
 ## 約定
 
