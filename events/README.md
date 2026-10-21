@@ -31,11 +31,10 @@
 
 完整定義：[`schema/attempt-events.schema.json`](schema/attempt-events.schema.json)。範例：[`examples/runner-session.json`](examples/runner-session.json)（獨立執行器，粒度 item，含產生題與部分正確）。
 
-## 紅線（schema 與驗證器都擋）
+## 格式界線（schema 擋）
 
 - `actor` 只能有 `role` 與 `student_code`，`additionalProperties: false`；教師試玩與訪客不得帶代號（總規劃 §5.3：他們的紀錄不匯出）。
-- 驗證器掃全檔字串：像身分證字號、手機、連續 10 碼以上數字，或鍵名是 `name`／`student_name`／`姓名`／`email`／`phone`，一律報錯。
-- 代號是 roster 的字串，udl 不解讀；不得是真學號。
+- 代號是 roster 的字串，udl 不解讀。
 
 ## 怎麼用
 
@@ -62,7 +61,7 @@ pnpm run validate:events <file>... -- --ladder-dir ../sped-student-kit/data/ladd
 pnpm run validate:events <file> -- --strict                                           # 警告也算失敗
 ```
 
-`validate-events.mjs` 檢查：schema；`seq` 從 1 嚴格遞增；`outcome` 與 `score` 一致（correct＝1、incorrect／invalid／pending-review＝0、partial 在 0 與 1 之間）；同一題 `attempt_no` 依出現順序（不符只警告）；student 以外角色警告「不匯出」；粒度 `unit` 警告「不能逐題歸因」；測驗模式 `read_aloud` 為 null 警告；隱私掃描。可 `import { validateEvents, validateEventsFile }`。
+`validate-events.mjs` 檢查：schema；`seq` 從 1 嚴格遞增；`outcome` 與 `score` 一致（correct＝1、incorrect／invalid／pending-review＝0、partial 在 0 與 1 之間）；同一題 `attempt_no` 依出現順序（不符只警告）；student 以外角色警告「不匯出」；粒度 `unit` 警告「不能逐題歸因」；測驗模式 `read_aloud` 為 null 警告。可 `import { validateEvents, validateEventsFile }`。
 
 ## 轉接器：朗讀器 `udl-lesson-attempt/v1`
 

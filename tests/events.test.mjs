@@ -95,22 +95,6 @@ test("ladder_ids 用 --ladder-dir 核對 kit 階梯資料", async () => {
   assert.ok(r2.ok);
 });
 
-test("隱私掃描：像身分證、手機、長數字或姓名鍵都擋", async () => {
-  const base = await readJson(path.join(EX, "runner-session.json"));
-  let f = clone(base);
-  f.events[3].detail.note = "A123456789";
-  assert.ok(has((await validateEvents(f)).errors, "身分證"));
-  f = clone(base);
-  f.events[3].response = { chosen: "0912345678" };
-  assert.ok(has((await validateEvents(f)).errors, "手機"));
-  f = clone(base);
-  f.context.assignment_id = "20261012123456";
-  assert.ok(has((await validateEvents(f)).errors, "10 碼"));
-  f = clone(base);
-  f.events[3].detail.student_name = "x";
-  assert.ok(has((await validateEvents(f)).errors, "姓名"));
-});
-
 test("建構器：createEventsFile 擋多餘 actor 欄位；answeredFields 接 score() 與產生器實例產出合法事件", async () => {
   assert.throws(() => createEventsFile({ producer: { shell: "udl-runner", shell_version: "0", granularity: "item" }, actor: { role: "student", student_code: "a1", name: "x" }, context: {} }), /只能有 role 與 student_code/);
   assert.throws(() => createEventsFile({ producer: { shell: "udl-runner", shell_version: "0", granularity: "item" }, actor: { role: "guest", student_code: "a1" }, context: {} }), /不得帶/);

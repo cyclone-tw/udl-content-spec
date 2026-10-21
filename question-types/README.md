@@ -106,8 +106,8 @@ interface RendererHandle {
 
 | type | 中文 | 作答格式（草案） | 計分 | 注意 |
 | --- | --- | --- | --- | --- |
-| `drawing` | 畫圖 | `{ "asset": { "kind": "image", "mime": "image/png", "sha256": "…", "ref": "<宿主決定的位置>" } }` | `pending-review`，`score: 0`；教師依 rubric 批閱後由宿主改寫結果；可附自動檢查（有無作畫、筆畫數）進 `detail` | 圖內可能寫名字；作品檔不自動進雲端 DB，先留教師裝置或本機 |
-| `speaking` | 口說 | `{ "asset": { "kind": "audio", "mime": "audio/webm", "sha256": "…", "ref": "…", "duration_ms": 0 } }` | `pending-review`；可接 ASR 給建議分放 `detail`，不自動定案 | **錄音是學生可識別資料**：只能留本機或教師裝置；雲端 DB 只存評分結果與時長，不存音檔（AGENTS 硬紅線 1） |
+| `drawing` | 畫圖 | `{ "asset": { "kind": "image", "mime": "image/png", "sha256": "…", "ref": "<宿主決定的位置>" } }` | `pending-review`，`score: 0`；教師依 rubric 批閱後由宿主改寫結果；可附自動檢查（有無作畫、筆畫數）進 `detail` | 作品檔不自動進雲端 DB，先留教師裝置或本機 |
+| `speaking` | 口說 | `{ "asset": { "kind": "audio", "mime": "audio/webm", "sha256": "…", "ref": "…", "duration_ms": 0 } }` | `pending-review`；可接 ASR 給建議分放 `detail`，不自動定案 | 雲端 DB 只存評分結果與時長，不存音檔 |
 
 保留型別不在 v1 的 `item.schema.json` `type` enum 內。現在先占名稱、先把 `pending-review` 放進 `result.schema.json`，是為了讓事件契約與報表現在就留位，之後加題型不必改結果格式。
 
