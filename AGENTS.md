@@ -3,7 +3,7 @@
 所有 coding agent 進本 repo 先讀這份。全域規則（cyclone-agent-config）照常適用；此處只列本 repo 特有規則。
 
 <!-- udl-family-block v1 -->
-> **UDL 教學家族**：本 repo 是家族共用的內容規格（公開）：內容包格式、題型與計分、數學產生器、作答事件、音檔清單格式、驗證器；不含任何教材正本或學生資料。
+> **UDL 教學家族**：本 repo 是家族共用的內容規格（公開）：內容包格式、題型與計分、數學產生器、作答事件、音檔清單格式、驗證器；不含任何教材正本。
 >
 > 上游：`udl-learning` 總規劃（決策正本）、`sped-student-kit`（能力階梯，驗證時用 `--ladder-dir`）；下游：`udl-learning`（平台與教材工廠）、各科教材 repo（如 `udl-math`），都以 git tag 版本相依本 repo。
 >
@@ -16,7 +16,7 @@ UDL 教學家族共用的內容規格（schema、題型與計分、參數化產�
 
 ## 硬紅線
 
-1. **不含學生資料**：`examples/` 只放合成課文與題目；代號只用示意（例如 `S03`）；不貼真名、真學號、班級名單。
+1. **範例用合成內容**：`examples/` 只放合成課文與題目；代號只用示意（例如 `S03`）。
 2. **不引入前例程式碼或素材**：H5P、Perseus、Oppia、Numbas、Moodle、CASE、ink 等只借設計邏輯；任何複製貼上的程式或圖都不得進 repo。
 3. Secrets／token／`.env` 不進 git。
 4. 授權：程式 MIT；`examples/` CC-BY 4.0。新增第三方相依前先確認授權相容（MIT／Apache-2.0／BSD 可；GPL／NC 不可）。

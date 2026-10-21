@@ -28,7 +28,7 @@ export const types = Object.freeze({
 /** v2 候選：已排進路線圖、尚未實作（見 README 路線圖）。 */
 export const planned = Object.freeze([]);
 
-/** v3 保留：先占名稱與結果形狀（pending-review），實作與隱私規則待定（見 README）。 */
+/** v3 保留：先占名稱與結果形狀（pending-review），實作待定（見 README）。 */
 export const reserved = Object.freeze(["drawing", "speaking"]);
 
 export const RESULT_SCHEMA_PATH = "question-types/result.schema.json";

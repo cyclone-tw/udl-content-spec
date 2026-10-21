@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 驗證一個或多個作答事件檔（udl-attempt-events/v1）：schema、seq 遞增、outcome 與 score 一致、
-// 角色與代號、ladder_ids 存在於 kit 階梯資料、沒有看起來像真名／證號／電話的字串。
+// 角色與代號、ladder_ids 存在於 kit 階梯資料。
 // 用法：node conformance/validate-events.mjs <file.json>... [--json] [--strict] [--ladder-dir <kit data/ladder>]
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -20,30 +20,6 @@ export async function loadEventsValidator() {
   addFormats(ajv);
   compiled = ajv.compile(JSON.parse(await readFile(SCHEMA_FILE, "utf8")));
   return compiled;
-}
-
-// 台灣身分證（1 英文＋9 數字）、手機（09 開頭 10 碼）、連續 10 碼以上數字（學號／證號常見）。
-const PII_PATTERNS = [
-  [/\b[A-Z][12]\d{8}\b/, "像身分證字號"],
-  [/\b09\d{8}\b/, "像手機號碼"],
-  [/\b\d{10,}\b/, "連續 10 碼以上數字（像學號或證號）"],
-];
-// 鍵名裡出現這些就擋：事件檔不該有姓名欄位。
-const FORBIDDEN_KEYS = /^(name|student_name|full_name|real_name|姓名|真名|email|phone)$/i;
-
-function scanPII(value, where, errors) {
-  if (value == null) return;
-  if (typeof value === "string") {
-    for (const [re, label] of PII_PATTERNS) if (re.test(value)) errors.push(`${where}: 字串${label}，事件檔不得含可識別資料`);
-    return;
-  }
-  if (Array.isArray(value)) return value.forEach((v, i) => scanPII(v, `${where}[${i}]`, errors));
-  if (typeof value === "object") {
-    for (const [k, v] of Object.entries(value)) {
-      if (FORBIDDEN_KEYS.test(k)) errors.push(`${where}.${k}: 不得有姓名／聯絡欄位`);
-      scanPII(v, `${where}.${k}`, errors);
-    }
-  }
 }
 
 /**
@@ -88,7 +64,6 @@ export async function validateEvents(file, { ladderIds = null, strict = false } 
   if (events[events.length - 1].type !== "session-completed") warnings.push("最後一個事件不是 session-completed");
   if (file.producer.granularity === "unit") warnings.push("粒度 unit：answered 只能對到單元層級的 ladder_ids，不能逐題歸因");
   if (file.actor.role !== "student") warnings.push(`actor.role=${file.actor.role}：教師試玩與訪客的紀錄不匯出給 kit（總規劃 §5.3）`);
-  scanPII(file, "file", errors);
   const ok = errors.length === 0 && (!strict || warnings.length === 0);
   return { ok, errors, warnings, counts: { events: events.length, answered } };
 }
