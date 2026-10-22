@@ -105,7 +105,7 @@ test("量角：三檔 10 題（右 4、左 4、不在 0 刻度 2），畫出的�
       if (q.tier === "zero-right") assert.ok(pt(q, "a")[0] > v[0]);
       assert.equal(score(q, { value: q.answer + 2 }).score, 1);
       assert.equal(score(q, { value: q.answer - 3 }).score, 0);
-      assert.equal(q.variables.wrong_scale, 180 - q.answer);
+      assert.equal(q.variables.wrong_scale, q.tier === "off-zero" ? undefined : 180 - q.answer);
       assert.equal(q.display.overlay, "always");
     }
   }
@@ -150,6 +150,12 @@ test("全等：一張圖裡只有一個和甲全等；翻面檔的那一個是�
       assert.equal(orient(tri(`c${k}`)) === orient(tri("t")), q.tier === "find-turn", "翻面檔的方向相反、轉的檔方向相同");
       assert.ok(q.options.filter((o) => o.id !== q.answer).every((o) => o.misconception));
       assert.ok(!/平移|旋轉|翻轉/.test(JSON.stringify([q.stem, q.hints, q.feedback])), "S-4-6：不出現操作名詞");
+      // 相鄰的三角形不重疊：每個三角形的外接方框彼此不相交
+      const boxes = ["t", "c0", "c1", "c2", "c3"].map((key) => { const ps = tri(key); return [Math.min(...ps.map((p) => p[0])), Math.min(...ps.map((p) => p[1])), Math.max(...ps.map((p) => p[0])), Math.max(...ps.map((p) => p[1]))]; });
+      for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+        const [a, b] = [boxes[i], boxes[j]];
+        assert.ok(a[2] < b[0] || b[2] < a[0] || a[3] < b[1] || b[3] < a[1], `第 ${i} 和第 ${j} 個三角形重疊`);
+      }
     }
   }
 });
@@ -176,6 +182,15 @@ test("對應：答案的邊一樣長、角一樣大，其他選項不一樣", as
       }
     }
   }
+});
+
+test("範圍不可能時丟可讀的 RangeError，不會卡住", () => {
+  const profile = structuredClone(getProfile("s-II-3#b@4"));
+  profile.tiers["sides-lengths"].cm = [3, 4];
+  const { params } = resolveParams(profile, { overrides: { tiers: ["sides-lengths"] } });
+  return import("../generators/math/triangle-classify/generate.mjs").then((m) => {
+    assert.throws(() => m.generate({ params, seed: "x", count: 3, profile }), /抽不到/);
+  });
 });
 
 test("五種課程調整都解析得到，不適用就不出題；技能卡接進活動出題", async () => {

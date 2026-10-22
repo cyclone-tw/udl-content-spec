@@ -77,7 +77,7 @@ export function generate({ params, seed, count, profile }) {
     const { angle, start, tilt } = found;
     const clockwise = def.zero === "left";
     const base = (clockwise ? 180 : 0) + tilt;
-    const vars = { tier, angle, start, end: start + angle, zero: def.zero, side: clockwise ? "左" : "右", tilt, wrong_scale: 180 - angle };
+    const vars = { tier, angle, start, end: start + angle, zero: def.zero, side: clockwise ? "左" : "右", tilt, ...(def.zero === "off" ? {} : { wrong_scale: 180 - angle }) };
     out.push({
       type: "numeric",
       tier,

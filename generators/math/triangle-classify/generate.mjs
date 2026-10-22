@@ -20,6 +20,11 @@ const SET_SQUARE_MM = 24;
 const TICKS = { equilateral: [1, 1, 1], isosceles: [1, 0, 1], scalene: [1, 2, 3] };
 
 const between = (rng, lo, hi) => lo + rng.next() * (hi - lo);
+/** 有上限的重抽：try 回傳 null 就再抽，超過次數丟可讀的 RangeError（不會卡住）。 */
+function retry(what, fn) {
+  for (let i = 0; i < MAX_ATTEMPTS_PER_ITEM; i++) { const r = fn(); if (r) return r; }
+  throw new RangeError(`${id}: ${MAX_ATTEMPTS_PER_ITEM} 次內抽不到${what}；請放寬條件檔的範圍`);
+}
 
 /** 依答案建一個三角形（mm，頂點逆時針 A→B→C）；看邊的檔位回傳三邊長（AB、BC、CA），看角的回傳三個角。 */
 function buildShape(rng, def, answer) {
@@ -27,7 +32,7 @@ function buildShape(rng, def, answer) {
     let A, B, C;
     if (answer === "right") { C = 90; A = rng.int(25, 65); B = 90 - A; }
     else if (answer === "obtuse") { C = rng.int(def.obtuse[0], def.obtuse[1]); A = rng.int(12, 180 - C - 12); B = 180 - C - A; }
-    else { do { A = rng.int(40, def.acute_max); B = rng.int(40, def.acute_max); C = 180 - A - B; } while (C < 30 || C > def.acute_max); }
+    else [A, B, C] = retry("銳角三角形的三個角", () => { const a = rng.int(40, def.acute_max), b = rng.int(40, def.acute_max), c = 180 - a - b; return c >= 30 && c <= def.acute_max ? [a, b, c] : null; });
     // 最大的角不一定在 C：隨機換位置
     const order = shuffle([A, B, C], rng);
     const t = triangleFromAngles(order[0], order[1], order[2], 60);
@@ -35,32 +40,32 @@ function buildShape(rng, def, answer) {
   }
   if (def.show === "lengths") {
     const [lo, hi] = def.cm;
-    let s;
-    for (;;) {
-      if (answer === "equilateral") { const a = rng.int(lo, hi); s = [a, a, a]; }
-      else if (answer === "isosceles") { const leg = rng.int(lo, hi), base = rng.int(lo, hi); if (base === leg) continue; s = [leg, base, leg]; }
-      else { s = [rng.int(lo, hi), rng.int(lo, hi), rng.int(lo, hi)]; if (new Set(s).size < 3) continue; }
-      const [a, b, c] = [...s].sort((x, y) => x - y);
-      if (a + b > c + 0.5) break; // 太扁的三角形不出
-    }
+    const s = retry(`「${def.label}」的${answer}邊長`, () => {
+      let t;
+      if (answer === "equilateral") { const a = rng.int(lo, hi); t = [a, a, a]; }
+      else if (answer === "isosceles") { const leg = rng.int(lo, hi), base = rng.int(lo, hi); if (base === leg) return null; t = [leg, base, leg]; }
+      else { t = [rng.int(lo, hi), rng.int(lo, hi), rng.int(lo, hi)]; if (new Set(t).size < 3) return null; }
+      const [a, b, c] = [...t].sort((x, y) => x - y);
+      return a + b > c + 0.5 ? t : null; // 太扁的三角形不出
+    });
     // 1 公分畫 10 mm：列印照實際尺寸，學生可以拿尺量
     return { tri: triangleFromSides(s[1] * 10, s[2] * 10, s[0] * 10), cm: s, label: s.join(",") };
   }
-  let s;
-  for (;;) {
-    if (answer === "equilateral") { const a = between(rng, 36, 56); s = [a, a, a]; }
+  const s = retry(`「${def.label}」的${answer}`, () => {
+    let t;
+    if (answer === "equilateral") { const a = between(rng, 36, 56); t = [a, a, a]; }
     else if (answer === "isosceles") {
       const leg = between(rng, 36, 56);
       const apex = rng.next() < 0.5 ? rng.int(30, 48) : rng.int(72, 110); // 避開看起來像正三角形的 50–70 度
-      s = [leg, 2 * leg * Math.sin((apex * Math.PI) / 360), leg];
+      t = [leg, 2 * leg * Math.sin((apex * Math.PI) / 360), leg];
     } else {
-      s = [between(rng, 30, 60), between(rng, 30, 60), between(rng, 30, 60)];
-      const sorted = [...s].sort((x, y) => x - y);
-      if (sorted[1] / sorted[0] < 1.15 || sorted[2] / sorted[1] < 1.15) continue; // 不等長要看得出來
+      t = [between(rng, 30, 60), between(rng, 30, 60), between(rng, 30, 60)];
+      const sorted = [...t].sort((x, y) => x - y);
+      if (sorted[1] / sorted[0] < 1.15 || sorted[2] / sorted[1] < 1.15) return null; // 不等長要看得出來
     }
-    const [a, b, c] = [...s].sort((x, y) => x - y);
-    if (a + b > c * 1.08) break;
-  }
+    const [a, b, c] = [...t].sort((x, y) => x - y);
+    return a + b > c * 1.08 ? t : null;
+  });
   return { tri: triangleFromSides(s[1], s[2], s[0]), label: s.map((x) => round1(x)).join(",") };
 }
 
@@ -106,7 +111,7 @@ export function misconceptionFor(kind, show, answer, chosen, { rotated }) {
   if (chosen === answer) return undefined;
   if (kind === "angles") return answer === "right" || chosen === "right" ? "angle-right-by-eye" : "triangle-largest-angle-misjudged";
   if (show === "lengths") return "triangle-side-lengths-misread";
-  if (answer === "isosceles" && rotated) return "triangle-orientation";
+  if (answer === "isosceles" && rotated && chosen === "scalene") return "triangle-orientation";
   return "triangle-equal-sides-miscount";
 }
 

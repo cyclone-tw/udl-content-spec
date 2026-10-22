@@ -13,7 +13,7 @@ export const paramsSchemaPath = "generators/math/congruent-triangles/params.sche
 export const MAX_ATTEMPTS_PER_ITEM = 1000;
 export const itemType = () => "choice";
 
-const CELL = 44;
+const CELL = 52; // 放大 1.3 倍的干擾項離重心最遠約 24 mm，格子要夠大，相鄰三角形不碰在一起
 const MARKS = ["①", "②", "③", "④"];
 const NAMES_A = ["ㄅ", "ㄆ", "ㄇ"];
 const NAMES_B = ["ㄉ", "ㄊ", "ㄋ"];
@@ -22,13 +22,14 @@ const between = (rng, lo, hi) => lo + rng.next() * (hi - lo);
 
 /** 一個看得出三邊不同長的三角形（mm）：最長邊約 longest。 */
 function scalene(rng, longest) {
-  for (;;) {
+  for (let n = 0; n < MAX_ATTEMPTS_PER_ITEM; n++) {
     const s = [between(rng, 0.55, 0.95) * longest, between(rng, 0.55, 0.95) * longest, longest];
     const sorted = [...s].sort((x, y) => x - y);
     if (sorted[1] / sorted[0] < 1.15 || sorted[2] / sorted[1] < 1.12 || sorted[0] + sorted[1] < sorted[2] * 1.15) continue;
     const t = triangleFromSides(s[0], s[1], s[2]);
     return [t.A, t.B, t.C];
   }
+  throw new RangeError(`${id}: ${MAX_ATTEMPTS_PER_ITEM} 次內抽不到三邊明顯不等長的三角形`);
 }
 
 /** 三個點以重心為中心轉 deg 度，必要時先左右翻面。 */
@@ -87,8 +88,9 @@ function findQuestion(rng, def, profile, rotateOn) {
   const kinds = shuffle(["scaled", "side", "angle"], rng);
   const wrongs = [];
   for (const kind of kinds) {
-    let d;
-    for (let k = 0; k < 50; k++) { d = distractor(rng, kind, base); if (clearlyDifferent(d, base) && wrongs.every((w) => clearlyDifferent(w.pts, d))) break; }
+    let d = null;
+    for (let k = 0; k < 50 && !d; k++) { const c = distractor(rng, kind, base); if (clearlyDifferent(c, base) && wrongs.every((w) => clearlyDifferent(w.pts, c))) d = c; }
+    if (!d) throw new RangeError(`${id}: 50 次內做不出和甲明顯不同的干擾項（${kind}）`);
     wrongs.push({ kind, pts: place(d, spin(), rng.next() < 0.5) });
   }
   const right = { kind: "congruent", pts: place(base, spin() || 90, def.flip) };
