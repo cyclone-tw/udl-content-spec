@@ -1,0 +1,32 @@
+{
+  "format_version": 1,
+  "id": "sample-angle",
+  "version": "0.1.0",
+  "title": "示範：和直角比",
+  "description": "合成範例內容包：三年級「和直角比」一個單元、一張技能卡；題目由 math.angle-vs-right 依能力指標條件檔 n-II-9#b@3 出題（圖形描述在題目實例的 display.figure）。不含學生資料。",
+  "subject": "math",
+  "language": "zh-TW",
+  "license": "CC-BY-4.0",
+  "source": {
+    "generated_by": "claude-code",
+    "date": "2026-10-22",
+    "notes": "udl-content-spec#69 範例。"
+  },
+  "units": [
+    "u-angle-right"
+  ],
+  "cards": [
+    "sk-angle-right"
+  ],
+  "pools": [],
+  "files": [
+    {
+      "path": "cards/sk-angle-right.json",
+      "sha256": "cc264b5246c671b1080cf31a440f59e8e18469ea4a1444d9708ead31f1b6d9dd"
+    },
+    {
+      "path": "units/u-angle-right.json",
+      "sha256": "dd28f1acacce94d4f44f1af549cb54b34645283874b58ef075b97bc04a90d0a2"
+    }
+  ]
+}

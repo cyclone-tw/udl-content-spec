@@ -18,7 +18,7 @@ import { AUDIO_EXTS, syllableKey, wordKey } from "../audio/index.mjs";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root_ = path.join(here, "..");
 const schemaDir = path.join(root_, "schema");
-const SCHEMAS = ["common", "pack", "unit", "material", "item", "pool", "scope", "card", "activity-profile"];
+const SCHEMAS = ["common", "figure", "pack", "unit", "material", "item", "pool", "scope", "card", "activity-profile"];
 // 與 schema/common.schema.json 的 relative_path 同一條規則；讀檔前先用它過濾。
 export const RELATIVE_PATH = /^(?!\/)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
 const CONTENT_DIRS = ["units", "materials", "items", "pools", "cards"];

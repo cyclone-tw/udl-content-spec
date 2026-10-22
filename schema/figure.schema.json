@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:figure",
+  "title": "幾何圖形描述",
+  "description": "宣告式幾何圖形：點、線段、角記號、標示文字與疊圖工具。單位是公釐（mm），y 軸向下；列印照實際尺寸，螢幕等比縮放。renderer 依這份描述畫 SVG，標示文字畫成可報讀的文字層，不燒進圖檔。每個元素有 id，之後的逐步狀態（講解動畫）可以用 id 描述差異。",
+  "type": "object",
+  "required": ["version", "unit", "width", "height", "points", "alt"],
+  "properties": {
+    "version": { "const": 1 },
+    "unit": { "const": "mm" },
+    "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 400, "description": "畫布寬（mm）；已包含疊圖工具會用到的範圍，疊圖開關不會讓圖跳動。" },
+    "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 400 },
+    "points": {
+      "type": "object",
+      "description": "點 id → [x, y]（mm）。",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/element_id" },
+      "additionalProperties": { "$ref": "#/$defs/xy" }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "from", "to"],
+        "properties": {
+          "id": { "$ref": "#/$defs/element_id" },
+          "from": { "$ref": "#/$defs/element_id" },
+          "to": { "$ref": "#/$defs/element_id" },
+          "kind": { "type": "string", "enum": ["side", "ray"], "default": "side", "description": "side：多邊形的邊；ray：角的邊（從頂點畫出去）。畫法相同，報讀與動畫用。" },
+          "ticks": { "type": "integer", "minimum": 0, "maximum": 3, "default": 0, "description": "等長記號的短線數；同數字的邊一樣長。" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "angles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "vertex", "from", "to", "mark"],
+        "properties": {
+          "id": { "$ref": "#/$defs/element_id" },
+          "vertex": { "$ref": "#/$defs/element_id" },
+          "from": { "$ref": "#/$defs/element_id", "description": "角的一邊上的點；從 from 逆時針（畫面上）轉到 to 是這個角。" },
+          "to": { "$ref": "#/$defs/element_id" },
+          "mark": { "type": "string", "enum": ["arc", "right", "none"], "description": "arc：角弧；right：直角記號（小方框）；none：不畫記號。" },
+          "radius": { "type": "number", "exclusiveMinimum": 0, "maximum": 60, "description": "角弧半徑或直角記號邊長（mm）。" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "labels": {
+      "type": "array",
+      "description": "標示文字（邊長、度數、甲乙丙、ㄅㄆㄇ）：renderer 畫成文字節點，可選取、可報讀。",
+      "items": {
+        "type": "object",
+        "required": ["id", "at", "text"],
+        "properties": {
+          "id": { "$ref": "#/$defs/element_id" },
+          "at": { "$ref": "#/$defs/xy" },
+          "text": { "type": "string", "minLength": 1, "maxLength": 16 },
+          "say": { "type": "string", "minLength": 1, "description": "報讀用的唸法（例如「∠ㄅ」唸「角ㄅ」）；省略就唸 text。" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "tools": {
+      "type": "object",
+      "description": "可以疊上去的虛擬工具。外殼給切換鈕；什麼時候自動疊上由題目的 display.overlay 決定。",
+      "properties": {
+        "set-square": {
+          "type": "object",
+          "description": "直角板：直角對準 vertex，一條直角邊沿著 vertex→along，另一條直角邊往 toward 那一側。",
+          "required": ["vertex", "along", "toward", "size"],
+          "properties": {
+            "vertex": { "$ref": "#/$defs/element_id" },
+            "along": { "$ref": "#/$defs/element_id" },
+            "toward": { "$ref": "#/$defs/element_id" },
+            "size": { "type": "number", "exclusiveMinimum": 0, "maximum": 120, "description": "直角邊長（mm）。" }
+          },
+          "additionalProperties": false
+        },
+        "protractor": {
+          "type": "object",
+          "description": "量角器：中心對準 vertex，0 度線沿著 vertex→along；學生可以翻到另一側從左邊或右邊量。",
+          "required": ["vertex", "along", "radius"],
+          "properties": {
+            "vertex": { "$ref": "#/$defs/element_id" },
+            "along": { "$ref": "#/$defs/element_id" },
+            "radius": { "type": "number", "exclusiveMinimum": 0, "maximum": 120 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "alt": { "type": "string", "minLength": 1, "description": "給報讀與無法看圖的人的描述。不得洩漏答案（例如比直角大或小）。" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "element_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$" },
+    "xy": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number" } }
+  }
+}

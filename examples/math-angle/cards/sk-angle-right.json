@@ -1,0 +1,45 @@
+{
+  "format_version": 1,
+  "id": "sk-angle-right",
+  "kind": "skill",
+  "key": "math.angle-vs-right:n-II-9#b@3",
+  "grade_min": 3,
+  "ladder_ids": [
+    "n-II-9#b@3"
+  ],
+  "curriculum_codes": [
+    "S-3-1",
+    "N-3-13"
+  ],
+  "title": {
+    "text": "和直角比",
+    "audio": null
+  },
+  "explain": {
+    "text": "把直角板的直角對準角的頂點，一條直角邊貼著角的一條邊，再看另一條邊在直角板的裡面、剛好貼著，還是跑到外面。",
+    "audio": null
+  },
+  "generator": "math.angle-vs-right",
+  "generator_version": 1,
+  "params": {
+    "tiers": [
+      "clear",
+      "right",
+      "near"
+    ],
+    "weights": {
+      "clear": 6,
+      "right": 3,
+      "near": 3
+    },
+    "choices": "three",
+    "overlay": "hint",
+    "rotate": true,
+    "vary_rays": true,
+    "distinct": true
+  },
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
+}

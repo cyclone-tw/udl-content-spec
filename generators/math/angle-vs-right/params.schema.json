@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:generators/math/angle-vs-right/params",
+  "title": "math.angle-vs-right 參數",
+  "description": "形狀由本 schema 檢查；值是否落在能力指標條件檔允許的範圍，由 generators/profiles/index.mjs 的 checkParams 檢查。通常不用手寫，呼叫 resolveParams(profile, { adjustment, overrides, mode }) 取得。",
+  "type": "object",
+  "required": ["tiers", "choices", "overlay", "rotate", "vary_rays", "distinct"],
+  "properties": {
+    "tiers": { "type": "array", "minItems": 1, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true, "description": "條件檔的檔位 id。" },
+    "weights": { "type": "object", "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }, "description": "檔位相對權重；題數依權重按比例分配，未列的為 1。" },
+    "choices": { "type": "string", "enum": ["three", "is-right"], "description": "three：比直角小／一樣大／比直角大；is-right：是不是直角。" },
+    "overlay": { "type": "string", "enum": ["button", "hint", "always"], "description": "寫進實例 display.overlay：虛擬直角板什麼時候出現。" },
+    "rotate": { "type": "boolean", "description": "整個角隨機旋轉（15 度一格）。" },
+    "vary_rays": { "type": "boolean", "description": "兩邊長短與角弧大小隨機，部分題目讓小角配長邊、大角配短邊。" },
+    "distinct": { "type": "boolean", "description": "同一批不出度數與方向都一樣的角。" }
+  },
+  "additionalProperties": false
+}

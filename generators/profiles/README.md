@@ -17,6 +17,11 @@ udl 只報事實：「指標 X：n 題對 k、調整方式、鷹架檔、提示�
 | ladder id | 檔案 | kit 原文 | 產生器 | 狀態 |
 | --- | --- | --- | --- | --- |
 | `n-I-2#a@2` | `n-i-2-a-2.json` | 能用直式計算二位數加減（含一次進位或退位），10 題正確率約八成 | `math.add-sub` v1 | v1（#18） |
+| `n-II-9#b@3` | `n-ii-9-b-3.json` | 能用直角板判斷一個角是直角、比直角大或比直角小 | `math.angle-vs-right` v1 | v1（#69，Cyclone 2026-10-22 確認預設） |
+
+條件檔的形狀依產生器分家：`profile.schema.json` 依 `generator` 分派到 `profile.add-sub.schema.json`、`profile.angle-vs-right.schema.json`；`checkParams`／`resolveParams` 也依 `generator` 分派（加減法規則在 `index.mjs`，和直角比在 `angle-vs-right.mjs`）。三層分工、五種課程調整的鍵、`resolveParams` 的用法各產生器相同。
+
+`n-II-9#b@3` 的檔位：`clear` 明顯（銳角 20–60 度、鈍角 120–160 度，權重 6）、`right` 直角（90 度，權重 3）、`near` 接近直角（銳角 65–75 度、鈍角 105–115 度，權重 3），預設 12 題；簡化＝只出明顯與直角、減量＝6 題、分解＝一開始就疊上虛擬直角板、替代＝兩選一「是不是直角」、不適用＝不出題。練習模式第 2 層提示自動疊上直角板，評量模式只給切換鈕。
 
 檔名：ladder id 轉小寫，`#` 與 `@` 換成 `-`。正本永遠是 kit `data/ladder/*.json`；`ladder_ref` 只是快照，commit 與原文供人工對照。
 
