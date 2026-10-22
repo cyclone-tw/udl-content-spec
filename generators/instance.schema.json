@@ -10,7 +10,7 @@
     "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}#[0-9]+$", "description": "<item id>#<index>。" },
     "source_item": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
     "unit": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
-    "type": { "type": "string", "enum": ["numeric", "blanks"], "description": "產生器目前只產數值題與多格填空（直式）；新增其他題型的產生器時擴充。" },
+    "type": { "type": "string", "enum": ["numeric", "blanks", "choice"], "description": "產生器產數值題、多格填空（直式）或選擇題（幾何圖形題）；新增其他題型的產生器時擴充。" },
     "skill": { "type": "string", "minLength": 1 },
     "difficulty": { "$ref": "urn:udl-content-spec:v1:common#/$defs/difficulty" },
     "ladder_ids": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id" } },
@@ -31,7 +31,23 @@
       },
       "additionalProperties": false
     },
-    "answer": { "type": "number" },
+    "answer": { "type": ["number", "string"], "description": "numeric：正解數值；choice：正解選項 id。" },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["id", "text"],
+        "properties": {
+          "id": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+          "text": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" },
+          "misconception": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id", "description": "選到這個錯誤選項時記的錯誤類型代碼（activities 內建表）。" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "shuffle": { "type": "boolean", "description": "choice：殼可不可以打亂選項順序。有大小順序的選項（比直角小／一樣大／比直角大）設 false。" },
     "tolerance": {
       "type": "object",
       "required": ["type", "value"],
@@ -83,7 +99,9 @@
         "operands": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer" } },
         "places": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "type": "string", "enum": ["ones", "tens", "hundreds", "thousands"] }, "description": "直式要畫哪幾位，由低到高；與 blanks 的格一一對應。" },
         "carry_marks": { "type": "boolean", "description": "renderer 可畫進退位記號格；記號不計分。" },
-        "scaffold": { "type": "string", "enum": ["none", "partial", "full"], "description": "鷹架檔：none 純直式；partial 位值標籤＋進退位格＋提示；full 再加圖像與逐位閘門。" }
+        "scaffold": { "type": "string", "enum": ["none", "partial", "full"], "description": "鷹架檔：none 純直式；partial 位值標籤＋進退位格＋提示；full 再加圖像與逐位閘門。" },
+        "figure": { "$ref": "urn:udl-content-spec:v1:figure", "description": "幾何圖形（schema/figure.schema.json）；renderer 畫在題幹旁。" },
+        "overlay": { "type": "string", "enum": ["button", "hint", "always"], "description": "疊圖工具（figure.tools）什麼時候出現：button 只給切換鈕；hint 另外在用到第 2 層提示時自動疊上；always 一開始就疊上（課程調整：分解）。" }
       },
       "additionalProperties": false
     },
@@ -94,11 +112,15 @@
   "allOf": [
     {
       "if": { "properties": { "type": { "const": "numeric" } } },
-      "then": { "required": ["answer"], "properties": { "blanks": false } }
+      "then": { "required": ["answer"], "properties": { "answer": { "type": "number" }, "blanks": false, "options": false, "shuffle": false } }
     },
     {
       "if": { "properties": { "type": { "const": "blanks" } } },
-      "then": { "required": ["blanks"], "properties": { "answer": false, "tolerance": false, "input": false, "unit_label": false } }
+      "then": { "required": ["blanks"], "properties": { "answer": false, "tolerance": false, "input": false, "unit_label": false, "options": false, "shuffle": false } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "choice" } } },
+      "then": { "required": ["options", "answer"], "properties": { "answer": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "blanks": false, "tolerance": false, "input": false, "unit_label": false } }
     }
   ],
   "additionalProperties": false,

@@ -17,6 +17,7 @@ async function loadAjv() {
   const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true, allowUnionTypes: true });
   addFormats(ajv);
   ajv.addSchema(await readJson("schema/common.schema.json"));
+  ajv.addSchema(await readJson("schema/figure.schema.json"));
   const validateInstance = ajv.compile(await readJson(INSTANCE_SCHEMA_PATH));
   const validateParams = {};
   for (const g of Object.values(generators)) validateParams[g.id] = ajv.compile(await readJson(g.paramsSchemaPath));
@@ -52,8 +53,8 @@ const genItem = (overrides = {}) => ({
   ...overrides,
 });
 
-test("登錄表：三個產生器、版本 1、params schema 可編譯", async () => {
-  assert.deepEqual(Object.keys(generators).sort(), [CARRY, NO_CARRY, "math.add-sub"]);
+test("登錄表：四個產生器、版本 1、params schema 可編譯", async () => {
+  assert.deepEqual(Object.keys(generators).sort(), [CARRY, NO_CARRY, "math.add-sub", "math.angle-vs-right"]);
   for (const g of Object.values(generators)) {
     assert.equal(g.version, 1);
     assert.equal(typeof g.generate, "function");

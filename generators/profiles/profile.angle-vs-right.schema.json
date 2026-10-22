@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:generators/profile/angle-vs-right",
+  "title": "能力指標出題條件檔（math.angle-vs-right）",
+  "description": "和直角比：畫一個角，問比直角小、一樣大還是比直角大。檔位是角度範圍；預設、五種課程調整、每檔三句提示、選項與回饋文字都在這裡。",
+  "type": "object",
+  "required": ["format_version", "ladder_id", "ladder_ref", "generator", "generator_version", "tiers", "defaults", "adjustments", "hints", "feedback", "stems", "option_text", "relation", "names"],
+  "properties": {
+    "format_version": { "const": 1 },
+    "ladder_id": { "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id" },
+    "ladder_ref": { "$ref": "urn:udl-content-spec:v1:generators/profile/add-sub#/properties/ladder_ref" },
+    "generator": { "const": "math.angle-vs-right" },
+    "generator_version": { "type": "integer", "minimum": 1 },
+    "tiers": {
+      "type": "object",
+      "description": "檔位 id → 角度範圍。每題先選檔位，再在檔位的範圍之間輪流（一題銳、一題鈍），範圍內抽整數度。",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["label", "ranges"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1, "description": "給老師看的檔位名稱。" },
+          "ranges": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer", "minimum": 5, "maximum": 175 } },
+            "description": "[最小, 最大]（度，含兩端）。不可跨過 90（[90, 90] 是直角）；180 度以上不出（三年級不談）。"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "defaults": { "$ref": "#/$defs/settings" },
+    "adjustments": {
+      "type": "object",
+      "required": ["simplify", "reduce", "decompose", "substitute", "not_applicable"],
+      "properties": {
+        "simplify": { "$ref": "#/$defs/adjustment" },
+        "reduce": { "$ref": "#/$defs/adjustment" },
+        "decompose": { "$ref": "#/$defs/adjustment" },
+        "substitute": { "$ref": "#/$defs/adjustment" },
+        "not_applicable": { "$ref": "#/$defs/adjustment" }
+      },
+      "additionalProperties": false
+    },
+    "hints": {
+      "type": "object",
+      "description": "檔位 id → 三句提示（輕推 → 縮範圍 → 近答案）。不得直接說出這題的答案。",
+      "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+      "additionalProperties": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "string", "minLength": 1 } }
+    },
+    "feedback": {
+      "type": "object",
+      "required": ["correct", "retry"],
+      "properties": {
+        "correct": { "type": "string", "minLength": 1, "description": "可用 {relation}、{name_sentence}。" },
+        "retry": { "type": "string", "minLength": 1, "description": "只指出下一步看哪裡，不說錯。" }
+      },
+      "additionalProperties": false
+    },
+    "stems": {
+      "type": "object",
+      "required": ["three", "is-right"],
+      "properties": {
+        "three": { "type": "string", "minLength": 1 },
+        "is-right": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "option_text": {
+      "type": "object",
+      "description": "選項文字。three 用 smaller、same、larger；is-right 用 yes、no。",
+      "required": ["smaller", "same", "larger", "yes", "no"],
+      "properties": {
+        "smaller": { "type": "string", "minLength": 1 },
+        "same": { "type": "string", "minLength": 1 },
+        "larger": { "type": "string", "minLength": 1 },
+        "yes": { "type": "string", "minLength": 1 },
+        "no": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "relation": {
+      "type": "object",
+      "description": "回饋裡的 {relation}：這個角和直角的關係。",
+      "required": ["smaller", "same", "larger"],
+      "properties": {
+        "smaller": { "type": "string", "minLength": 1 },
+        "same": { "type": "string", "minLength": 1 },
+        "larger": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "names": {
+      "type": "object",
+      "description": "回饋裡的 {name_sentence}：帶出角的名稱（初步認識銳角、直角、鈍角）。",
+      "required": ["smaller", "same", "larger"],
+      "properties": {
+        "smaller": { "type": "string", "minLength": 1 },
+        "same": { "type": "string", "minLength": 1 },
+        "larger": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "alt": { "type": "string", "minLength": 1, "description": "圖形的 alt（每題相同，不洩漏答案）；省略用產生器預設。" },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "choices": { "type": "string", "enum": ["three", "is-right"], "description": "three：比直角小／一樣大／比直角大；is-right：是不是直角（課程調整：替代）。" },
+    "overlay": { "type": "string", "enum": ["button", "hint", "always"] },
+    "settings": {
+      "type": "object",
+      "required": ["tiers", "weights", "count", "choices", "overlay", "rotate", "vary_rays", "distinct"],
+      "properties": {
+        "tiers": { "type": "array", "minItems": 1, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
+        "weights": {
+          "type": "object",
+          "description": "檔位 id → 相對權重；題數依權重按比例分配（最大餘數法），未列的檔位權重 1。",
+          "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
+          "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }
+        },
+        "count": { "type": "integer", "minimum": 1 },
+        "choices": { "$ref": "#/$defs/choices" },
+        "overlay": {
+          "type": "object",
+          "required": ["assess", "practice"],
+          "properties": { "assess": { "$ref": "#/$defs/overlay" }, "practice": { "$ref": "#/$defs/overlay" } },
+          "additionalProperties": false
+        },
+        "rotate": { "type": "boolean", "description": "整個角隨機旋轉（抓「斜放就認不得直角」）。" },
+        "vary_rays": { "type": "boolean", "description": "兩邊長短與角弧大小隨機，部分題目故意讓小角配長邊、大角配短邊（抓「邊長就以為角大」）。" },
+        "distinct": { "type": "boolean", "description": "同一批不出度數與方向都一樣的角。" }
+      },
+      "additionalProperties": false
+    },
+    "adjustment": {
+      "type": "object",
+      "required": ["label"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "skip": { "const": true },
+        "note": { "type": "string" },
+        "tiers": { "type": "array", "minItems": 1, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
+        "weights": { "type": "object", "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "additionalProperties": { "type": "number", "exclusiveMinimum": 0 } },
+        "count": { "type": "integer", "minimum": 1 },
+        "choices": { "$ref": "#/$defs/choices" },
+        "overlay": {
+          "type": "object",
+          "properties": { "assess": { "$ref": "#/$defs/overlay" }, "practice": { "$ref": "#/$defs/overlay" } },
+          "additionalProperties": false
+        },
+        "rotate": { "type": "boolean" },
+        "vary_rays": { "type": "boolean" },
+        "distinct": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

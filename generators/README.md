@@ -7,6 +7,7 @@
 | id | 中文 | 版本 | 條件 | 參數 | 產出題型 | 狀態 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `math.add-sub` | 加減法（依能力指標條件檔） | 1 | 由 `profiles/` 的檔位決定：進位次數、退位次數、被減數個位是否為 0、和的範圍 | `tiers`、`weights`、`operations`、`shapes`、`presentation`、`scaffold`、`context`、`distinct`、`context_pools`（用 `resolveParams` 產生） | `blanks`（直式）或 `numeric` | v1（#18） |
+| `math.angle-vs-right` | 和直角比（圖形選擇題） | 1 | 由 `profiles/` 的檔位決定角度範圍；題數依權重按比例分配 | `tiers`、`weights`、`choices`、`overlay`、`rotate`、`vary_rays`、`distinct` | `choice`（`display.figure` 幾何圖形） | v1（#69） |
 | `math.add-2digit-carry` | 二位數進位加法 | 1 | 個位相加 ≥ 10 | `min`、`max`（10–99）、`max_sum`、`distinct`、`layout` | `numeric` | legacy：已被 `math.add-sub` 涵蓋，保留到 v2；驗證器對它的題目只警告「沒有條件檔」（`ladder_ids` 仍必填） |
 | `math.add-2digit-no-carry` | 二位數不進位加法 | 1 | 個位相加 < 10 | 同上 | `numeric` | 同上 |
 
@@ -26,7 +27,7 @@ const instances = instantiate(item, { seed: "attempt-01HZX…", pools });  // it
 const result = score(instances[0], { value: 42 });
 ```
 
-`index.mjs` 匯出 `generators`（登錄表）、`getGenerator(id)`、`instantiate(item, { seed, pools })`、`profileForItem(item)`、`substitute(text, variables)`、`INSTANCE_SCHEMA_PATH`，並轉出 `profiles/index.mjs` 的 `profiles`、`getProfile`、`profilesFor`、`resolveParams`、`checkParams`、`PROFILE_SCHEMA_PATH`。
+`index.mjs` 匯出 `generators`（登錄表）、`getGenerator(id)`、`instantiate(item, { seed, pools })`、`profileForItem(item)`、`substitute(text, variables)`、`INSTANCE_SCHEMA_PATH`，並轉出 `profiles/index.mjs` 的 `profiles`、`getProfile`、`profilesFor`、`resolveParams`、`checkParams`、`PROFILE_SCHEMA_PATH`、`PROFILE_FAMILY_SCHEMA_PATHS`。產生器模組可另外匯出 `itemType(params)`（出的題型），活動的技能練習照它建題目；沒有就照 `presentation` 判斷數值題或直式。
 
 ## 契約
 
@@ -65,6 +66,7 @@ const result = score(instances[0], { value: 42 });
 - `tier` 是這題抽到的檔位；`display.scaffold` 是鷹架檔（`none`／`partial`／`full`），事件都要記。直式實例是 `type: "blanks"`，`blanks` 每位一格，`display.places` 說明畫哪幾位、`carry_marks` 可畫進退位記號格（不計分）。
 - `stem.text.audio` 永遠是 `null`：亂數題的題幹無法預錄，由殼的 TTS 讀。
 - `display.layout` 給 renderer 決定橫式或直式，不影響答案。
+- 幾何題是 `type: "choice"`：`options`（可帶 `misconception`）、`answer`（選項 id）、`shuffle`；`display.figure` 是圖形描述（`schema/figure.schema.json`，mm、y 向下，標示畫成可報讀的文字層），`display.overlay` 說虛擬工具什麼時候疊上。
 
 ## 路線圖
 

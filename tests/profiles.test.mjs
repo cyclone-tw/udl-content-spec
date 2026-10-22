@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import {
-  profiles, getProfile, profilesFor, resolveParams, checkParams, PROFILE_SCHEMA_PATH, INSTANCE_SCHEMA_PATH,
+  profiles, getProfile, profilesFor, resolveParams, checkParams, PROFILE_SCHEMA_PATH, PROFILE_FAMILY_SCHEMA_PATHS, INSTANCE_SCHEMA_PATH,
   generators, instantiate, profileForItem,
 } from "../generators/index.mjs";
 import { analyze, hintVariants, pickHints } from "../generators/math/add-sub/generate.mjs";
@@ -24,6 +24,8 @@ async function loadAjv() {
   const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true, allowUnionTypes: true });
   addFormats(ajv);
   ajv.addSchema(await readJson("schema/common.schema.json"));
+  ajv.addSchema(await readJson("schema/figure.schema.json"));
+  for (const p of PROFILE_FAMILY_SCHEMA_PATHS) ajv.addSchema(await readJson(p));
   return {
     validateProfile: ajv.compile(await readJson(PROFILE_SCHEMA_PATH)),
     validateInstance: ajv.compile(await readJson(INSTANCE_SCHEMA_PATH)),
@@ -51,11 +53,11 @@ const canonical = (q) => (q.type === "blanks" ? { blanks: Object.fromEntries(q.b
 
 test("登錄表：條件檔通過 schema，每個檔位都有三句提示，預設檔位與權重都在 tiers 內", async () => {
   const { validateProfile } = await ajvPromise;
-  assert.deepEqual(Object.keys(profiles), [A2]);
+  assert.deepEqual(Object.keys(profiles), [A2, "n-II-9#b@3"]);
   assert.equal(profilesFor([A2, "c-x"]).length, 1);
   assert.equal(getProfile("nope"), null);
-  for (const p of Object.values(profiles)) {
-    assert.ok(validateProfile(p), JSON.stringify(validateProfile.errors));
+  for (const p of Object.values(profiles)) assert.ok(validateProfile(p), `${p.ladder_id}: ${JSON.stringify(validateProfile.errors)}`);
+  for (const p of Object.values(profiles).filter((x) => x.generator === "math.add-sub")) {
     assert.deepEqual(Object.keys(p.hints).sort(), Object.keys(p.tiers).sort(), "每個檔位都要有提示範本");
     for (const h of Object.values(p.hints)) assert.equal(pickHints(h, []).hints.length, 3, "default 一定三句");
     assert.equal(pickHints(p.hints["add-one-carry"], ["ones-carry"]).key, "default", "沒登錄的候選退回 default，key 也要說 default");

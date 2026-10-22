@@ -1,0 +1,36 @@
+{
+  "format_version": 1,
+  "id": "u-angle-right",
+  "title": "和直角比",
+  "subject": "math",
+  "grade": 3,
+  "ladder_ids": [
+    "n-II-9#b@3"
+  ],
+  "curriculum_codes": [
+    "S-3-1",
+    "N-3-13"
+  ],
+  "estimated_minutes": 30,
+  "materials": [],
+  "items": [],
+  "bindings": {
+    "skills": [
+      "sk-angle-right"
+    ]
+  },
+  "activities": [
+    {
+      "activity": "skill-practice",
+      "label": "和直角比",
+      "short": "練習",
+      "count": 12
+    },
+    {
+      "activity": "quiz",
+      "label": "小測驗",
+      "short": "測驗",
+      "count": 6
+    }
+  ]
+}

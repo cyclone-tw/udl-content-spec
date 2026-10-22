@@ -2,7 +2,7 @@
 // 生題是純函式：同一單元、同一組卡、同一個種子，永遠得到同樣的題目；題目實例形狀與固定題相同，
 // 所以可以直接丟給 question-types 的 score()。實例不是內容檔，不存進內容包。
 import { createRng } from "../generators/_prng.mjs";
-import { instantiate } from "../generators/index.mjs";
+import { instantiate, getGenerator } from "../generators/index.mjs";
 import { normalizeZhuyin, syllableKey, wordKey } from "../audio/index.mjs";
 import zhLow from "./profiles/zh-low.json" with { type: "json" };
 import zhMid from "./profiles/zh-mid.json" with { type: "json" };
@@ -272,6 +272,10 @@ export const misconceptions = Object.freeze({
   "wrong-paragraph": Object.freeze({ label: "段落重點張冠李戴", note: "把別段的重點當成這一段的" }),
   "wrong-branch": Object.freeze({ label: "心智圖分支放錯", note: "把別的分支的內容放到這一支" }),
   "rhetoric-mixup": Object.freeze({ label: "修辭類型混淆", note: "把這句的修辭認成另一種（看 detail 的 chosen 與 answer 是哪兩種）" }),
+  "angle-by-ray-length": Object.freeze({ label: "看邊長判斷角的大小", note: "邊畫得長就以為角大、邊短就以為角小（題目故意讓小角配長邊、大角配短邊）" }),
+  "angle-compare-reversed": Object.freeze({ label: "和直角比反了", note: "比直角小說成比直角大，或反過來" }),
+  "angle-right-by-eye": Object.freeze({ label: "用眼睛估直角", note: "接近直角就說一樣大，或直角說成不一樣（沒有用直角板比）" }),
+  "angle-right-orientation": Object.freeze({ label: "斜放就認不得直角", note: "直角轉了方向就說不是直角" }),
 });
 
 // 每個活動：預設段落、是否生題、在什麼條件下才出現（needs 回傳 null 表示可以，字串是不能的理由）。
@@ -950,7 +954,7 @@ function genSkillPractice({ unit, cards, rng, count, seed, pools }) {
       format_version: 1,
       id: `${skill.id}`.slice(0, 64),
       unit: unit.id,
-      type: skill.params?.presentation === "horizontal-numeric" ? "numeric" : "blanks",
+      type: getGenerator(skill.generator)?.itemType?.(skill.params) ?? (skill.params?.presentation === "horizontal-numeric" ? "numeric" : "blanks"),
       kind: "generated",
       skill: skill.title.text,
       ladder_ids: skill.ladder_ids,

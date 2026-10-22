@@ -1,12 +1,20 @@
 // 條件檔登錄表：每條 kit 能力階梯一份，決定產生題能用哪些檔位與預設怎麼出。
 // 三層分工：這裡是「條件檔」（通用）；「處方」（學生 × 指標用哪種調整）在平台名冊；「尺」（達到門檻）在 kit／IEP。
 import nI2a2 from "./n-i-2-a-2.json" with { type: "json" };
+import nII9b3 from "./n-ii-9-b-3.json" with { type: "json" };
+import * as angleVsRight from "./angle-vs-right.mjs";
 
 export const PROFILE_SCHEMA_PATH = "generators/profiles/profile.schema.json";
+/** 各產生器自己的條件檔形狀；PROFILE_SCHEMA_PATH 依 generator 分派到這些（ajv 要先載入）。 */
+export const PROFILE_FAMILY_SCHEMA_PATHS = Object.freeze([
+  "generators/profiles/profile.add-sub.schema.json",
+  "generators/profiles/profile.angle-vs-right.schema.json",
+]);
 
 /** 已登錄的條件檔，以 ladder id 為 key。 */
 export const profiles = Object.freeze({
   [nI2a2.ladder_id]: nI2a2,
+  [nII9b3.ladder_id]: nII9b3,
 });
 
 /** 五種課程調整的固定鍵（對應 C06／C08 表件的簡化、減量、分解、替代；不適用＝不出題）。 */
@@ -31,11 +39,27 @@ export function profilesFor(ladderIds) {
   return (Array.isArray(ladderIds) ? ladderIds : []).map(getProfile).filter(Boolean);
 }
 
+// 每個產生器的條件檔各有自己的檔位條件與預設欄位；checkParams／resolveParams 依 profile.generator 分派。
+const FAMILIES = {
+  "math.add-sub": { checkParams: checkAddSubParams, resolveParams: resolveAddSubParams },
+  "math.angle-vs-right": angleVsRight,
+};
+
+function familyOf(profile) {
+  const family = isPlainObject(profile) ? FAMILIES[profile.generator] : undefined;
+  if (!family) throw new TypeError(`條件檔 ${profile?.ladder_id ?? "?"} 的產生器 ${JSON.stringify(profile?.generator)} 沒有條件檔規則`);
+  return family;
+}
+
 /**
  * 檢查一組 params 是否落在條件檔允許的範圍內；回傳可讀的錯誤清單（空陣列＝合格）。
  * 純函式；驗證器與產生器都用它，所以「內容包能過驗證」與「產生器願意出題」永遠一致。
  */
 export function checkParams(profile, params) {
+  return familyOf(profile).checkParams(profile, params);
+}
+
+function checkAddSubParams(profile, params) {
   const errors = [];
   if (!isPlainObject(params)) return ["params 必須是物件"];
   const known = new Set(["tiers", "weights", "operations", "shapes", "presentation", "scaffold", "context", "distinct", "context_pools"]);
@@ -101,8 +125,12 @@ function mergeSettings(base, patch) {
  * 處方層呼叫：adjustment 是五種調整之一（或省略＝不調整），overrides 是老師對預設的覆寫，mode 決定鷹架取 assess 還是 practice。
  * 回傳 { skip: true } 表示不適用，不出題。覆寫超出條件檔會丟 TypeError（內容錯誤）。
  */
-export function resolveParams(profile, { adjustment, overrides = {}, mode = "assess", context_pools } = {}) {
+export function resolveParams(profile, options = {}) {
   if (!isPlainObject(profile) || !isPlainObject(profile.defaults)) throw new TypeError("resolveParams: profile 不合法");
+  return familyOf(profile).resolveParams(profile, options);
+}
+
+function resolveAddSubParams(profile, { adjustment, overrides = {}, mode = "assess", context_pools } = {}) {
   if (!MODES.includes(mode)) throw new TypeError(`resolveParams: mode 必須是 ${MODES.join("／")}`);
   let settings = structuredClone(profile.defaults);
   if (adjustment !== undefined) {

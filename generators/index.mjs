@@ -3,11 +3,12 @@
 import * as addCarry from "./math/add-2digit-carry/generate.mjs";
 import * as addNoCarry from "./math/add-2digit-no-carry/generate.mjs";
 import * as addSub from "./math/add-sub/generate.mjs";
+import * as angleVsRight from "./math/angle-vs-right/generate.mjs";
 import { profilesFor } from "./profiles/index.mjs";
 import { substitute, substituteSpoken } from "./_template.mjs";
 
 export { substitute } from "./_template.mjs";
-export { profiles, getProfile, profilesFor, resolveParams, checkParams, PROFILE_SCHEMA_PATH } from "./profiles/index.mjs";
+export { profiles, getProfile, profilesFor, resolveParams, checkParams, PROFILE_SCHEMA_PATH, PROFILE_FAMILY_SCHEMA_PATHS } from "./profiles/index.mjs";
 
 const entry = (mod) => Object.freeze({
   id: mod.id,
@@ -15,6 +16,7 @@ const entry = (mod) => Object.freeze({
   generate: mod.generate,
   paramsSchemaPath: mod.paramsSchemaPath,
   legacy: mod.legacy === true,
+  itemType: typeof mod.itemType === "function" ? mod.itemType : null,
 });
 
 /** 已登錄的產生器。add-2digit-carry／no-carry 已被 add-sub 涵蓋，保留到 v2。 */
@@ -22,6 +24,7 @@ export const generators = Object.freeze({
   [addCarry.id]: entry(addCarry),
   [addNoCarry.id]: entry(addNoCarry),
   [addSub.id]: entry(addSub),
+  [angleVsRight.id]: entry(angleVsRight),
 });
 
 export const INSTANCE_SCHEMA_PATH = "generators/instance.schema.json";

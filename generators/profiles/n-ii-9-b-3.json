@@ -1,0 +1,145 @@
+{
+  "format_version": 1,
+  "ladder_id": "n-II-9#b@3",
+  "ladder_ref": {
+    "repo": "cyclone-tw/sped-student-kit",
+    "commit": "2c5cb1d",
+    "behavior": "能用直角板判斷一個角是直角、比直角大或比直角小",
+    "curriculum_codes": [
+      "N-3-13",
+      "S-3-1"
+    ]
+  },
+  "generator": "math.angle-vs-right",
+  "generator_version": 1,
+  "tiers": {
+    "clear": {
+      "label": "明顯（銳角 20–60 度、鈍角 120–160 度）",
+      "ranges": [
+        [
+          20,
+          60
+        ],
+        [
+          120,
+          160
+        ]
+      ]
+    },
+    "right": {
+      "label": "直角（剛好 90 度）",
+      "ranges": [
+        [
+          90,
+          90
+        ]
+      ]
+    },
+    "near": {
+      "label": "接近直角（銳角 65–75 度、鈍角 105–115 度）",
+      "ranges": [
+        [
+          65,
+          75
+        ],
+        [
+          105,
+          115
+        ]
+      ]
+    }
+  },
+  "defaults": {
+    "tiers": [
+      "clear",
+      "right",
+      "near"
+    ],
+    "weights": {
+      "clear": 6,
+      "right": 3,
+      "near": 3
+    },
+    "count": 12,
+    "choices": "three",
+    "overlay": {
+      "assess": "button",
+      "practice": "hint"
+    },
+    "rotate": true,
+    "vary_rays": true,
+    "distinct": true
+  },
+  "adjustments": {
+    "simplify": {
+      "label": "簡化：只出明顯與直角",
+      "tiers": [
+        "clear",
+        "right"
+      ]
+    },
+    "reduce": {
+      "label": "減量：6 題",
+      "count": 6
+    },
+    "decompose": {
+      "label": "分解：一開始就疊上虛擬直角板",
+      "overlay": {
+        "assess": "always",
+        "practice": "always"
+      }
+    },
+    "substitute": {
+      "label": "替代：兩選一「是不是直角」",
+      "choices": "is-right"
+    },
+    "not_applicable": {
+      "label": "不適用：不出題",
+      "skip": true
+    }
+  },
+  "hints": {
+    "clear": [
+      "角可能斜斜的或倒過來放。先找到角的尖尖，那是頂點，兩條邊從頂點出發。",
+      "按「放上直角板」，把直角板的直角對準頂點，一條直角邊貼著角的一條邊。",
+      "看另一條邊：在直角板裡面就是比直角小，剛好貼著直角板的邊就是一樣大，跑到外面就是比直角大。"
+    ],
+    "right": [
+      "角可能斜斜的或倒過來放。先找到角的尖尖，那是頂點，兩條邊從頂點出發。",
+      "按「放上直角板」，把直角板的直角對準頂點，一條直角邊貼著角的一條邊。",
+      "看另一條邊：在直角板裡面就是比直角小，剛好貼著直角板的邊就是一樣大，跑到外面就是比直角大。"
+    ],
+    "near": [
+      "角可能斜斜的或倒過來放。先找到角的尖尖，那是頂點，兩條邊從頂點出發。",
+      "按「放上直角板」，把直角板的直角對準頂點，一條直角邊貼著角的一條邊。",
+      "看另一條邊：在直角板裡面就是比直角小，剛好貼著直角板的邊就是一樣大，跑到外面就是比直角大。"
+    ]
+  },
+  "feedback": {
+    "correct": "答對了！這個角{relation}。{name_sentence}",
+    "retry": "再看一次另一條邊：它在直角板的裡面、剛好貼著，還是跑到外面？"
+  },
+  "stems": {
+    "three": "這個角和直角比，怎麼樣？",
+    "is-right": "這個角是不是直角？"
+  },
+  "option_text": {
+    "smaller": "比直角小",
+    "same": "一樣大",
+    "larger": "比直角大",
+    "yes": "是直角",
+    "no": "不是直角"
+  },
+  "relation": {
+    "smaller": "比直角小",
+    "same": "和直角一樣大",
+    "larger": "比直角大"
+  },
+  "names": {
+    "smaller": "比直角小的角，叫作銳角。",
+    "same": "和直角一樣大的角，就是直角。",
+    "larger": "比直角大的角，叫作鈍角。"
+  },
+  "alt": "一個角：兩條邊從同一個頂點出發。可以放上直角板比一比。",
+  "notes": "Cyclone 2026-10-22 確認（udl-math#8）：三檔 12 題（明顯 6、直角 3、接近 3）、選項用 kit 行為句說法、答對回饋帶出銳角／直角／鈍角名稱、五種調整照研究建議。三年級不出度數、不用量角器（課程手冊 N-3-13）。三檔提示相同，免得提示洩漏檔位。"
+}

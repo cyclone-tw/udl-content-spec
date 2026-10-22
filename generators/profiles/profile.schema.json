@@ -2,191 +2,20 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:udl-content-spec:v1:generators/profile",
   "title": "能力指標出題條件檔",
-  "description": "一條 kit 能力階梯行為對應一份：這條指標允許哪些檔位、數字形狀、預設怎麼出、每種課程調整的預設方案、每檔三層提示範本。產生題的 params 只能在這裡列的範圍內挑；驗證器據此檢查。處方（個別學生）與尺（判級門檻）不在這裡。",
+  "description": "一條 kit 能力階梯行為對應一份：這條指標允許哪些檔位、預設怎麼出、每種課程調整的預設方案、每檔三層提示範本。不同產生器的檔位條件不同，所以依 generator 分到各自的形狀（profile.<產生器>.schema.json）。處方（個別學生）與尺（判級門檻）不在這裡。",
   "type": "object",
-  "required": ["format_version", "ladder_id", "ladder_ref", "generator", "generator_version", "tiers", "shapes", "defaults", "adjustments", "hints", "feedback", "stems"],
+  "required": ["generator"],
   "properties": {
-    "format_version": { "const": 1 },
-    "ladder_id": { "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id" },
-    "ladder_ref": {
-      "type": "object",
-      "description": "kit 階梯的來源快照，供人工對照；正本永遠在 kit。",
-      "required": ["repo", "commit", "behavior", "curriculum_codes"],
-      "properties": {
-        "repo": { "type": "string", "minLength": 1 },
-        "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
-        "behavior": { "type": "string", "minLength": 1 },
-        "curriculum_codes": { "type": "array", "minItems": 1, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/curriculum_code" }, "uniqueItems": true }
-      },
-      "additionalProperties": false
-    },
-    "generator": { "type": "string", "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$" },
-    "generator_version": { "type": "integer", "minimum": 1 },
-    "tiers": {
-      "type": "object",
-      "description": "檔位 id → 條件。檔位 id 是 kebab-case；條件欄位由產生器解讀。",
-      "minProperties": 1,
-      "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
-      "additionalProperties": {
-        "type": "object",
-        "required": ["label", "operation"],
-        "properties": {
-          "label": { "type": "string", "minLength": 1, "description": "給老師看的檔位名稱。" },
-          "operation": { "type": "string", "enum": ["add", "sub"] },
-          "carries": { "type": "integer", "minimum": 0, "maximum": 3, "description": "加法進位次數（恰好）。" },
-          "borrows": { "type": "integer", "minimum": 0, "maximum": 3, "description": "減法退位次數（恰好）。" },
-          "minuend_ones_zero": { "type": "boolean", "description": "減法：被減數個位是否必須為 0（true）或不得為 0（false）。省略不限。" },
-          "sum_max": { "type": "integer", "minimum": 1, "description": "結果（加法的和、減法的差）上限（含）。" },
-          "sum_min": { "type": "integer", "minimum": 1, "description": "結果（加法的和、減法的差）下限（含）。" }
-        },
-        "additionalProperties": false
-      }
-    },
-    "shapes": {
-      "type": "object",
-      "description": "兩個數各幾位；[2,1] 代表二位數與一位數。",
-      "required": ["allowed", "default"],
-      "properties": {
-        "allowed": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/shape" }, "uniqueItems": true },
-        "default": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/shape" }, "uniqueItems": true }
-      },
-      "additionalProperties": false
-    },
-    "defaults": { "$ref": "#/$defs/settings" },
-    "adjustments": {
-      "type": "object",
-      "description": "課程調整預設方案：每一項是對 defaults 的覆寫，或 skip: true（不出題）。鍵固定五種。",
-      "required": ["simplify", "reduce", "decompose", "substitute", "not_applicable"],
-      "properties": {
-        "simplify": { "$ref": "#/$defs/adjustment" },
-        "reduce": { "$ref": "#/$defs/adjustment" },
-        "decompose": { "$ref": "#/$defs/adjustment" },
-        "substitute": { "$ref": "#/$defs/adjustment" },
-        "not_applicable": { "$ref": "#/$defs/adjustment" }
-      },
-      "additionalProperties": false
-    },
-    "hints": {
-      "type": "object",
-      "description": "檔位 id → 三句提示範本（輕推 → 縮範圍 → 近答案），可用 {變數}。每個檔位都要有。同一檔位有不同解法子情形時用 { default, variants }：產生器依實例算出變體 key（例如 add-one-carry 的 tens-carry、形狀 [n,1] 的 one-digit），依序找第一個有的變體，都沒有就用 default。",
-      "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
-      "additionalProperties": {
-        "oneOf": [
-          { "$ref": "#/$defs/three_hints" },
-          {
-            "type": "object",
-            "required": ["default", "variants"],
-            "properties": {
-              "default": { "$ref": "#/$defs/three_hints" },
-              "variants": {
-                "type": "object",
-                "minProperties": 1,
-                "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
-                "additionalProperties": { "$ref": "#/$defs/three_hints" }
-              }
-            },
-            "additionalProperties": false
-          }
-        ]
-      }
-    },
-    "feedback": {
-      "type": "object",
-      "required": ["correct", "retry"],
-      "properties": {
-        "correct": { "type": "string", "minLength": 1 },
-        "retry": { "type": "string", "minLength": 1 }
-      },
-      "additionalProperties": false
-    },
-    "stems": {
-      "type": "object",
-      "description": "題幹範本。equation 必填；context 是情境範本清單，{subject}/{action}/{item}/{unit} 從池抽。",
-      "required": ["equation", "vertical"],
-      "properties": {
-        "equation": { "type": "string", "minLength": 1, "description": "橫式題幹，例如 {a} {op} {b} = ？" },
-        "vertical": {
-          "type": "object",
-          "description": "直式多格填空的題幹尾句，接在算式或情境句後面。places_2 必須恰含 [[tens]] 與 [[ones]] 各一次；places_3 另含 [[hundreds]]。",
-          "required": ["places_2", "places_3"],
-          "properties": {
-            "places_2": { "type": "string", "minLength": 1 },
-            "places_3": { "type": "string", "minLength": 1 }
-          },
-          "additionalProperties": false
-        },
-        "context": {
-          "type": "object",
-          "required": ["add", "sub"],
-          "properties": {
-            "add": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
-            "sub": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    "notes": { "type": "string" }
+    "generator": { "enum": ["math.add-sub", "math.angle-vs-right"] }
   },
-  "additionalProperties": false,
-  "$defs": {
-    "three_hints": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "string", "minLength": 1 } },
-    "shape": {
-      "type": "array",
-      "minItems": 2,
-      "maxItems": 2,
-      "items": { "type": "integer", "minimum": 1, "maximum": 4 }
+  "allOf": [
+    {
+      "if": { "properties": { "generator": { "const": "math.add-sub" } } },
+      "then": { "$ref": "urn:udl-content-spec:v1:generators/profile/add-sub" }
     },
-    "scaffold": { "type": "string", "enum": ["none", "partial", "full"] },
-    "settings": {
-      "type": "object",
-      "required": ["tiers", "weights", "operations", "shapes", "count", "presentation", "scaffold", "context", "distinct"],
-      "properties": {
-        "tiers": { "type": "array", "minItems": 1, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
-        "weights": {
-          "type": "object",
-          "description": "檔位 id → 相對權重；未列的檔位權重 1。",
-          "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" },
-          "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }
-        },
-        "operations": { "type": "array", "minItems": 1, "items": { "type": "string", "enum": ["add", "sub"] }, "uniqueItems": true },
-        "shapes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/shape" }, "uniqueItems": true },
-        "count": { "type": "integer", "minimum": 1 },
-        "presentation": { "type": "string", "enum": ["vertical-blanks", "horizontal-numeric"] },
-        "scaffold": {
-          "type": "object",
-          "required": ["assess", "practice"],
-          "properties": { "assess": { "$ref": "#/$defs/scaffold" }, "practice": { "$ref": "#/$defs/scaffold" } },
-          "additionalProperties": false
-        },
-        "context": { "type": "boolean" },
-        "distinct": { "type": "boolean" }
-      },
-      "additionalProperties": false
-    },
-    "adjustment": {
-      "type": "object",
-      "required": ["label"],
-      "properties": {
-        "label": { "type": "string", "minLength": 1 },
-        "skip": { "const": true },
-        "note": { "type": "string" },
-        "tiers": { "type": "array", "minItems": 1, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "uniqueItems": true },
-        "weights": { "type": "object", "propertyNames": { "$ref": "urn:udl-content-spec:v1:common#/$defs/id" }, "additionalProperties": { "type": "number", "exclusiveMinimum": 0 } },
-        "operations": { "type": "array", "minItems": 1, "items": { "type": "string", "enum": ["add", "sub"] }, "uniqueItems": true },
-        "shapes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/shape" }, "uniqueItems": true },
-        "count": { "type": "integer", "minimum": 1 },
-        "presentation": { "type": "string", "enum": ["vertical-blanks", "horizontal-numeric"] },
-        "scaffold": {
-          "type": "object",
-          "properties": { "assess": { "$ref": "#/$defs/scaffold" }, "practice": { "$ref": "#/$defs/scaffold" } },
-          "additionalProperties": false
-        },
-        "context": { "type": "boolean" },
-        "distinct": { "type": "boolean" }
-      },
-      "additionalProperties": false
+    {
+      "if": { "properties": { "generator": { "const": "math.angle-vs-right" } } },
+      "then": { "$ref": "urn:udl-content-spec:v1:generators/profile/angle-vs-right" }
     }
-  }
+  ]
 }
