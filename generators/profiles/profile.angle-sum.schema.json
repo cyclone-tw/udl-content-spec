@@ -1,0 +1,345 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:generators/profile/angle-sum",
+  "title": "能力指標出題條件檔（math.angle-sum）",
+  "description": "平角、周角與角的合成分解：檔位決定題型（180 減、360 減、相加、相減）與角度範圍；結果不超過 360 度。",
+  "type": "object",
+  "required": [
+    "format_version",
+    "ladder_id",
+    "ladder_ref",
+    "generator",
+    "generator_version",
+    "tiers",
+    "defaults",
+    "adjustments",
+    "hints",
+    "feedback",
+    "stems",
+    "alt"
+  ],
+  "properties": {
+    "format_version": {
+      "const": 1
+    },
+    "ladder_id": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id"
+    },
+    "ladder_ref": {
+      "$ref": "urn:udl-content-spec:v1:generators/profile/add-sub#/properties/ladder_ref"
+    },
+    "generator": {
+      "const": "math.angle-sum"
+    },
+    "generator_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tiers": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "label",
+          "kind",
+          "min",
+          "max",
+          "step"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "straight-minus",
+              "full-minus",
+              "add",
+              "sub"
+            ],
+            "description": "straight-minus：一直線上兩角，180 減；full-minus：一整圈，360 減；add：兩角相加；sub：大角減一角。"
+          },
+          "min": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 355
+          },
+          "max": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 355
+          },
+          "step": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 45
+          },
+          "total_max": {
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 360,
+            "description": "kind=add：兩角和的上限。"
+          },
+          "part_min": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 90,
+            "description": "kind=sub：分出來的角最小幾度。"
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "add"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "total_max"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "sub"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "part_min"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "defaults": {
+      "$ref": "#/$defs/settings"
+    },
+    "adjustments": {
+      "type": "object",
+      "required": [
+        "simplify",
+        "reduce",
+        "decompose",
+        "substitute",
+        "not_applicable"
+      ],
+      "properties": {
+        "simplify": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "reduce": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "decompose": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "substitute": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "not_applicable": {
+          "$ref": "#/$defs/adjustment"
+        }
+      },
+      "additionalProperties": false
+    },
+    "hints": {
+      "type": "object",
+      "description": "檔位 id → 三句提示（輕推 → 縮範圍 → 近答案），可用 {變數}。",
+      "propertyNames": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "feedback": {
+      "type": "object",
+      "required": [
+        "correct",
+        "retry"
+      ],
+      "properties": {
+        "correct": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retry": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "stems": {
+      "type": "object",
+      "required": [
+        "straight-minus",
+        "full-minus",
+        "add",
+        "sub"
+      ],
+      "properties": {
+        "straight-minus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "full-minus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "add": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sub": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "alt": {
+      "type": "object",
+      "required": [
+        "straight-minus",
+        "full-minus",
+        "add",
+        "sub"
+      ],
+      "properties": {
+        "straight-minus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "full-minus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "add": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sub": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "settings": {
+      "type": "object",
+      "required": [
+        "tiers",
+        "weights",
+        "count",
+        "distinct",
+        "rotate"
+      ],
+      "properties": {
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "weights": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distinct": {
+          "type": "boolean"
+        },
+        "rotate": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "adjustment": {
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skip": {
+          "const": true
+        },
+        "note": {
+          "type": "string"
+        },
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "weights": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distinct": {
+          "type": "boolean"
+        },
+        "rotate": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

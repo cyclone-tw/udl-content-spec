@@ -1,0 +1,38 @@
+{
+  "format_version": 1,
+  "id": "u-angles-g4",
+  "title": "角度",
+  "subject": "math",
+  "grade": 4,
+  "ladder_ids": [
+    "n-II-9#b@4",
+    "s-II-4#b@4"
+  ],
+  "curriculum_codes": [
+    "N-4-10",
+    "S-4-1",
+    "S-4-2"
+  ],
+  "materials": [],
+  "items": [],
+  "bindings": {
+    "skills": [
+      "sk-angle-measure",
+      "sk-angle-sum"
+    ]
+  },
+  "activities": [
+    {
+      "activity": "skill-practice",
+      "label": "量角與算角",
+      "short": "練習",
+      "count": 10
+    },
+    {
+      "activity": "quiz",
+      "label": "小測驗",
+      "short": "測驗",
+      "count": 6
+    }
+  ]
+}

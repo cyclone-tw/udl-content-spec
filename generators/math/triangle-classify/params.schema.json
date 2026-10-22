@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:generators/math/triangle-classify/params",
+  "title": "math.triangle-classify 參數",
+  "description": "形狀由本 schema 檢查；值是否在條件檔範圍內由 checkParams 檢查。通常呼叫 resolveParams 取得。",
+  "type": "object",
+  "required": [
+    "tiers",
+    "overlay",
+    "rotate",
+    "distinct"
+  ],
+  "properties": {
+    "tiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "weights": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      }
+    },
+    "overlay": {
+      "type": "string",
+      "enum": [
+        "button",
+        "hint",
+        "always"
+      ],
+      "description": "按角分類的虛擬直角板什麼時候出現。"
+    },
+    "rotate": {
+      "type": "boolean",
+      "description": "整個三角形隨機旋轉（15 度一格）。"
+    },
+    "distinct": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

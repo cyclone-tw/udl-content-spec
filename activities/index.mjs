@@ -276,6 +276,13 @@ export const misconceptions = Object.freeze({
   "angle-compare-reversed": Object.freeze({ label: "和直角比反了", note: "比直角小說成比直角大，或反過來" }),
   "angle-right-by-eye": Object.freeze({ label: "用眼睛估直角", note: "接近直角就說一樣大，或直角說成不一樣（沒有用直角板比）" }),
   "angle-right-orientation": Object.freeze({ label: "斜放就認不得直角", note: "直角轉了方向就說不是直角" }),
+  "congruent-size-ignored": Object.freeze({ label: "只看形狀沒看大小", note: "選了形狀一樣但放大或縮小的三角形" }),
+  "congruent-shape-by-eye": Object.freeze({ label: "形狀看起來像就以為全等", note: "選了改了一個邊或一個角的三角形" }),
+  "correspondence-by-position": Object.freeze({ label: "照擺放位置找對應", note: "沒有把乙轉一轉，就照同一個位置找對應的邊或角" }),
+  "triangle-equal-sides-miscount": Object.freeze({ label: "數錯一樣長的邊", note: "看等長記號數錯幾個邊一樣長（正三角形、等腰三角形、3 邊都不一樣長混淆）" }),
+  "triangle-orientation": Object.freeze({ label: "轉了方向就認不得等腰三角形", note: "等腰三角形斜放或倒放就說 3 邊都不一樣長" }),
+  "triangle-side-lengths-misread": Object.freeze({ label: "看錯邊長", note: "比較 3 個邊的公分數時看錯或數錯" }),
+  "triangle-largest-angle-misjudged": Object.freeze({ label: "最大的角判斷錯", note: "銳角三角形與鈍角三角形混淆（沒有用直角板比最大的角）" }),
 });
 
 // 每個活動：預設段落、是否生題、在什麼條件下才出現（needs 回傳 null 表示可以，字串是不能的理由）。

@@ -1,0 +1,470 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:generators/profile/triangle-classify",
+  "title": "能力指標出題條件檔（math.triangle-classify）",
+  "description": "看邊（等長記號或公分數）或看角分類三角形。檔位決定看什麼；選項文字、答對理由、每檔答錯回饋都在這裡。",
+  "type": "object",
+  "required": [
+    "format_version",
+    "ladder_id",
+    "ladder_ref",
+    "generator",
+    "generator_version",
+    "tiers",
+    "defaults",
+    "adjustments",
+    "hints",
+    "feedback",
+    "stems",
+    "alt",
+    "option_text",
+    "reasons"
+  ],
+  "properties": {
+    "format_version": {
+      "const": 1
+    },
+    "ladder_id": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id"
+    },
+    "ladder_ref": {
+      "$ref": "urn:udl-content-spec:v1:generators/profile/add-sub#/properties/ladder_ref"
+    },
+    "generator": {
+      "const": "math.triangle-classify"
+    },
+    "generator_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tiers": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "label",
+          "kind",
+          "retry"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sides",
+              "angles"
+            ]
+          },
+          "show": {
+            "type": "string",
+            "enum": [
+              "marks",
+              "lengths"
+            ],
+            "description": "kind=sides：看等長記號或看公分數。"
+          },
+          "cm": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 12
+            },
+            "description": "show=lengths：邊長範圍（整數公分，畫 1 公分＝10 mm）。"
+          },
+          "acute_max": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 85,
+            "description": "kind=angles：銳角三角形的最大角上限（度）。"
+          },
+          "obtuse": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 95,
+              "maximum": 160
+            },
+            "description": "kind=angles：鈍角範圍（度）。"
+          },
+          "retry": {
+            "type": "string",
+            "minLength": 1,
+            "description": "這一檔答錯時的回饋：只指出下一步看哪裡。"
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "sides"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "show"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "show": {
+                  "const": "lengths"
+                }
+              },
+              "required": [
+                "show"
+              ]
+            },
+            "then": {
+              "required": [
+                "cm"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "angles"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "acute_max",
+                "obtuse"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "defaults": {
+      "$ref": "#/$defs/settings"
+    },
+    "adjustments": {
+      "type": "object",
+      "required": [
+        "simplify",
+        "reduce",
+        "decompose",
+        "substitute",
+        "not_applicable"
+      ],
+      "properties": {
+        "simplify": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "reduce": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "decompose": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "substitute": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "not_applicable": {
+          "$ref": "#/$defs/adjustment"
+        }
+      },
+      "additionalProperties": false
+    },
+    "hints": {
+      "type": "object",
+      "description": "檔位 id → 三句提示（輕推 → 縮範圍 → 近答案），可用 {變數}。",
+      "propertyNames": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "feedback": {
+      "type": "object",
+      "required": [
+        "correct"
+      ],
+      "properties": {
+        "correct": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "description": "correct 可用 {reason}；答錯回饋寫在各檔位的 retry。"
+    },
+    "stems": {
+      "type": "object",
+      "required": [
+        "sides",
+        "angles"
+      ],
+      "properties": {
+        "sides": {
+          "type": "string",
+          "minLength": 1
+        },
+        "angles": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "option_text": {
+      "type": "object",
+      "required": [
+        "equilateral",
+        "isosceles",
+        "scalene",
+        "acute",
+        "right",
+        "obtuse"
+      ],
+      "properties": {
+        "equilateral": {
+          "type": "string",
+          "minLength": 1
+        },
+        "isosceles": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scalene": {
+          "type": "string",
+          "minLength": 1
+        },
+        "acute": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right": {
+          "type": "string",
+          "minLength": 1
+        },
+        "obtuse": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "reasons": {
+      "type": "object",
+      "required": [
+        "equilateral",
+        "isosceles",
+        "scalene",
+        "acute",
+        "right",
+        "obtuse"
+      ],
+      "properties": {
+        "equilateral": {
+          "type": "string",
+          "minLength": 1
+        },
+        "isosceles": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scalene": {
+          "type": "string",
+          "minLength": 1
+        },
+        "acute": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right": {
+          "type": "string",
+          "minLength": 1
+        },
+        "obtuse": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "description": "答對回饋裡的 {reason}。"
+    },
+    "alt": {
+      "type": "object",
+      "required": [
+        "marks",
+        "lengths",
+        "angles"
+      ],
+      "properties": {
+        "marks": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lengths": {
+          "type": "string",
+          "minLength": 1
+        },
+        "angles": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "description": "圖形 alt（同一種呈現每題相同，不洩漏答案）。"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "overlay": {
+      "type": "string",
+      "enum": [
+        "button",
+        "hint",
+        "always"
+      ]
+    },
+    "settings": {
+      "type": "object",
+      "required": [
+        "tiers",
+        "weights",
+        "count",
+        "overlay",
+        "rotate",
+        "distinct"
+      ],
+      "properties": {
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "weights": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "overlay": {
+          "type": "object",
+          "properties": {
+            "assess": {
+              "$ref": "#/$defs/overlay"
+            },
+            "practice": {
+              "$ref": "#/$defs/overlay"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "assess",
+            "practice"
+          ]
+        },
+        "rotate": {
+          "type": "boolean"
+        },
+        "distinct": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "adjustment": {
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skip": {
+          "const": true
+        },
+        "note": {
+          "type": "string"
+        },
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "weights": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "overlay": {
+          "type": "object",
+          "properties": {
+            "assess": {
+              "$ref": "#/$defs/overlay"
+            },
+            "practice": {
+              "$ref": "#/$defs/overlay"
+            }
+          },
+          "additionalProperties": false
+        },
+        "rotate": {
+          "type": "boolean"
+        },
+        "distinct": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

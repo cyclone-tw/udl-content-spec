@@ -1,0 +1,93 @@
+{
+  "format_version": 1,
+  "ladder_id": "s-II-2#a@4",
+  "ladder_ref": {
+    "repo": "cyclone-tw/sped-student-kit",
+    "commit": "2c5cb1d",
+    "behavior": "能把兩個圖形描下剪開，經滑動、轉動或翻面疊合，判斷形狀大小是否一樣（全等）",
+    "curriculum_codes": [
+      "S-4-6"
+    ]
+  },
+  "generator": "math.congruent-triangles",
+  "generator_version": 1,
+  "tiers": {
+    "find-turn": {
+      "label": "找全等：轉過的",
+      "kind": "find",
+      "flip": false
+    },
+    "find-flip": {
+      "label": "找全等：翻過來再轉過的",
+      "kind": "find",
+      "flip": true
+    }
+  },
+  "defaults": {
+    "tiers": [
+      "find-turn",
+      "find-flip"
+    ],
+    "weights": {
+      "find-turn": 1,
+      "find-flip": 1
+    },
+    "count": 6,
+    "rotate": true
+  },
+  "adjustments": {
+    "simplify": {
+      "label": "簡化：只出轉過的（不翻面）",
+      "tiers": [
+        "find-turn"
+      ]
+    },
+    "reduce": {
+      "label": "減量：3 題",
+      "count": 3
+    },
+    "decompose": {
+      "label": "分解：先只出轉過的，4 題",
+      "tiers": [
+        "find-turn"
+      ],
+      "count": 4
+    },
+    "substitute": {
+      "label": "替代：只出轉過的，不旋轉以外的變化",
+      "tiers": [
+        "find-turn"
+      ],
+      "rotate": false
+    },
+    "not_applicable": {
+      "label": "不適用：不出題",
+      "skip": true
+    }
+  },
+  "hints": {
+    "find-turn": [
+      "想像把甲描下來、剪下來。",
+      "把甲轉一轉，有時還要翻過來，疊到每一個三角形上比比看。",
+      "邊的長短和角的大小都要一樣，才是疊得起來的那一個。"
+    ],
+    "find-flip": [
+      "想像把甲描下來、剪下來。",
+      "把甲轉一轉，有時還要翻過來，疊到每一個三角形上比比看。",
+      "邊的長短和角的大小都要一樣，才是疊得起來的那一個。"
+    ]
+  },
+  "feedback": {
+    "find": {
+      "correct": "答對了！{answer_label}和甲的形狀、大小都一樣，疊得起來。",
+      "retry": "再比一次：邊的長短和角的大小都要一樣。"
+    }
+  },
+  "stems": {
+    "find": "哪一個三角形和甲疊得起來（全等）？"
+  },
+  "alt": {
+    "find": "左邊是三角形甲，右邊是編號 1 到 4 的四個三角形。"
+  },
+  "notes": "Cyclone 2026-10-22：全等與對應這輪全部做（udl-math#8）。檔位、題數（各 6 題）與五種課程調整 Cyclone 2026-10-22 確認。S-4-6 備註：平移、旋轉、翻轉是描述操作，不做名詞教學，題目與提示只說「轉一轉、翻過來」。"
+}

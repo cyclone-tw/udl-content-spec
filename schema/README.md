@@ -10,7 +10,7 @@
 | `material.schema.json` | 教材：`kind`（lesson／simplified／demo／dialogue／mindmap／rhetoric）、`zhuyin_map`、`vocab`（`【詞|key】` 標記的 key）、`blocks`（text／image／audio／dialogue／math-demo／check／mindmap 節點樹）；text 區塊可選 `gist` 段落大意（`gist_span` 涵蓋幾個自然段，`preface` 前言不編段號，#60）、心智圖節點可選 `ordered`；`rhetoric` 區塊是修辭例句：`text`、`devices`（修辭類型代碼，第一個是主要的）、`note`（#51） |
 | `item.schema.json` | 題目：共用欄位＋`kind`（fixed／generated）＋`type`（choice／true-false／match／numeric）的條件欄位；generated 只帶 `generator`、`generator_version`、`params`、`count`；選用 `read_aloud_scope`（all／stem／none，#33）；`stem.listen`（聽音題：音源 `audio`／`syllable`／`word` 三選一、`repeat_max` 可選，#36、#49）；選擇題 `options[]` 可選 `misconception`（錯誤類型代碼）與 `feedback`（逐選項回饋，#43） |
 | `pool.schema.json` | 干擾項池 |
-| `figure.schema.json` | 幾何圖形描述（#69）：mm、y 向下；有名字的點、線段（邊或射線、等長記號）、角記號（角弧、直角記號）、標示文字（邊長、度數、甲乙丙、ㄅㄆㄇ，renderer 畫成可報讀的文字層，不燒進圖檔）、疊圖工具（直角板、量角器）、必填 `alt`（不洩漏答案）；每個元素有 id，保留之後逐步狀態（講解動畫）的擴充空間。產生器實例放在 `display.figure` |
+| `figure.schema.json` | 幾何圖形描述（#69）：mm、y 向下；有名字的點、線段（邊或射線、等長記號）、角記號（角弧、直角記號）、標示文字（邊長、度數、甲乙丙、ㄅㄆㄇ，renderer 畫成可報讀的文字層，不燒進圖檔）、疊圖工具（直角板；量角器可帶 `toward`，半圓開在角那一側，底線可以沿一個沒畫出來的點）、必填 `alt`（不洩漏答案）；每個元素有 id，`steps` 欄位保留給之後的逐步狀態（講解動畫），目前 renderer 忽略。產生器實例放在 `display.figure` |
 | `scope.schema.json` | 範圍選擇器：`include`／`exclude` 的 pack＋version＋units／materials／items／標籤 |
 | `card.schema.json` | 卡片（#31）：`char` 生字（鍵 `字|注音`；易混淆字 `confusables[]` 可填 `zhuyin`，聽音選字才能避開同音字，#49）、`word` 語詞（鍵 `詞|注音`，與音檔語詞庫同鍵）、`pattern` 句型（例句切詞塊）、`skill` 數學技能（引用產生器與參數）；同一個字或詞只有一張卡 |
 | `activity-profile.schema.json` | 年級活動設定（#31）：某科某些年級一課預設有哪些步驟、屬讀委託／修練／討伐哪一段、報讀範圍；`ladders` 活動 × 年級 → 能力階梯（#33）；步驟 `count` 可寫 `"all"`（題庫有幾筆出幾題）、`quiz` 的 `blueprint` 測驗藍圖（各練習分類抽幾題，#50）、`mix` 的 `sources` 混合練習（#51）；內建設定在 `activities/profiles/` |

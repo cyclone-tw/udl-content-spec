@@ -4,6 +4,10 @@ import * as addCarry from "./math/add-2digit-carry/generate.mjs";
 import * as addNoCarry from "./math/add-2digit-no-carry/generate.mjs";
 import * as addSub from "./math/add-sub/generate.mjs";
 import * as angleVsRight from "./math/angle-vs-right/generate.mjs";
+import * as congruentTriangles from "./math/congruent-triangles/generate.mjs";
+import * as angleSum from "./math/angle-sum/generate.mjs";
+import * as angleMeasure from "./math/angle-measure/generate.mjs";
+import * as triangleClassify from "./math/triangle-classify/generate.mjs";
 import { profilesFor } from "./profiles/index.mjs";
 import { substitute, substituteSpoken } from "./_template.mjs";
 
@@ -25,6 +29,10 @@ export const generators = Object.freeze({
   [addNoCarry.id]: entry(addNoCarry),
   [addSub.id]: entry(addSub),
   [angleVsRight.id]: entry(angleVsRight),
+  [congruentTriangles.id]: entry(congruentTriangles),
+  [angleSum.id]: entry(angleSum),
+  [angleMeasure.id]: entry(angleMeasure),
+  [triangleClassify.id]: entry(triangleClassify),
 });
 
 export const INSTANCE_SCHEMA_PATH = "generators/instance.schema.json";

@@ -1,0 +1,57 @@
+{
+  "format_version": 1,
+  "id": "sample-geometry-g4",
+  "version": "0.1.0",
+  "title": "示範：四年級角度與三角形",
+  "description": "合成範例內容包：四年級兩個單元（角度、三角形）、五張技能卡，題目由 math.angle-measure、math.angle-sum、math.triangle-classify、math.congruent-triangles 依能力指標條件檔出題。不含學生資料。",
+  "subject": "math",
+  "language": "zh-TW",
+  "license": "CC-BY-4.0",
+  "source": {
+    "generated_by": "claude-code",
+    "date": "2026-10-22",
+    "notes": "udl-content-spec#70–#72、#74 範例。"
+  },
+  "units": [
+    "u-angles-g4",
+    "u-triangles-g4"
+  ],
+  "cards": [
+    "sk-triangle-classify",
+    "sk-angle-measure",
+    "sk-angle-sum",
+    "sk-congruent-find",
+    "sk-congruent-match"
+  ],
+  "pools": [],
+  "files": [
+    {
+      "path": "cards/sk-angle-measure.json",
+      "sha256": "c7f8d86b277eae4663294dbdf162d0540a03b044e177e23853ad694dabb9b025"
+    },
+    {
+      "path": "cards/sk-angle-sum.json",
+      "sha256": "203fd6b7d64e8be04b7f78a274db03ab541d942a3412033aa2312ce63ab23aad"
+    },
+    {
+      "path": "cards/sk-congruent-find.json",
+      "sha256": "ffeb859c8cc6a425a7377fa0657d14d6898f31f2a10ee62fdecf281bf3fc6e24"
+    },
+    {
+      "path": "cards/sk-congruent-match.json",
+      "sha256": "5ba9ecbacc81b3a0eeb1c71148861e6757151cec176de0eb43ea18537b758fae"
+    },
+    {
+      "path": "cards/sk-triangle-classify.json",
+      "sha256": "df2eb9a97f3f860ad4a07d95a87fba4be44b1a30589c8bcac6051ba5ecc40e95"
+    },
+    {
+      "path": "units/u-angles-g4.json",
+      "sha256": "6b4cad76aff1882f12710dc65afa11bb26675b433e55e29686fbcf0c47409c44"
+    },
+    {
+      "path": "units/u-triangles-g4.json",
+      "sha256": "2b652560ec612359c81a2b5b9b26fa92a71d9e788a040619f241693877a54787"
+    }
+  ]
+}

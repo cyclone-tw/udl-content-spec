@@ -1,0 +1,39 @@
+{
+  "format_version": 1,
+  "id": "u-triangles-g4",
+  "title": "三角形",
+  "subject": "math",
+  "grade": 4,
+  "ladder_ids": [
+    "s-II-3#b@4",
+    "s-II-2#a@4",
+    "s-II-2#b@4"
+  ],
+  "curriculum_codes": [
+    "S-4-6",
+    "S-4-7"
+  ],
+  "materials": [],
+  "items": [],
+  "bindings": {
+    "skills": [
+      "sk-triangle-classify",
+      "sk-congruent-find",
+      "sk-congruent-match"
+    ]
+  },
+  "activities": [
+    {
+      "activity": "skill-practice",
+      "label": "三角形分類與全等",
+      "short": "練習",
+      "count": 12
+    },
+    {
+      "activity": "quiz",
+      "label": "小測驗",
+      "short": "測驗",
+      "count": 6
+    }
+  ]
+}

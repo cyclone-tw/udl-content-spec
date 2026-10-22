@@ -1,0 +1,34 @@
+{
+  "format_version": 1,
+  "id": "sk-congruent-find",
+  "kind": "skill",
+  "key": "math.congruent-triangles:s-II-2#a@4",
+  "grade_min": 4,
+  "ladder_ids": [
+    "s-II-2#a@4"
+  ],
+  "curriculum_codes": [
+    "S-4-6"
+  ],
+  "title": {
+    "text": "找全等的三角形",
+    "audio": null
+  },
+  "generator": "math.congruent-triangles",
+  "generator_version": 1,
+  "params": {
+    "tiers": [
+      "find-turn",
+      "find-flip"
+    ],
+    "weights": {
+      "find-turn": 1,
+      "find-flip": 1
+    },
+    "rotate": true
+  },
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
+}

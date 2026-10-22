@@ -4,18 +4,93 @@
   "title": "能力指標出題條件檔",
   "description": "一條 kit 能力階梯行為對應一份：這條指標允許哪些檔位、預設怎麼出、每種課程調整的預設方案、每檔三層提示範本。不同產生器的檔位條件不同，所以依 generator 分到各自的形狀（profile.<產生器>.schema.json）。處方（個別學生）與尺（判級門檻）不在這裡。",
   "type": "object",
-  "required": ["generator"],
+  "required": [
+    "generator"
+  ],
   "properties": {
-    "generator": { "enum": ["math.add-sub", "math.angle-vs-right"] }
+    "generator": {
+      "enum": [
+        "math.add-sub",
+        "math.angle-vs-right",
+        "math.triangle-classify",
+        "math.angle-measure",
+        "math.angle-sum",
+        "math.congruent-triangles"
+      ]
+    }
   },
   "allOf": [
     {
-      "if": { "properties": { "generator": { "const": "math.add-sub" } } },
-      "then": { "$ref": "urn:udl-content-spec:v1:generators/profile/add-sub" }
+      "if": {
+        "properties": {
+          "generator": {
+            "const": "math.add-sub"
+          }
+        }
+      },
+      "then": {
+        "$ref": "urn:udl-content-spec:v1:generators/profile/add-sub"
+      }
     },
     {
-      "if": { "properties": { "generator": { "const": "math.angle-vs-right" } } },
-      "then": { "$ref": "urn:udl-content-spec:v1:generators/profile/angle-vs-right" }
+      "if": {
+        "properties": {
+          "generator": {
+            "const": "math.angle-vs-right"
+          }
+        }
+      },
+      "then": {
+        "$ref": "urn:udl-content-spec:v1:generators/profile/angle-vs-right"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "generator": {
+            "const": "math.triangle-classify"
+          }
+        }
+      },
+      "then": {
+        "$ref": "urn:udl-content-spec:v1:generators/profile/triangle-classify"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "generator": {
+            "const": "math.angle-measure"
+          }
+        }
+      },
+      "then": {
+        "$ref": "urn:udl-content-spec:v1:generators/profile/angle-measure"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "generator": {
+            "const": "math.angle-sum"
+          }
+        }
+      },
+      "then": {
+        "$ref": "urn:udl-content-spec:v1:generators/profile/angle-sum"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "generator": {
+            "const": "math.congruent-triangles"
+          }
+        }
+      },
+      "then": {
+        "$ref": "urn:udl-content-spec:v1:generators/profile/congruent-triangles"
+      }
     }
   ]
 }

@@ -1,0 +1,38 @@
+{
+  "format_version": 1,
+  "id": "sk-angle-measure",
+  "kind": "skill",
+  "key": "math.angle-measure:n-II-9#b@4",
+  "grade_min": 4,
+  "ladder_ids": [
+    "n-II-9#b@4"
+  ],
+  "curriculum_codes": [
+    "N-4-10",
+    "S-4-1"
+  ],
+  "title": {
+    "text": "用量角器量角",
+    "audio": null
+  },
+  "generator": "math.angle-measure",
+  "generator_version": 1,
+  "params": {
+    "tiers": [
+      "zero-right",
+      "zero-left",
+      "off-zero"
+    ],
+    "weights": {
+      "zero-right": 4,
+      "zero-left": 4,
+      "off-zero": 2
+    },
+    "distinct": true,
+    "overlay": "always"
+  },
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
+}

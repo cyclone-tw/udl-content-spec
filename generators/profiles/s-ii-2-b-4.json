@@ -1,0 +1,91 @@
+{
+  "format_version": 1,
+  "ladder_id": "s-II-2#b@4",
+  "ladder_ref": {
+    "repo": "cyclone-tw/sped-student-kit",
+    "commit": "2c5cb1d",
+    "behavior": "能在兩個全等圖形中指出對應邊與對應角，並說出對應邊等長、對應角相等",
+    "curriculum_codes": [
+      "S-4-6"
+    ]
+  },
+  "generator": "math.congruent-triangles",
+  "generator_version": 1,
+  "tiers": {
+    "side": {
+      "label": "找對應邊",
+      "kind": "correspond",
+      "ask": "side"
+    },
+    "angle": {
+      "label": "找對應角",
+      "kind": "correspond",
+      "ask": "angle"
+    }
+  },
+  "defaults": {
+    "tiers": [
+      "side",
+      "angle"
+    ],
+    "weights": {
+      "side": 1,
+      "angle": 1
+    },
+    "count": 6,
+    "rotate": true
+  },
+  "adjustments": {
+    "simplify": {
+      "label": "簡化：只找對應角",
+      "tiers": [
+        "angle"
+      ]
+    },
+    "reduce": {
+      "label": "減量：3 題",
+      "count": 3
+    },
+    "decompose": {
+      "label": "分解：乙只轉半圈（不隨機轉）",
+      "rotate": false
+    },
+    "substitute": {
+      "label": "替代：只找對應角，乙只轉半圈",
+      "tiers": [
+        "angle"
+      ],
+      "rotate": false
+    },
+    "not_applicable": {
+      "label": "不適用：不出題",
+      "skip": true
+    }
+  },
+  "hints": {
+    "side": [
+      "先看甲的 {asked} 這條邊，兩頭是哪兩個點。",
+      "把乙轉一轉（有時還要翻過來），讓它和甲擺的方向一樣。",
+      "疊起來以後，和 {asked} 疊在一起的那條邊就是答案。"
+    ],
+    "angle": [
+      "先找到甲的 {asked} 是哪一個角。",
+      "把乙轉一轉（有時還要翻過來），讓它和甲擺的方向一樣。",
+      "疊起來以後，和 {asked} 疊在一起的那個角就是答案。"
+    ]
+  },
+  "feedback": {
+    "correspond": {
+      "correct": "答對了！{asked} 對應到 {answer_text}。",
+      "retry": "把乙轉一轉，讓它和甲的方向一樣，再看看和它疊在一起的是哪一個。"
+    }
+  },
+  "stems": {
+    "side": "甲和乙全等。甲的 {asked} 這條邊，對應到乙的哪一條邊？",
+    "angle": "甲和乙全等。甲的 {asked}，對應到乙的哪一個角？"
+  },
+  "alt": {
+    "correspond": "兩個三角形甲和乙，頂點都標了注音符號。"
+  },
+  "notes": "Cyclone 2026-10-22：全等與對應這輪全部做（udl-math#8）。檔位、題數（各 6 題）與五種課程調整 Cyclone 2026-10-22 確認。S-4-6 備註：平移、旋轉、翻轉是描述操作，不做名詞教學，題目與提示只說「轉一轉、翻過來」。"
+}

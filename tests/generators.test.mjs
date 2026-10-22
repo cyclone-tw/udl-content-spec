@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
@@ -53,8 +53,10 @@ const genItem = (overrides = {}) => ({
   ...overrides,
 });
 
-test("登錄表：四個產生器、版本 1、params schema 可編譯", async () => {
-  assert.deepEqual(Object.keys(generators).sort(), [CARRY, NO_CARRY, "math.add-sub", "math.angle-vs-right"]);
+test("登錄表：generators/math/ 每個資料夾都登錄了、版本 1、params schema 可編譯", async () => {
+  const dirs = (await readdir(path.join(here, "..", "generators", "math"), { withFileTypes: true })).filter((d) => d.isDirectory()).map((d) => `math.${d.name}`);
+  assert.deepEqual(Object.keys(generators).sort(), dirs.sort());
+  assert.ok([CARRY, NO_CARRY, "math.add-sub", "math.angle-vs-right"].every((g) => generators[g]));
   for (const g of Object.values(generators)) {
     assert.equal(g.version, 1);
     assert.equal(typeof g.generate, "function");
