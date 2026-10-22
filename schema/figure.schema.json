@@ -81,11 +81,12 @@
         },
         "protractor": {
           "type": "object",
-          "description": "量角器：中心對準 vertex，0 度線沿著 vertex→along；學生可以翻到另一側從左邊或右邊量。",
+          "description": "量角器：中心對準 vertex，底線沿著 vertex→along（along 可以是沒畫出來的點，例如兩邊都不在 0 刻度時）；半圓開在 toward 那一側，外圈從 along 那頭的 0 往 toward 那側數，內圈反過來。省略 toward 時開在 along 的逆時針側。",
           "required": ["vertex", "along", "radius"],
           "properties": {
             "vertex": { "$ref": "#/$defs/element_id" },
             "along": { "$ref": "#/$defs/element_id" },
+            "toward": { "$ref": "#/$defs/element_id" },
             "radius": { "type": "number", "exclusiveMinimum": 0, "maximum": 120 }
           },
           "additionalProperties": false
@@ -93,7 +94,8 @@
       },
       "additionalProperties": false
     },
-    "alt": { "type": "string", "minLength": 1, "description": "給報讀與無法看圖的人的描述。不得洩漏答案（例如比直角大或小）。" }
+    "alt": { "type": "string", "minLength": 1, "description": "給報讀與無法看圖的人的描述。不得洩漏答案（例如比直角大或小）。" },
+    "steps": { "type": "array", "description": "保留給講解動畫的逐步狀態（每一步用元素 id 描述差異）；格式尚未定義，renderer 目前忽略。", "items": { "type": "object" } }
   },
   "additionalProperties": false,
   "$defs": {

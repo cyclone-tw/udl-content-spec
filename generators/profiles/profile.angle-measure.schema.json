@@ -1,0 +1,337 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:generators/profile/angle-measure",
+  "title": "能力指標出題條件檔（math.angle-measure）",
+  "description": "用虛擬量角器量角：檔位決定 0 度線在右邊、左邊，或兩邊都不在 0 刻度；角度範圍與間隔、容許誤差、提示與回饋都在這裡。",
+  "type": "object",
+  "required": [
+    "format_version",
+    "ladder_id",
+    "ladder_ref",
+    "generator",
+    "generator_version",
+    "tiers",
+    "defaults",
+    "adjustments",
+    "hints",
+    "feedback",
+    "stems",
+    "alt",
+    "tolerance"
+  ],
+  "properties": {
+    "format_version": {
+      "const": 1
+    },
+    "ladder_id": {
+      "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id"
+    },
+    "ladder_ref": {
+      "$ref": "urn:udl-content-spec:v1:generators/profile/add-sub#/properties/ladder_ref"
+    },
+    "generator": {
+      "const": "math.angle-measure"
+    },
+    "generator_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tiers": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "label",
+          "zero",
+          "min",
+          "max",
+          "step"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "zero": {
+            "type": "string",
+            "enum": [
+              "right",
+              "left",
+              "off"
+            ],
+            "description": "right：0 度線在右邊；left：在左邊（角開在順時針那側）；off：兩邊都不在 0 刻度。"
+          },
+          "min": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 175
+          },
+          "max": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 175
+          },
+          "step": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 45
+          },
+          "offset": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 120
+            },
+            "description": "zero=off：起點邊離 0 度線的度數範圍。"
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "zero": {
+                  "const": "off"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "offset"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "defaults": {
+      "$ref": "#/$defs/settings"
+    },
+    "adjustments": {
+      "type": "object",
+      "required": [
+        "simplify",
+        "reduce",
+        "decompose",
+        "substitute",
+        "not_applicable"
+      ],
+      "properties": {
+        "simplify": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "reduce": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "decompose": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "substitute": {
+          "$ref": "#/$defs/adjustment"
+        },
+        "not_applicable": {
+          "$ref": "#/$defs/adjustment"
+        }
+      },
+      "additionalProperties": false
+    },
+    "hints": {
+      "type": "object",
+      "description": "檔位 id → 三句提示（輕推 → 縮範圍 → 近答案），可用 {變數}。",
+      "propertyNames": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "feedback": {
+      "type": "object",
+      "required": [
+        "correct",
+        "retry"
+      ],
+      "properties": {
+        "correct": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retry": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "stems": {
+      "type": "object",
+      "required": [
+        "right",
+        "left",
+        "off"
+      ],
+      "properties": {
+        "right": {
+          "type": "string",
+          "minLength": 1
+        },
+        "left": {
+          "type": "string",
+          "minLength": 1
+        },
+        "off": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "alt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": {
+      "type": "string"
+    },
+    "tolerance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "容許誤差（度，nominal）。"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "overlay": {
+      "type": "string",
+      "enum": [
+        "button",
+        "hint",
+        "always"
+      ]
+    },
+    "settings": {
+      "type": "object",
+      "required": [
+        "tiers",
+        "weights",
+        "count",
+        "overlay",
+        "distinct"
+      ],
+      "properties": {
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "weights": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "overlay": {
+          "type": "object",
+          "properties": {
+            "assess": {
+              "$ref": "#/$defs/overlay"
+            },
+            "practice": {
+              "$ref": "#/$defs/overlay"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "assess",
+            "practice"
+          ]
+        },
+        "distinct": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "adjustment": {
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skip": {
+          "const": true
+        },
+        "note": {
+          "type": "string"
+        },
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "weights": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "overlay": {
+          "type": "object",
+          "properties": {
+            "assess": {
+              "$ref": "#/$defs/overlay"
+            },
+            "practice": {
+              "$ref": "#/$defs/overlay"
+            }
+          },
+          "additionalProperties": false
+        },
+        "distinct": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

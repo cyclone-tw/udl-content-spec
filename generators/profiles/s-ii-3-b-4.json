@@ -1,0 +1,137 @@
+{
+  "format_version": 1,
+  "ladder_id": "s-II-3#b@4",
+  "ladder_ref": {
+    "repo": "cyclone-tw/sped-student-kit",
+    "commit": "2c5cb1d",
+    "behavior": "能依邊與角的特徵分辨正三角形、等腰三角形、直角三角形、銳角三角形與鈍角三角形",
+    "curriculum_codes": [
+      "S-4-7"
+    ]
+  },
+  "generator": "math.triangle-classify",
+  "generator_version": 1,
+  "tiers": {
+    "sides-marks": {
+      "label": "看邊：等長記號",
+      "kind": "sides",
+      "show": "marks",
+      "retry": "再數一次：記號一樣的邊有幾個？"
+    },
+    "sides-lengths": {
+      "label": "看邊：公分數（3–9 公分整數）",
+      "kind": "sides",
+      "show": "lengths",
+      "cm": [
+        3,
+        9
+      ],
+      "retry": "再比一次 3 個邊的公分數，有幾個一樣？"
+    },
+    "angles": {
+      "label": "看角：銳角、直角、鈍角三角形（鈍角 100–150 度，銳角三角形最大角不超過 80 度）",
+      "kind": "angles",
+      "acute_max": 80,
+      "obtuse": [
+        100,
+        150
+      ],
+      "retry": "再用直角板比一次最大的角。"
+    }
+  },
+  "defaults": {
+    "tiers": [
+      "sides-marks",
+      "sides-lengths",
+      "angles"
+    ],
+    "weights": {
+      "sides-marks": 4,
+      "sides-lengths": 4,
+      "angles": 4
+    },
+    "count": 12,
+    "overlay": {
+      "assess": "button",
+      "practice": "hint"
+    },
+    "rotate": true,
+    "distinct": true
+  },
+  "adjustments": {
+    "simplify": {
+      "label": "簡化：只看等長記號與看角",
+      "tiers": [
+        "sides-marks",
+        "angles"
+      ]
+    },
+    "reduce": {
+      "label": "減量：6 題",
+      "count": 6
+    },
+    "decompose": {
+      "label": "分解：看角的題目一開始就疊上虛擬直角板",
+      "overlay": {
+        "assess": "always",
+        "practice": "always"
+      }
+    },
+    "substitute": {
+      "label": "替代：只出看等長記號",
+      "tiers": [
+        "sides-marks"
+      ]
+    },
+    "not_applicable": {
+      "label": "不適用：不出題",
+      "skip": true
+    }
+  },
+  "hints": {
+    "sides-marks": [
+      "看邊上的短線記號：記號一樣的邊，一樣長。",
+      "數一數：有幾個邊的記號一樣？",
+      "3 個邊都一樣長是正三角形；剛好 2 個邊一樣長是等腰三角形；都不一樣就是 3 個邊都不一樣長。"
+    ],
+    "sides-lengths": [
+      "看每個邊旁邊的公分數。",
+      "比一比：有幾個邊的公分數一樣？",
+      "3 個邊都一樣長是正三角形；剛好 2 個邊一樣長是等腰三角形；都不一樣就是 3 個邊都不一樣長。"
+    ],
+    "angles": [
+      "先找出三個角裡最大的那一個。",
+      "按「放上直角板」，用直角板比一比最大的角。",
+      "最大的角比直角小是銳角三角形，剛好是直角是直角三角形，比直角大是鈍角三角形。"
+    ]
+  },
+  "feedback": {
+    "correct": "答對了！{reason}"
+  },
+  "stems": {
+    "sides": "看邊，這是哪一種三角形？",
+    "angles": "看角，這是哪一種三角形？"
+  },
+  "option_text": {
+    "equilateral": "正三角形",
+    "isosceles": "等腰三角形",
+    "scalene": "3 個邊都不一樣長",
+    "acute": "銳角三角形",
+    "right": "直角三角形",
+    "obtuse": "鈍角三角形"
+  },
+  "reasons": {
+    "equilateral": "3 個邊一樣長，是正三角形。",
+    "isosceles": "剛好 2 個邊一樣長，是等腰三角形。",
+    "scalene": "3 個邊都不一樣長。",
+    "acute": "3 個角都比直角小，是銳角三角形。",
+    "right": "有一個角是直角，是直角三角形。",
+    "obtuse": "有一個角比直角大，是鈍角三角形。"
+  },
+  "alt": {
+    "marks": "一個三角形，邊上畫了表示一樣長的短線記號。",
+    "lengths": "一個三角形，每個邊旁邊標了長度。",
+    "angles": "一個三角形，三個角都畫了角弧。可以放上直角板比一比。"
+  },
+  "notes": "Cyclone 2026-10-22 確認（udl-math#8）：三檔 12 題（看記號 4、看公分 4、看角 4）；按邊選項「正三角形／等腰三角形／3 個邊都不一樣長」，等腰只出恰好 2 邊等長，不考正三角形算不算等腰（課程手冊 S-4-7）；按角不畫直角記號，用虛擬直角板比最大的角；鈍角至少 100 度、銳角三角形最大角不超過 80 度。五種課程調整 Cyclone 2026-10-22 確認。"
+}

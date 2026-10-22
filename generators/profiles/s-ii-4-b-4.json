@@ -1,0 +1,132 @@
+{
+  "format_version": 1,
+  "ladder_id": "s-II-4#b@4",
+  "ladder_ref": {
+    "repo": "cyclone-tw/sped-student-kit",
+    "commit": "2c5cb1d",
+    "behavior": "能說出平角是 180 度、周角是 360 度，並算出兩個旋轉角的和或差，結果不超過 360 度（例：90 度加 45 度）",
+    "curriculum_codes": [
+      "S-4-2"
+    ]
+  },
+  "generator": "math.angle-sum",
+  "generator_version": 1,
+  "tiers": {
+    "straight-minus": {
+      "label": "一直線上的兩個角（180 減，已知角 20–160 度）",
+      "kind": "straight-minus",
+      "min": 20,
+      "max": 160,
+      "step": 5
+    },
+    "full-minus": {
+      "label": "轉一整圈（360 減，已知角 60–300 度）",
+      "kind": "full-minus",
+      "min": 60,
+      "max": 300,
+      "step": 5
+    },
+    "add": {
+      "label": "兩個角合起來（相加，和不超過 300 度）",
+      "kind": "add",
+      "min": 15,
+      "max": 175,
+      "step": 5,
+      "total_max": 300
+    },
+    "sub": {
+      "label": "大角分成兩個角（相減，大角 60–300 度）",
+      "kind": "sub",
+      "min": 60,
+      "max": 300,
+      "step": 5,
+      "part_min": 15
+    }
+  },
+  "defaults": {
+    "tiers": [
+      "straight-minus",
+      "full-minus",
+      "add",
+      "sub"
+    ],
+    "weights": {
+      "straight-minus": 3,
+      "full-minus": 2,
+      "add": 3,
+      "sub": 2
+    },
+    "count": 10,
+    "rotate": true,
+    "distinct": true
+  },
+  "adjustments": {
+    "simplify": {
+      "label": "簡化：只出一直線上的兩個角與兩角相加",
+      "tiers": [
+        "straight-minus",
+        "add"
+      ]
+    },
+    "reduce": {
+      "label": "減量：5 題",
+      "count": 5
+    },
+    "decompose": {
+      "label": "分解：先只出平角與周角（180 減、360 減）",
+      "tiers": [
+        "straight-minus",
+        "full-minus"
+      ]
+    },
+    "substitute": {
+      "label": "替代：只出兩角相加",
+      "tiers": [
+        "add"
+      ]
+    },
+    "not_applicable": {
+      "label": "不適用：不出題",
+      "skip": true
+    }
+  },
+  "hints": {
+    "straight-minus": [
+      "一條直線是平角，平角是 180 度。",
+      "這兩個角合起來是 180 度。",
+      "用 180 減掉 {x}。"
+    ],
+    "full-minus": [
+      "轉一整圈是周角，周角是 360 度。",
+      "這兩個角合起來是 360 度。",
+      "用 360 減掉 {x}。"
+    ],
+    "add": [
+      "「？」是兩個小角合起來的大角。",
+      "把兩個小角的度數加起來。",
+      "算 {x} 加 {y}。"
+    ],
+    "sub": [
+      "大角是 {z} 度，裡面分成兩個角。",
+      "「？」是大角減掉另一個角。",
+      "算 {z} 減 {x}。"
+    ]
+  },
+  "feedback": {
+    "correct": "答對了！「？」是 {answer} 度。",
+    "retry": "再看一次圖：哪些角合起來是一直線（180 度）、一整圈（360 度），或一個大角？"
+  },
+  "stems": {
+    "straight-minus": "一條直線上的兩個角，「？」是幾度？",
+    "full-minus": "轉一整圈是 360 度，「？」是幾度？",
+    "add": "兩個角合起來，「？」是幾度？",
+    "sub": "大角是 {z} 度，裡面分成兩個角，「？」是幾度？"
+  },
+  "alt": {
+    "straight-minus": "一條直線上，從同一點畫出另一條邊，分成兩個角。",
+    "full-minus": "從同一點畫出兩條邊，兩個角合起來是一整圈。",
+    "add": "從同一點畫出三條邊，兩個小角合成一個大角。",
+    "sub": "一個大角裡面畫了一條邊，分成兩個角。"
+  },
+  "notes": "Cyclone 2026-10-22 確認（udl-math#8）：四檔 10 題（180 減 3、360 減 2、相加 3、相減 2），角度取 5 的倍數，有圖（已知角標度數、求的角標「？」）。結果不超過 360 度（S-4-2 備註）。五種課程調整 Cyclone 2026-10-22 確認。"
+}

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile, mkdtemp, cp, writeFile, rm } from "node:fs/promises";
+import { readFile, readdir, mkdtemp, cp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -53,7 +53,9 @@ const canonical = (q) => (q.type === "blanks" ? { blanks: Object.fromEntries(q.b
 
 test("登錄表：條件檔通過 schema，每個檔位都有三句提示，預設檔位與權重都在 tiers 內", async () => {
   const { validateProfile } = await ajvPromise;
-  assert.deepEqual(Object.keys(profiles), [A2, "n-II-9#b@3"]);
+  const files = (await readdir(path.join(ROOT, "generators", "profiles"))).filter((f) => f.endsWith(".json") && !f.includes("schema"));
+  assert.deepEqual(Object.values(profiles).map((p) => p.ladder_id.toLowerCase().replace(/[#@]/g, "-") + ".json").sort(), files.sort(), "profiles/ 每個條件檔都登錄了");
+  assert.ok(profiles[A2] && profiles["n-II-9#b@3"]);
   assert.equal(profilesFor([A2, "c-x"]).length, 1);
   assert.equal(getProfile("nope"), null);
   for (const p of Object.values(profiles)) assert.ok(validateProfile(p), `${p.ladder_id}: ${JSON.stringify(validateProfile.errors)}`);

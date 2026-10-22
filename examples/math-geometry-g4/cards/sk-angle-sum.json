@@ -1,0 +1,39 @@
+{
+  "format_version": 1,
+  "id": "sk-angle-sum",
+  "kind": "skill",
+  "key": "math.angle-sum:s-II-4#b@4",
+  "grade_min": 4,
+  "ladder_ids": [
+    "s-II-4#b@4"
+  ],
+  "curriculum_codes": [
+    "S-4-2"
+  ],
+  "title": {
+    "text": "平角、周角與角的合成分解",
+    "audio": null
+  },
+  "generator": "math.angle-sum",
+  "generator_version": 1,
+  "params": {
+    "tiers": [
+      "straight-minus",
+      "full-minus",
+      "add",
+      "sub"
+    ],
+    "weights": {
+      "straight-minus": 3,
+      "full-minus": 2,
+      "add": 3,
+      "sub": 2
+    },
+    "rotate": true,
+    "distinct": true
+  },
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
+}

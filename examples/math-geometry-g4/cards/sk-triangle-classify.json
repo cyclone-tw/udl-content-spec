@@ -1,0 +1,38 @@
+{
+  "format_version": 1,
+  "id": "sk-triangle-classify",
+  "kind": "skill",
+  "key": "math.triangle-classify:s-II-3#b@4",
+  "grade_min": 4,
+  "ladder_ids": [
+    "s-II-3#b@4"
+  ],
+  "curriculum_codes": [
+    "S-4-7"
+  ],
+  "title": {
+    "text": "三角形分類",
+    "audio": null
+  },
+  "generator": "math.triangle-classify",
+  "generator_version": 1,
+  "params": {
+    "tiers": [
+      "sides-marks",
+      "sides-lengths",
+      "angles"
+    ],
+    "weights": {
+      "sides-marks": 4,
+      "sides-lengths": 4,
+      "angles": 4
+    },
+    "rotate": true,
+    "distinct": true,
+    "overlay": "hint"
+  },
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
+}

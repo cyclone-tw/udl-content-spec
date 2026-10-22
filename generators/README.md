@@ -8,6 +8,10 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `math.add-sub` | 加減法（依能力指標條件檔） | 1 | 由 `profiles/` 的檔位決定：進位次數、退位次數、被減數個位是否為 0、和的範圍 | `tiers`、`weights`、`operations`、`shapes`、`presentation`、`scaffold`、`context`、`distinct`、`context_pools`（用 `resolveParams` 產生） | `blanks`（直式）或 `numeric` | v1（#18） |
 | `math.angle-vs-right` | 和直角比（圖形選擇題） | 1 | 由 `profiles/` 的檔位決定角度範圍；題數依權重按比例分配 | `tiers`、`weights`、`choices`、`overlay`、`rotate`、`vary_rays`、`distinct` | `choice`（`display.figure` 幾何圖形） | v1（#69） |
+| `math.triangle-classify` | 三角形分類（看等長記號、看公分、看角） | 1 | 檔位的 `kind`／`show`；題數依權重按比例分配 | `tiers`、`weights`、`overlay`、`rotate`、`distinct` | `choice`（`display.figure`） | v1（#70） |
+| `math.angle-measure` | 用量角器量角 | 1 | 檔位的 `zero`（0 度線在右、左、不在 0 刻度）與角度範圍 | `tiers`、`weights`、`overlay`、`distinct` | `numeric`（容差在條件檔，`display.figure` 附量角器） | v1（#71） |
+| `math.angle-sum` | 平角、周角與角的合成分解 | 1 | 檔位的 `kind`（180 減、360 減、相加、相減）與角度範圍 | `tiers`、`weights`、`rotate`、`distinct` | `numeric`（`display.figure` 標已知角與「？」） | v1（#72） |
+| `math.congruent-triangles` | 全等與對應 | 1 | 檔位的 `kind`（找全等、找對應邊或角） | `tiers`、`weights`、`rotate` | `choice`（甲與 ①–④ 或甲乙畫在同一張圖） | v1（#74） |
 | `math.add-2digit-carry` | 二位數進位加法 | 1 | 個位相加 ≥ 10 | `min`、`max`（10–99）、`max_sum`、`distinct`、`layout` | `numeric` | legacy：已被 `math.add-sub` 涵蓋，保留到 v2；驗證器對它的題目只警告「沒有條件檔」（`ladder_ids` 仍必填） |
 | `math.add-2digit-no-carry` | 二位數不進位加法 | 1 | 個位相加 < 10 | 同上 | `numeric` | 同上 |
 
@@ -66,7 +70,8 @@ const result = score(instances[0], { value: 42 });
 - `tier` 是這題抽到的檔位；`display.scaffold` 是鷹架檔（`none`／`partial`／`full`），事件都要記。直式實例是 `type: "blanks"`，`blanks` 每位一格，`display.places` 說明畫哪幾位、`carry_marks` 可畫進退位記號格（不計分）。
 - `stem.text.audio` 永遠是 `null`：亂數題的題幹無法預錄，由殼的 TTS 讀。
 - `display.layout` 給 renderer 決定橫式或直式，不影響答案。
-- 幾何題是 `type: "choice"`：`options`（可帶 `misconception`）、`answer`（選項 id）、`shuffle`；`display.figure` 是圖形描述（`schema/figure.schema.json`，mm、y 向下，標示畫成可報讀的文字層），`display.overlay` 說虛擬工具什麼時候疊上。
+- 幾何產生器共用 `math/_geometry.mjs`（建三角形、旋轉、權重分題、算畫布、標示位置）。
+- 幾何題是 `type: "choice"` 或 `type: "numeric"`：`options`（可帶 `misconception`）、`answer`（選項 id）、`shuffle`；`display.figure` 是圖形描述（`schema/figure.schema.json`，mm、y 向下，標示畫成可報讀的文字層），`display.overlay` 說虛擬工具什麼時候疊上。
 
 ## 路線圖
 

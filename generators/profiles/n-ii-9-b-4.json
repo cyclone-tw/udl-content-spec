@@ -1,0 +1,119 @@
+{
+  "format_version": 1,
+  "ladder_id": "n-II-9#b@4",
+  "ladder_ref": {
+    "repo": "cyclone-tw/sped-student-kit",
+    "commit": "2c5cb1d",
+    "behavior": "能用量角器量出角度，包括兩邊不在刻度 0 上的角",
+    "curriculum_codes": [
+      "N-4-10",
+      "S-4-1"
+    ]
+  },
+  "generator": "math.angle-measure",
+  "generator_version": 1,
+  "tiers": {
+    "zero-right": {
+      "label": "0 度線在右邊（10–170 度，5 的倍數）",
+      "zero": "right",
+      "min": 10,
+      "max": 170,
+      "step": 5
+    },
+    "zero-left": {
+      "label": "0 度線在左邊（10–170 度，5 的倍數）",
+      "zero": "left",
+      "min": 10,
+      "max": 170,
+      "step": 5
+    },
+    "off-zero": {
+      "label": "兩邊都不在 0 刻度（20–140 度，起點邊離 0 度 10–60 度）",
+      "zero": "off",
+      "min": 20,
+      "max": 140,
+      "step": 5,
+      "offset": [
+        10,
+        60
+      ]
+    }
+  },
+  "defaults": {
+    "tiers": [
+      "zero-right",
+      "zero-left",
+      "off-zero"
+    ],
+    "weights": {
+      "zero-right": 4,
+      "zero-left": 4,
+      "off-zero": 2
+    },
+    "count": 10,
+    "overlay": {
+      "assess": "always",
+      "practice": "always"
+    },
+    "distinct": true
+  },
+  "adjustments": {
+    "simplify": {
+      "label": "簡化：只出 0 度線在右邊或左邊",
+      "tiers": [
+        "zero-right",
+        "zero-left"
+      ]
+    },
+    "reduce": {
+      "label": "減量：5 題",
+      "count": 5
+    },
+    "decompose": {
+      "label": "分解：先只出 0 度線在右邊",
+      "tiers": [
+        "zero-right"
+      ]
+    },
+    "substitute": {
+      "label": "替代：只出 0 度線在右邊，6 題",
+      "tiers": [
+        "zero-right"
+      ],
+      "count": 6
+    },
+    "not_applicable": {
+      "label": "不適用：不出題",
+      "skip": true
+    }
+  },
+  "hints": {
+    "zero-right": [
+      "量角器的中心點已經對準頂點。先找哪一條邊貼著 0 度線。",
+      "0 度線在{side}邊，就從{side}邊的 0 開始，沿著同一圈往上數。",
+      "數到另一條邊對著的刻度，就是這個角的度數。"
+    ],
+    "zero-left": [
+      "量角器的中心點已經對準頂點。先找哪一條邊貼著 0 度線。",
+      "0 度線在{side}邊，就從{side}邊的 0 開始，沿著同一圈往上數。",
+      "數到另一條邊對著的刻度，就是這個角的度數。"
+    ],
+    "off-zero": [
+      "兩條邊都沒有對著 0。先找兩條邊各對著哪個刻度。",
+      "兩個刻度要讀同一圈（從同一邊的 0 開始數的那一圈）。",
+      "大的刻度減小的刻度，就是這個角的度數。"
+    ]
+  },
+  "feedback": {
+    "correct": "答對了！這個角是 {angle} 度。",
+    "retry": "看看是不是讀了另一圈：要從貼著 0 度線那一邊的 0 開始數。"
+  },
+  "stems": {
+    "right": "用量角器量一量，這個角是幾度？",
+    "left": "用量角器量一量，這個角是幾度？",
+    "off": "這個角的兩條邊都沒有對著 0，這個角是幾度？"
+  },
+  "alt": "一個角，量角器的中心對準角的頂點。",
+  "tolerance": 2,
+  "notes": "Cyclone 2026-10-22 確認（udl-math#8）：三檔 10 題（0 度線在右邊 4、在左邊 4、兩邊都不在 0 刻度 2），角度取 5 的倍數，容許 ±2 度；讀錯內外圈記在 variables.wrong_scale（180 減答案）。課程手冊 N-4-10：量角器要從左右兩側量。五種課程調整 Cyclone 2026-10-22 確認。"
+}

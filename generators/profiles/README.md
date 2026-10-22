@@ -18,8 +18,13 @@ udl 只報事實：「指標 X：n 題對 k、調整方式、鷹架檔、提示�
 | --- | --- | --- | --- | --- |
 | `n-I-2#a@2` | `n-i-2-a-2.json` | 能用直式計算二位數加減（含一次進位或退位），10 題正確率約八成 | `math.add-sub` v1 | v1（#18） |
 | `n-II-9#b@3` | `n-ii-9-b-3.json` | 能用直角板判斷一個角是直角、比直角大或比直角小 | `math.angle-vs-right` v1 | v1（#69，Cyclone 2026-10-22 確認預設） |
+| `s-II-3#b@4` | `s-ii-3-b-4.json` | 能依邊與角的特徵分辨正三角形、等腰三角形、直角三角形、銳角三角形與鈍角三角形 | `math.triangle-classify` v1 | v1（#70，Cyclone 2026-10-22 確認：三檔 12 題 4／4／4、課程調整已確認） |
+| `n-II-9#b@4` | `n-ii-9-b-4.json` | 能用量角器量出角度，包括兩邊不在刻度 0 上的角 | `math.angle-measure` v1 | v1（#71，Cyclone 2026-10-22 確認：三檔 10 題 4／4／2、±2 度、課程調整已確認） |
+| `s-II-4#b@4` | `s-ii-4-b-4.json` | 能說出平角是 180 度、周角是 360 度，並算出兩個旋轉角的和或差，結果不超過 360 度 | `math.angle-sum` v1 | v1（#72，Cyclone 2026-10-22 確認：四檔 10 題 3／2／3／2、有圖、課程調整已確認） |
+| `s-II-2#a@4` | `s-ii-2-a-4.json` | 能把兩個圖形描下剪開，經滑動、轉動或翻面疊合，判斷形狀大小是否一樣（全等） | `math.congruent-triangles` v1 | v1（#74，Cyclone 2026-10-22 確認：各 6 題） |
+| `s-II-2#b@4` | `s-ii-2-b-4.json` | 能在兩個全等圖形中指出對應邊與對應角，並說出對應邊等長、對應角相等 | `math.congruent-triangles` v1 | v1（#74，Cyclone 2026-10-22 確認：各 6 題） |
 
-條件檔的形狀依產生器分家：`profile.schema.json` 依 `generator` 分派到 `profile.add-sub.schema.json`、`profile.angle-vs-right.schema.json`；`checkParams`／`resolveParams` 也依 `generator` 分派（加減法規則在 `index.mjs`，和直角比在 `angle-vs-right.mjs`）。三層分工、五種課程調整的鍵、`resolveParams` 的用法各產生器相同。
+條件檔的形狀依產生器分家：`profile.schema.json` 依 `generator` 分派到 `profile.<產生器>.schema.json`（`$ref` 用 `$id`），**編譯 `profile.schema.json` 之前要先把 `PROFILE_FAMILY_SCHEMA_PATHS` 列的每一份加進 Ajv**，否則 `$ref` 解不開（測試與驗證器都這樣做）。`checkParams`／`resolveParams` 也依 `generator` 分派：加減法規則在 `index.mjs`，幾何產生器用 `_family.mjs` 的工廠（檔位＋權重＋題數，再加各自的列舉、布林與依 mode 取值的設定）。三層分工、五種課程調整的鍵、`resolveParams` 的用法各產生器相同。
 
 `n-II-9#b@3` 的檔位：`clear` 明顯（銳角 20–60 度、鈍角 120–160 度，權重 6）、`right` 直角（90 度，權重 3）、`near` 接近直角（銳角 65–75 度、鈍角 105–115 度，權重 3），預設 12 題；簡化＝只出明顯與直角、減量＝6 題、分解＝一開始就疊上虛擬直角板、替代＝兩選一「是不是直角」、不適用＝不出題。練習模式第 2 層提示自動疊上直角板，評量模式只給切換鈕。
 

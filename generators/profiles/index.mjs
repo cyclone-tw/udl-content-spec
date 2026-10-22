@@ -3,18 +3,36 @@
 import nI2a2 from "./n-i-2-a-2.json" with { type: "json" };
 import nII9b3 from "./n-ii-9-b-3.json" with { type: "json" };
 import * as angleVsRight from "./angle-vs-right.mjs";
+import sII2a4 from "./s-ii-2-a-4.json" with { type: "json" };
+import sII2b4 from "./s-ii-2-b-4.json" with { type: "json" };
+import * as congruentRules from "./congruent-triangles.mjs";
+import sII4b4 from "./s-ii-4-b-4.json" with { type: "json" };
+import * as angleSumRules from "./angle-sum.mjs";
+import nII9b4 from "./n-ii-9-b-4.json" with { type: "json" };
+import * as angleMeasureRules from "./angle-measure.mjs";
+import sII3b4 from "./s-ii-3-b-4.json" with { type: "json" };
+import * as triangleClassifyRules from "./triangle-classify.mjs";
 
 export const PROFILE_SCHEMA_PATH = "generators/profiles/profile.schema.json";
 /** 各產生器自己的條件檔形狀；PROFILE_SCHEMA_PATH 依 generator 分派到這些（ajv 要先載入）。 */
 export const PROFILE_FAMILY_SCHEMA_PATHS = Object.freeze([
   "generators/profiles/profile.add-sub.schema.json",
   "generators/profiles/profile.angle-vs-right.schema.json",
+  "generators/profiles/profile.congruent-triangles.schema.json",
+  "generators/profiles/profile.angle-sum.schema.json",
+  "generators/profiles/profile.angle-measure.schema.json",
+  "generators/profiles/profile.triangle-classify.schema.json",
 ]);
 
 /** 已登錄的條件檔，以 ladder id 為 key。 */
 export const profiles = Object.freeze({
   [nI2a2.ladder_id]: nI2a2,
   [nII9b3.ladder_id]: nII9b3,
+  [sII2a4.ladder_id]: sII2a4,
+  [sII2b4.ladder_id]: sII2b4,
+  [sII4b4.ladder_id]: sII4b4,
+  [nII9b4.ladder_id]: nII9b4,
+  [sII3b4.ladder_id]: sII3b4,
 });
 
 /** 五種課程調整的固定鍵（對應 C06／C08 表件的簡化、減量、分解、替代；不適用＝不出題）。 */
@@ -43,6 +61,10 @@ export function profilesFor(ladderIds) {
 const FAMILIES = {
   "math.add-sub": { checkParams: checkAddSubParams, resolveParams: resolveAddSubParams },
   "math.angle-vs-right": angleVsRight,
+  "math.congruent-triangles": congruentRules,
+  "math.angle-sum": angleSumRules,
+  "math.angle-measure": angleMeasureRules,
+  "math.triangle-classify": triangleClassifyRules,
 };
 
 function familyOf(profile) {

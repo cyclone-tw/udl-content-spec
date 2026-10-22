@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:udl-content-spec:v1:generators/math/angle-measure/params",
+  "title": "math.angle-measure 參數",
+  "description": "形狀由本 schema 檢查；值是否在條件檔範圍內由 checkParams 檢查。通常呼叫 resolveParams 取得。",
+  "type": "object",
+  "required": [
+    "tiers",
+    "overlay",
+    "distinct"
+  ],
+  "properties": {
+    "tiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "weights": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "urn:udl-content-spec:v1:common#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      }
+    },
+    "overlay": {
+      "type": "string",
+      "enum": [
+        "button",
+        "hint",
+        "always"
+      ],
+      "description": "虛擬量角器什麼時候出現（量角通常 always）。"
+    },
+    "distinct": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}
