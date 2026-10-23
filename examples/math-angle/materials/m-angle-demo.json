@@ -1,0 +1,216 @@
+{
+  "format_version": 1,
+  "id": "m-angle-demo",
+  "unit": "u-angle-right",
+  "kind": "demo",
+  "title": {
+    "text": "看示範：角的大小"
+  },
+  "blocks": [
+    {
+      "type": "math-demo",
+      "title": {
+        "text": "角的大小怎麼比"
+      },
+      "steps": [
+        {
+          "text": {
+            "text": "角有一個頂點和兩條邊。"
+          },
+          "focus": [
+            "ray-a",
+            "ray-b"
+          ],
+          "figure": {
+            "version": 1,
+            "unit": "mm",
+            "width": 90,
+            "height": 66,
+            "points": {
+              "v": [
+                34,
+                58
+              ],
+              "a": [
+                82,
+                58
+              ],
+              "b": [
+                59.7,
+                27.4
+              ]
+            },
+            "segments": [
+              {
+                "id": "ray-a",
+                "from": "v",
+                "to": "a",
+                "kind": "ray"
+              },
+              {
+                "id": "ray-b",
+                "from": "v",
+                "to": "b",
+                "kind": "ray"
+              }
+            ],
+            "angles": [
+              {
+                "id": "angle",
+                "vertex": "v",
+                "from": "a",
+                "to": "b",
+                "mark": "arc",
+                "radius": 8
+              }
+            ],
+            "labels": [
+              {
+                "id": "l-vertex",
+                "at": [
+                  29.1,
+                  62.9
+                ],
+                "text": "頂點"
+              }
+            ],
+            "tools": {
+              "set-square": {
+                "vertex": "v",
+                "along": "a",
+                "toward": "b",
+                "size": 30
+              }
+            },
+            "alt": "一個角：兩條邊從同一個頂點出發。"
+          }
+        },
+        {
+          "text": {
+            "text": "把一條邊轉開，角就變大了。"
+          },
+          "focus": [
+            "angle"
+          ],
+          "figure": {
+            "version": 1,
+            "unit": "mm",
+            "width": 90,
+            "height": 66,
+            "points": {
+              "v": [
+                34,
+                58
+              ],
+              "a": [
+                82,
+                58
+              ],
+              "b": [
+                20.3,
+                20.4
+              ]
+            },
+            "segments": [
+              {
+                "id": "ray-a",
+                "from": "v",
+                "to": "a",
+                "kind": "ray"
+              },
+              {
+                "id": "ray-b",
+                "from": "v",
+                "to": "b",
+                "kind": "ray"
+              }
+            ],
+            "angles": [
+              {
+                "id": "angle",
+                "vertex": "v",
+                "from": "a",
+                "to": "b",
+                "mark": "arc",
+                "radius": 8
+              }
+            ],
+            "tools": {
+              "set-square": {
+                "vertex": "v",
+                "along": "a",
+                "toward": "b",
+                "size": 30
+              }
+            },
+            "alt": "一個角：兩條邊從同一個頂點出發。"
+          }
+        },
+        {
+          "ask": {
+            "text": "這個角和直角比，是比較大還是比較小？"
+          },
+          "text": {
+            "text": "放上直角板：另一條邊在直角板外面，所以這個角比直角大。"
+          },
+          "tools": [
+            "set-square"
+          ],
+          "figure": {
+            "version": 1,
+            "unit": "mm",
+            "width": 90,
+            "height": 66,
+            "points": {
+              "v": [
+                34,
+                58
+              ],
+              "a": [
+                82,
+                58
+              ],
+              "b": [
+                20.3,
+                20.4
+              ]
+            },
+            "segments": [
+              {
+                "id": "ray-a",
+                "from": "v",
+                "to": "a",
+                "kind": "ray"
+              },
+              {
+                "id": "ray-b",
+                "from": "v",
+                "to": "b",
+                "kind": "ray"
+              }
+            ],
+            "angles": [
+              {
+                "id": "angle",
+                "vertex": "v",
+                "from": "a",
+                "to": "b",
+                "mark": "arc",
+                "radius": 8
+              }
+            ],
+            "tools": {
+              "set-square": {
+                "vertex": "v",
+                "along": "a",
+                "toward": "b",
+                "size": 30
+              }
+            },
+            "alt": "一個角：兩條邊從同一個頂點出發。"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -12,7 +12,9 @@
     "N-3-13"
   ],
   "estimated_minutes": 30,
-  "materials": [],
+  "materials": [
+    "m-angle-demo"
+  ],
   "items": [],
   "bindings": {
     "skills": [
@@ -20,6 +22,12 @@
     ]
   },
   "activities": [
+    {
+      "activity": "demo",
+      "label": "看示範",
+      "short": "示範",
+      "phase": "learn"
+    },
     {
       "activity": "skill-practice",
       "label": "和直角比",

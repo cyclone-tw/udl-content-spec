@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:udl-content-spec:v1:figure",
   "title": "幾何圖形描述",
-  "description": "宣告式幾何圖形：點、線段、角記號、標示文字與疊圖工具。單位是公釐（mm），y 軸向下；列印照實際尺寸，螢幕等比縮放。renderer 依這份描述畫 SVG，標示文字畫成可報讀的文字層，不燒進圖檔。每個元素有 id，之後的逐步狀態（講解動畫）可以用 id 描述差異。",
+  "description": "宣告式幾何圖形：點、線段、角記號、標示文字與疊圖工具。單位是公釐（mm），y 軸向下；列印照實際尺寸，螢幕等比縮放。renderer 依這份描述畫 SVG，標示文字畫成可報讀的文字層，不燒進圖檔。每個元素有 id；講解動畫（示範教材 math-demo 的步驟，#80）靠相同的點 id 在相鄰兩步之間補間。",
   "type": "object",
   "required": ["version", "unit", "width", "height", "points", "alt"],
   "properties": {
@@ -95,7 +95,7 @@
       "additionalProperties": false
     },
     "alt": { "type": "string", "minLength": 1, "description": "給報讀與無法看圖的人的描述。不得洩漏答案（例如比直角大或小）。" },
-    "steps": { "type": "array", "description": "保留給講解動畫的逐步狀態（每一步用元素 id 描述差異）；格式尚未定義，renderer 目前忽略。", "items": { "type": "object" } }
+    "steps": { "type": "array", "description": "不使用：講解動畫的逐步狀態寫在示範教材 math-demo 的 steps（每一步一張 figure，#80）。renderer 忽略這個欄位。", "items": { "type": "object" } }
   },
   "additionalProperties": false,
   "$defs": {
