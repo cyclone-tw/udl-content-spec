@@ -13,6 +13,7 @@
 | `blanks` | 多格填空（含單格填字） | 1 | `{ "blanks": { "<slot id>": <number\|string> } }` | correct／partial／incorrect／invalid | v1 |
 | `ordering` | 排序 | 1 | `{ "order": ["<id>", …] }` | correct／partial／incorrect／invalid | v1 |
 | `classify` | 拖拉分類 | 1 | `{ "bins": { "<bin id>": ["<object id>", …] } }` | correct／partial／incorrect／invalid | v1 |
+| `handwrite` | 手寫字（描一描、寫一寫，#78） | 1 | `{ "chars": [{ "char", "completed", "mistakes", "helped" }] }` | correct／partial／incorrect／invalid | v1 |
 | `drawing` | 畫圖 | — | 草案見路線圖 | pending-review | v3 保留 |
 | `speaking` | 口說 | — | 草案見路線圖 | pending-review | v3 保留 |
 

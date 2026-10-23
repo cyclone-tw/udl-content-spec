@@ -556,6 +556,12 @@
         },
         "generated": {
           "$ref": "#/$defs/generated"
+        },
+        "practice_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "活動生的題目的穩定身分（activities/ 的 practice_key，#78），不隨種子變；平台用它組錯題本，再用 generateByKeys 重產同一題。"
         }
       },
       "additionalProperties": false

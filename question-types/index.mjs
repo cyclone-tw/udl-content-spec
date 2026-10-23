@@ -6,6 +6,7 @@ import * as numeric from "./numeric/score.mjs";
 import * as blanks from "./blanks/score.mjs";
 import * as ordering from "./ordering/score.mjs";
 import * as classify from "./classify/score.mjs";
+import * as handwrite from "./handwrite/score.mjs";
 
 const entry = (mod) => Object.freeze({
   type: mod.type,
@@ -23,6 +24,7 @@ export const types = Object.freeze({
   [blanks.type]: entry(blanks),
   [ordering.type]: entry(ordering),
   [classify.type]: entry(classify),
+  [handwrite.type]: entry(handwrite),
 });
 
 /** v2 候選：已排進路線圖、尚未實作（見 README 路線圖）。 */

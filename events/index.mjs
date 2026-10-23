@@ -59,7 +59,8 @@ export function answeredFields(question, result, { attempt_no, response_ms, hint
   if (question.curriculum_codes?.length) fields.curriculum_codes = [...question.curriculum_codes];
   if (response !== undefined) fields.response = response;
   if (result.detail) fields.detail = result.detail;
-  if (isInstance) {
+  if (question.practice_key) fields.practice_key = question.practice_key;
+  if (isInstance && question.generator) {
     fields.generated = {
       generator: question.generator,
       generator_version: question.generator_version,
