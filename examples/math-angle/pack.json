@@ -3,7 +3,7 @@
   "id": "sample-angle",
   "version": "0.1.0",
   "title": "示範：和直角比",
-  "description": "合成範例內容包：三年級「和直角比」一個單元、一張技能卡；題目由 math.angle-vs-right 依能力指標條件檔 n-II-9#b@3 出題（圖形描述在題目實例的 display.figure）。不含學生資料。",
+  "description": "合成範例內容包：三年級「和直角比」一個單元、一張技能卡、一段講解動畫（#80）；題目由 math.angle-vs-right 依能力指標條件檔 n-II-9#b@3 出題（圖形描述在題目實例的 display.figure）。不含學生資料。",
   "subject": "math",
   "language": "zh-TW",
   "license": "CC-BY-4.0",
@@ -25,8 +25,12 @@
       "sha256": "cc264b5246c671b1080cf31a440f59e8e18469ea4a1444d9708ead31f1b6d9dd"
     },
     {
+      "path": "materials/m-angle-demo.json",
+      "sha256": "3adb9232b8c11ee173ff15961b8149ceb2e3dab32eebcd2a098b7b0f69da6206"
+    },
+    {
       "path": "units/u-angle-right.json",
-      "sha256": "dd28f1acacce94d4f44f1af549cb54b34645283874b58ef075b97bc04a90d0a2"
+      "sha256": "21eb471ec86ff4fb7215fa718e01049eb82fae30bf9688d1a1738a7e4ac5d20a"
     }
   ]
 }

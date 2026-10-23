@@ -18,6 +18,18 @@ import { AUDIO_EXTS, syllableKey, wordKey } from "../audio/index.mjs";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root_ = path.join(here, "..");
 const schemaDir = path.join(root_, "schema");
+// 講解動畫的一步（#80）：tools、focus 要對得到這一步的圖；先想一想（ask）的步驟要有圖或算式可以看。
+export function checkDemoStep(step) {
+  const out = [], fig = step.figure;
+  if ((step.tools || step.focus) && !fig) out.push("有 tools 或 focus 卻沒有 figure");
+  if (step.ask && !fig && !step.expression) out.push("ask 的步驟要有 figure 或 expression");
+  if (!fig) return out;
+  for (const t of step.tools ?? []) if (!fig.tools?.[t]) out.push(`tools 的 ${t} 不在這一步的 figure.tools`);
+  const ids = new Set([...Object.keys(fig.points ?? {}), ...[fig.segments, fig.angles, fig.labels].flatMap((list) => (list ?? []).map((e) => e.id))]);
+  for (const id of step.focus ?? []) if (!ids.has(id)) out.push(`focus 的 ${id} 不在這一步的 figure`);
+  return out;
+}
+
 const SCHEMAS = ["common", "figure", "pack", "unit", "material", "item", "pool", "scope", "card", "activity-profile"];
 // 與 schema/common.schema.json 的 relative_path 同一條規則；讀檔前先用它過濾。
 export const RELATIVE_PATH = /^(?!\/)(?!.*\.\.)[A-Za-z0-9._/-]+$/;
@@ -637,6 +649,7 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
         if (b.type === "check" && !asArray(unit.items).includes(b.item)) errors.push(`${rel}/blocks/${i}: check 引用的 item ${b.item} 不在單元 items`);
         if ((b.type === "image" || b.type === "audio") && typeof b.src === "string") requireListed(b.src, `${rel}/blocks/${i}`);
         if (b.type === "math-demo") for (const s of b.steps) if (typeof s.image === "string") requireListed(s.image, `${rel}/blocks/${i}`);
+        if (b.type === "math-demo") for (const [k, s] of b.steps.entries()) errors.push(...checkDemoStep(s).map((m) => `${rel}/blocks/${i}/steps/${k}: ${m}`));
       }
       materials.set(materialId, material);
     }

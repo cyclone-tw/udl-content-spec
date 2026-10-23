@@ -250,6 +250,10 @@
             "type": {
               "const": "math-demo"
             },
+            "title": {
+              "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text",
+              "description": "這段講解的名稱（例如「角的大小怎麼比」）；一份示範教材有好幾段講解時用來分段。"
+            },
             "steps": {
               "type": "array",
               "minItems": 1,
@@ -260,7 +264,8 @@
                 ],
                 "properties": {
                   "text": {
-                    "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text"
+                    "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text",
+                    "description": "這一步的說明，顯示並由裝置語音唸出；有 ask 時是按「看答案」後才出現的說明。"
                   },
                   "expression": {
                     "type": "string",
@@ -268,6 +273,26 @@
                   },
                   "image": {
                     "$ref": "urn:udl-content-spec:v1:common#/$defs/relative_path"
+                  },
+                  "figure": {
+                    "$ref": "urn:udl-content-spec:v1:figure",
+                    "description": "講解動畫（#80）：這一步的完整圖形。外殼把相鄰兩步裡 id 相同的點做補間，減少動態時直接換成這一步的靜態圖。"
+                  },
+                  "tools": {
+                    "type": "array",
+                    "description": "這一步疊上的虛擬工具；必須是這一步 figure.tools 有定義的。",
+                    "items": { "type": "string", "enum": ["set-square", "protractor"] },
+                    "uniqueItems": true
+                  },
+                  "focus": {
+                    "type": "array",
+                    "description": "這一步要強調的元素 id（邊、角、標示）；必須在這一步的 figure 裡。",
+                    "items": { "$ref": "urn:udl-content-spec:v1:figure#/$defs/element_id" },
+                    "uniqueItems": true
+                  },
+                  "ask": {
+                    "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text",
+                    "description": "先想一想的提問：只顯示並唸這句，學生按「看答案」才顯示 text。提問不得含答案。"
                   }
                 },
                 "additionalProperties": false
