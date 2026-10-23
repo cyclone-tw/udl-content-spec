@@ -25,7 +25,7 @@
 | `answered` | 見下 | 一次作答與判定 |
 | `session-completed` | `summary?` | 結束與彙總 |
 
-`answered` 必帶：`item_id`、`ladder_ids`（至少一條）、`question_type`／`type_version`、`outcome`／`score`（照 `question-types/result.schema.json`）、`attempt_no`、`response_ms`、`hint_tier`（0–3，送出前用到的最高層）、`read_aloud`（true／false；殼不知道就 `null`，不要猜）、`guess_flag`（`none`／`possible-guessing`／`flagged`）。可帶：`curriculum_codes`、`response`（原始作答）、`detail`（score 的 detail；選擇題答錯且選項有標錯誤類型時含 `misconception`，#43）、`generated`（產生題追溯：`generator`、`generator_version`、`seed`、`index`、`tier`、`hint_variant`、`variables`，有這些就能重現同一題）。
+`answered` 必帶：`item_id`、`ladder_ids`（至少一條）、`question_type`／`type_version`、`outcome`／`score`（照 `question-types/result.schema.json`）、`attempt_no`、`response_ms`、`hint_tier`（0–3，送出前用到的最高層）、`read_aloud`（true／false；殼不知道就 `null`，不要猜）、`guess_flag`（`none`／`possible-guessing`／`flagged`）。可帶：`curriculum_codes`、`response`（原始作答）、`detail`（score 的 detail；選擇題答錯且選項有標錯誤類型時含 `misconception`，#43）、`generated`（產生題追溯：`generator`、`generator_version`、`seed`、`index`、`tier`、`hint_variant`、`variables`，有這些就能重現同一題）、`practice_key`（活動生的題的穩定身分，不隨種子變；平台用它組錯題本，再用 `activities/` 的 `generateByKeys` 重產同一題，#78）。
 
 `context.prescription` 記這次實際套用的調整：`font_scale`、`zhuyin`、`read_aloud`（off／on／student-choice）、`option_count`、`untimed`、`motion`、`scaffold`（none／partial／full）、`adjustment`（simplify／reduce／decompose／substitute／not_applicable，與條件檔同名）。缺的欄位表示用殼預設。
 
@@ -51,7 +51,7 @@ pushEvent(file, "answered", answeredFields(question, result, { attempt_no: 1, re
 pushEvent(file, "session-completed", { summary: { answered, correct } });
 ```
 
-`answeredFields` 會從題目（固定題或 `instantiate()` 的實例）抄 `item_id`、`ladder_ids`、`curriculum_codes`、題型版本，產生題再抄 `generated`；殼只補它才知道的事（第幾次、幾毫秒、提示層、報讀）。
+`answeredFields` 會從題目（固定題或 `instantiate()` 的實例）抄 `item_id`、`ladder_ids`、`curriculum_codes`、題型版本，產生器實例再抄 `generated`，活動生的題抄 `practice_key`；殼只補它才知道的事（第幾次、幾毫秒、提示層、報讀）。
 
 驗證：
 
@@ -95,6 +95,7 @@ kit 的 IEP 評量要記支持代碼（I 獨立、V 口語提示、G 手勢提�
 | `prescription.scaffold` partial／full（直式位值格、進位小 1） | P | — |
 | `prescription.adjustment` simplify／reduce | 不是支持代碼，是調整紀錄 | kit 的「調整方式」欄位怎麼接？ |
 | 題型 choice／true-false／match／classify／ordering／blanks／numeric（點選或鍵盤） | A（書面）？ | 平板點選算書面嗎？ |
+| 題型 handwrite（手指寫字，#78） | A（書面）？ | 平板手寫算書面嗎？`helped` 對到哪個支持代碼？ |
 | v3 speaking | B | — |
 | v3 drawing | C 或 A | — |
 

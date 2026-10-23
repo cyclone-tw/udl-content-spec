@@ -1,0 +1,65 @@
+{
+  "format_version": 1,
+  "id": "i-handwrite-01",
+  "unit": "u01-stream-bridge",
+  "type": "handwrite",
+  "kind": "fixed",
+  "skill": "寫字",
+  "difficulty": 2,
+  "ladder_ids": [
+    "4-Ⅲ-1#d@6"
+  ],
+  "curriculum_codes": [
+    "4-Ⅲ-1"
+  ],
+  "read_aloud_scope": "all",
+  "stem": {
+    "text": {
+      "text": "看注音，寫出「○○」空格裡的字。",
+      "audio": null
+    },
+    "say_text": {
+      "text": "看注音，寫出「星星」這個語詞。",
+      "audio": null
+    }
+  },
+  "mode": "write",
+  "target": "星星",
+  "context": {
+    "word": "星星",
+    "zhuyin": "ㄒㄧㄥ ㄒㄧㄥ",
+    "positions": [
+      0,
+      1
+    ]
+  },
+  "max_mistakes": 3,
+  "hints": [
+    {
+      "text": "先唸一次語詞，想想晚上天空裡會發亮的是什麼。",
+      "audio": null
+    },
+    {
+      "text": "這個字上面是「日」，下面是「生」。",
+      "audio": null
+    },
+    {
+      "text": "可以按「看筆順」看一次，再自己寫。",
+      "audio": null
+    }
+  ],
+  "feedback": {
+    "correct": {
+      "text": "寫對了！兩個「星」都寫得很好。",
+      "audio": null
+    },
+    "retry": {
+      "text": "「星」再多寫幾次，會越寫越順。",
+      "audio": null
+    }
+  },
+  "meta": {
+    "author": "claude-code",
+    "reviewed": false
+  }
+}

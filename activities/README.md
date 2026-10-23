@@ -9,6 +9,9 @@
 | `resolveBindings(unit, lookup)` | 把 `bindings` 的卡片引用換成卡片物件；同包 id 或跨包 `pack@version#id` 都交給 `lookup` |
 | `planSteps({ unit, cards, materials, profile?, items?, readings?, groups? })` | 年級活動設定（或單元自己的 `activities`）× 綁定的卡 × 有的教材與手寫題 → 步驟清單（進度條的關卡）；條件不足的步驟放進 `skipped` 並寫理由。`groups` 只留這幾類練習（#50） |
 | `generate(activity, { unit, cards, seed, count?, pools?, items?, blueprint?, readings?, audio? })` | 生題；同一單元＋同一組卡（與手寫題）＋同一個種子，結果永遠相同 |
+| `generateByKeys(keys, { unit, cards, seed, … })` | 依 `practice_key` 清單重產題目（錯題本「只練錯題」，#78）；回傳 `{ instances, missing }` |
+
+`activityMeta` 是每個活動的屬性表（`phase`、`group`、`generates`、`read_aloud_scope`、`sound`、`encounter`），殼直接查，不必自己認活動名稱（#66、#78）。
 
 `toItemShape()`、`toInstanceShape()` 把實例轉回固定題／產生器實例形狀給 schema 驗證；`correctResponse()` 產生正解作答（驗證器確認正解拿滿分）。
 
@@ -27,6 +30,10 @@
 | `word-cloze` | 修練 | 語詞 | 是 | 有例句的語詞卡，語詞卡 ≥ 2 | choice：例句挖空選語詞 |
 | `listen-char` | 修練 | 識字 | 是 | 至少一張生字卡湊得出「讀音已知、不同音」的干擾字 | choice＋`stem.listen.syllable`：播單音選字（#49）。干擾項先用卡上填了 `zhuyin` 的易混淆字，再用同課生字；同音字一律不用，讀音不明的字不用 |
 | `listen-word` | 修練 | 語詞 | 是 | 語詞卡 ≥ 2，且不全同音 | choice＋`stem.listen.word`：播語詞選語詞（#49）。干擾項是同課其他語詞，同音語詞不用；有同音字的優先放一個 |
+| `tone-pick` | 修練 | 識字 | 是 | 語詞卡的注音和字數對得上、至少一個字不是輕聲 | choice：認一認，看語詞（不帶注音）選注音（#78）。錯的選項先放一個**聲調陷阱**（把一個非輕聲字換成另一個聲調；不等於正解，也不等於同一個語詞其他卡上的讀音），再放一個同課其他語詞的注音（同字數優先）；沒有別的語詞時放第二個聲調陷阱 |
+| `char-lookalike` | 修練 | 識字 | 是 | 生字卡至少 2 個 `why: 形近` 的易混淆字（或 pack `pools/` 裡 kind「形近字」、含這個字的池補足），而且這課有含這個字的語詞卡 | choice：找一找，含目標字的句子（語詞卡例句，沒有例句用語詞）把目標字都換成「○」，選項是目標字＋2 個形近字（#78）。不給注音：和 `char-pick`（看注音選字）不同，這題靠字形與語境 |
+| `char-trace` | 修練 | 識字 | 是 | 生字卡 | handwrite `trace`：描一描，每張生字卡一題（看筆順 → 描 → 自己寫，#78）；不進遭遇與測驗 |
+| `char-write` | 修練 | 識字 | 是 | 語詞卡裡有這課的生字 | handwrite `write`：寫一寫，每個「語詞＋其中一個生字」一題，看注音寫國字；同一個字在語詞裡出現幾次就挖空幾格（#78）；不進遭遇與測驗 |
 | `word-meaning` | 修練 | 語詞 | 是 | 語詞卡 ≥ 2，且解釋不全相同 | choice：看語詞（有例句就帶例句）選解釋（#49）。干擾項是同課其他語詞的解釋，有相同字的語詞優先放一個 |
 | `sentence-order` | 修練 | 語詞 | 是 | 句型卡 | ordering：例句詞塊排序 |
 | `skill-practice` | 修練 | 技能 | 是 | 技能卡 | 數學產生器實例（numeric／blanks），參數照能力指標條件檔 |
@@ -59,20 +66,21 @@ Cyclone 2026-10-16（udl-learning#189）：練習要能分類，老師可以只�
 - **混合練習** `mix`（#51）：Cyclone 要的是「識字、語詞、課文」三類練習，所以高年級設定一類一步，用 `sources` 列出這一步混合哪些同分類活動（`planSteps` 回傳的 `step.sources` 只留條件足夠的，略過的記在 `step.sources_skipped`）；呼叫端把 `step.sources` 原樣傳給 `generate("mix", { sources, … })`。`count: "all"` 是各來源題庫加總、每筆輪到一次；給數字時輪流分給各來源、不超過各自的題庫。題目依 `sources` 順序成段出（同一種題型放在一起，減少切換），各帶 `mix_source`，能力階梯與報讀範圍照來源活動。測驗藍圖會把混合練習展開成它的來源。
 - **混合練習的來源條件不足時略過**：例如「只用核心卡」時湊不出選字題，就只出聽音選字；全部來源都湊不出題才丟錯（#58）。
 - **太重的來源不進測驗**：語詞配對一題就是一整組，同分類有別的來源時，測驗藍圖不用它；只有它時才用（#58）。
-- **藍圖來源題庫都是 0 時丟錯**：多半是呼叫端漏傳 `materials` 或 `items`，不默默少出（#58）。
+- **藍圖來源題庫都是 0 時丟錯**：多半是呼叫端漏傳 `materials` 或 `items`，不默默少出（#58）；錯誤訊息列出各來源條件不足的理由。條件不足的來源（例如只用核心卡時語詞只剩一張，湊不出語詞填空）題庫算 0，不會出選項不夠的題（#78）。
 - **重現一批題目**：要同樣的 `unit`、`cards`、`seed`、`count`，以及 `blueprint`／`sources`／`items`／`materials`；平台記事件時要一起留著這次用的步驟設定（#58）。
 - **設定錯誤 vs 條件不足**：非 `quiz` 寫 `blueprint`、不支援 `count: "all"` 的活動寫了 `"all"`、混合練習的來源不是練習活動或混了不同分類，`planSteps` 都放進 `skipped` 並標 `config: true`，驗證器報錯；其他（例如這課沒有心智圖）只是條件不足，略過不報錯（#56）。
 - **藍圖的來源**只算會算題庫（`pool`）的活動；技能練習沒有題庫，不當藍圖來源（#56）。
 - `groups` 篩選對沒有藍圖的 `quiz` 不起作用：舊式小測驗照舊從所有卡抽（#56）。
+- **手寫題不進測驗**：`char-trace`、`char-write` 標 `encounter: false`，測驗藍圖不把它們當來源（寫字要筆順資料，也不適合限時；#78）。
 - **課文題** `reading-items`：單元 `items` 裡的固定題一律歸「課文」；產生器模板（`kind: "generated"`）不算。實例照抄題目內容，`id` 不變（報表照題目統計），`source: "items"`、`item` 記原題 id；報讀範圍以題目自己標的 `read_aloud_scope` 為先，沒標用 `all`。
 
 ## 年級活動設定（`profiles/`）
 
 | id | 年級 | 步驟 |
 | --- | --- | --- |
-| `zh-low` | 國語一、二 | 聽故事 → 認字 → 配對 → 小測驗 |
-| `zh-mid` | 國語三、四 | 讀課文 → 生字 → 語詞配對 → 句型排序 → 小測驗 |
-| `zh-high` | 國語五、六 | 讀課文 → 心智圖 → 生字卡 → **識字練習**（聽音選字、看音選字）→ 語詞卡 → **語詞練習**（聽音選詞、語詞解釋、語詞配對、語詞填空）→ 句型（可關）→ **課文練習**（段落大意、段落排序、心智圖挖空與排序、修辭選擇與分類、手寫課文題）→ 小測驗（藍圖：識字 2、語詞 3、課文 5；#50、#51） |
+| `zh-low` | 國語一、二 | 和中高年級同一套範本、依年級減題型（#78）：讀課文 → 心智圖（可關）→ 生字卡 → **寫字練習**（描一描、寫一寫）→ **識字練習**（聽音選字、看音選字、認一認、找一找）→ 語詞卡 → **語詞練習**（聽音選詞、語詞配對、語詞填空）→ **課文練習**（段落大意、段落排序、心智圖挖空、手寫課文題；不放修辭）→ 小測驗（藍圖：識字 2、語詞 2、課文 1） |
+| `zh-mid` | 國語三、四 | 同一套範本（#78）：讀課文 → 心智圖（可關）→ 生字卡 → **寫字練習** → **識字練習**（聽音選字、看音選字、認一認、找一找）→ 語詞卡 → **語詞練習**（聽音選詞、語詞解釋、語詞配對、語詞填空）→ 句型排序（可關）→ **課文練習**（段落大意、段落排序、心智圖挖空與排序、手寫課文題；不放修辭）→ 小測驗（藍圖：識字 2、語詞 3、課文 3） |
+| `zh-high` | 國語五、六 | 讀課文 → 心智圖 → 生字卡 → **寫字練習**（描一描、寫一寫，#78）→ **識字練習**（聽音選字、看音選字、認一認、找一找）→ 語詞卡 → **語詞練習**（聽音選詞、語詞解釋、語詞配對、語詞填空）→ 句型（可關）→ **課文練習**（段落大意、段落排序、心智圖挖空與排序、修辭選擇與分類、手寫課文題）→ 小測驗（藍圖：識字 2、語詞 3、課文 5；#50、#51） |
 | `math-elementary` | 數學一到六 | 看示範 → 操作練習 → 計算練習 → 小測驗 |
 
 形狀見 `schema/activity-profile.schema.json`。單元可用 `activity_profile` 指定別份，或用 `activities` 整份取代；老師之後在指派時隱藏或調整（平台流程設定，不在規格）。
@@ -93,14 +101,39 @@ Cyclone 2026-10-16（udl-learning#189）：練習要能分類，老師可以只�
 
   | 代碼 | 中文名 | 誰會標 |
   | --- | --- | --- |
-  | `form-alike` | 形近混淆 | 聽音選字：易混淆字 `why: 形近` |
+  | `form-alike` | 形近混淆 | 聽音選字：易混淆字 `why: 形近`；找一找：每個錯的選項（#78） |
   | `sound-alike` | 音近混淆 | 聽音選字：易混淆字 `why: 音近`；聽音選語詞：有同音字的語詞 |
   | `shared-char` | 相同字的語詞混淆 | 語詞解釋：干擾項的語詞和題目語詞有相同字 |
   | `wrong-paragraph` | 段落重點張冠李戴 | 段落大意：選了別段的大意（#51） |
   | `wrong-branch` | 心智圖分支放錯 | 心智圖挖空：選了別的分支的內容（#51） |
   | `rhetoric-mixup` | 修辭類型混淆 | 修辭選擇：選了另一種修辭；是哪兩種看 `detail` 的 `chosen` 與 `answer`（#51） |
+  | `tone-mixup` | 聲調混淆 | 認一認：選了只差一個字聲調的讀音（#78） |
 
   標了錯誤類型的選項都帶套句型的逐選項回饋；同課其他生字或語詞當干擾項時不標。`score()` 的 `detail.misconception` 與 `answered` 事件照 #43 帶出。手寫題也可以直接用這些代碼，不必在 `pack.json` 重列。
+
+## 進修部練習：認一認、找一找、描一描、寫一寫（#78）
+
+Cyclone 2026-10-23：進修部三上的練習做成通用模組，題目由卡片庫資料自動產生，換學期、換課文只換資料；外殼的關卡與城鎮「練習場」用同一組活動。行為參考 `udl-night-chinese` 的單元網站（只借設計，不搬程式）。
+
+- **認一認** `tone-pick`：題幹「「公園」怎麼唸？選出正確的注音，要看清楚聲調。」，選項是注音字串。錯的聲調陷阱標內建錯誤類型 `tone-mixup`（聲調混淆）並帶逐選項回饋；別的語詞的注音只帶回饋「這是「…」的注音。」。考讀音（`sound: true`），報讀只唸 `stem.say_text`「這個語詞怎麼唸？…」，不唸目標語詞與選項；殼不在題幹加注音。
+- **找一找** `char-lookalike`：題幹「選出正確的字，放進○：放學後，我們去公○散步。」；錯的選項標 `form-alike`。句子裡所有目標字都換成「○」（不然看得到答案）；報讀只唸「選出正確的字，放進句子的空格。」。形近字取自生字卡 `confusables`（`why: 形近`），不夠時用 pack `pools/` 裡 `kind: "形近字"`、`entries` 含這個字的池（池裡其他單字都算形近字；`planSteps`／`generate` 要傳 `pools`）。
+- **描一描** `char-trace`、**寫一寫** `char-write`：題型 `handwrite`（見 `question-types/handwrite/README.md`）。`context` 帶語詞與注音；寫一寫用 `positions` 標挖空的位置。題數預設 `count: "all"`，每筆輪到一次。判筆與筆順資料是外殼的事；外殼沒有某個字的筆順資料時略過那題。
+- **不進遭遇** `encounter: false`：手寫題只在練習步驟出現。`planSteps` 回傳的步驟帶 `encounter: false`（混合練習的來源全是這種時），`activityMeta[活動].encounter` 也查得到；外殼草原遭遇只出點選題，測驗藍圖也不抽。
+
+## 讀音題標記（#66）
+
+報讀把題目唸出來，考讀音或字形的題就洩漏答案。規格標記哪些題是這種，殼照標記做，不必自己認活動名稱或猜題目內容。
+
+- `sound: true` 的活動：`char-pick`、`listen-char`、`listen-word`、`tone-pick`、`char-lookalike`。題目實例一律帶 `sound`（true／false，像 `read_aloud_scope` 一樣）；課文題照抄手寫題自己標的 `sound`。
+- 殼的規則（`sound: true`）：選項與卡片一律不唸；題幹有 `stem.say_text` 就唸它，沒有就唸 `stem.text`，但把「」裡的目標字換成「這個字」「這個語詞」；題幹不加注音。`read_aloud_scope` 仍照舊管題幹與選項。
+- `stem.say_text`（報讀用題幹，任何題都可以有）：有它時報讀唸它、不唸 `stem.text`。活動生的 `char-pick`、`tone-pick`、`char-lookalike`、`char-write` 都帶。
+- 手寫題：考讀音或字形的題請標 `sound: true`，把目標字放在「」裡或寫 `stem.say_text`；驗證器擋 `sound: true` 卻 `read_aloud_scope` 是 `all`（省略也算 `all`），並提醒「看起來考讀音卻沒標」（聽音題、選項或題幹有注音）。
+
+## 錯題本：`practice_key` 與重產（#78）
+
+- 每個生出來的題目實例帶 `practice_key`：`<活動>|<來源 id>|<變體>`，**不隨種子變**。來源 id 是用到的卡片 id（多張用逗號接，語詞配對排序過）、課文資料題的教材 id、課文題的題目 id；變體只在同一組來源出得了不同題時才有（句型排序的第幾句、課文資料題的 `anchor`）。例：`tone-pick|w-gongyuan`、`char-write|w-gongyuan,c-yuan2`、`sentence-order|pt-kaiman|0`、`para-gist|m-lesson|p3`、`reading-items|i-reading-01`。混合練習與測驗出的題用**來源活動**的 key（`mix_source`／`quiz_source`），和單獨練那個活動時相同。
+- `answered` 事件可帶 `practice_key`（選填，見 `events/README.md`）；平台從作答紀錄挑出答錯的 key 就是錯題本。
+- `generateByKeys(keys, { unit, cards, seed, … })` 依 key 清單重產：順序照清單、重複的 key 只出一次；題目身分不變（同一個語詞、同一個生字、同一段課文），選項與干擾項照這次的 `seed` 重抽。技能練習的 key 是技能卡（`skill-practice|sk-…`），重產是同一張技能卡的新題。卡片或教材已不在這個單元、條件不足出不了題的 key 放進 `missing` 並寫理由，不丟錯。
 
 ## 修辭例句（#51）
 
@@ -125,5 +158,7 @@ Cyclone 2026-10-16（udl-learning#189）：練習要能分類，老師可以只�
 課文資料生的題（#51）：`source: "materials"`、`material`（教材 id）、`anchor`（`p3` 第 3 段、`p1-p6` 段落範圍、`n0.1.2` 心智圖節點路徑、`b4` 修辭例句區塊；修辭分類一題有好幾句，寫成 `<教材 id>#b4,<教材 id>#b7`，`material` 只記第一句的教材）、`cards: []`；混合練習出的題另帶 `mix_source`。
 
 課文題（#50）：`kind: "instance"`、`source: "items"`、`item`（原題 id，`id` 不變）、`activity`、`activity_version`、`seed`、`index`、`unit`；其餘欄位照抄手寫題。測驗藍圖抽出的題另帶 `quiz_group`。
+
+所有活動生的題都另帶 `practice_key`（#78）與 `sound`（#66），見上。
 
 卡片生的題：`kind: "instance"`、`source: "cards"`、`activity`、`activity_version`、`seed`、`index`、`unit`、`cards`（用到的卡 id）、`quiz_source`（小測驗裡這題來自哪個活動）；其餘欄位與固定題相同，可直接丟給 `score()`。技能練習沿用數學產生器的實例，另加 `activity`、`activity_version`、`cards`。作答事件記 `activity`＋`seed` 就能重現整批題目。

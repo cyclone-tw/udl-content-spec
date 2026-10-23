@@ -185,6 +185,50 @@ export function checkListenItem(item, { readings = new Map(), pools = new Map() 
   return errors;
 }
 
+const ZHUYIN_CHAR = /[\u3100-\u312f]/u;
+/**
+ * 讀音題標記（#66，純函式）：標了 sound 的題 read_aloud_scope 不能是 all（省略也算 all）；
+ * 沒標但看起來考讀音（聽音題、選項或題幹有注音）提醒作者標上；手寫題標了 sound 卻沒有 say_text、題幹也沒有「」提醒。
+ * @param {object} item 固定題或題目實例
+ * @param {{ handwritten?: boolean }} opts handwritten：手寫題（作者寫的）才做提醒；活動生的題只擋錯誤。
+ */
+export function checkSoundItem(item, { handwritten = true } = {}) {
+  const errors = [];
+  const warnings = [];
+  const scope = item.read_aloud_scope ?? "all";
+  if (item.sound === true && scope === "all") errors.push(`考讀音或字形的題（sound: true）read_aloud_scope 不能是 all${item.read_aloud_scope ? "" : "（省略就是 all）"}，改成 stem 或 none`);
+  if (!handwritten) return { errors, warnings };
+  const optionText = asArray(item.options).map((o) => String(o?.text?.text ?? ""));
+  const looks = item.stem?.listen ? "聽音題" : optionText.some((t) => ZHUYIN_CHAR.test(t)) ? "選項有注音" : ZHUYIN_CHAR.test(String(item.stem?.text?.text ?? "")) ? "題幹有注音" : null;
+  if (looks && item.sound !== true) warnings.push(`看起來是考讀音的題（${looks}），請標 sound: true，報讀才不會唸出答案`);
+  if (item.sound === true && !item.stem?.say_text && !/「[^」]+」/u.test(String(item.stem?.text?.text ?? "")) && !item.stem?.listen) warnings.push("考讀音的題請把目標字放在「」裡，或寫 stem.say_text（報讀用題幹），殼才知道要避開哪個字");
+  return { errors, warnings };
+}
+
+/**
+ * 手寫題（#78，純函式）：positions 要有 word、和 target 一樣長、不超出語詞、對到的字就是 target；zhuyin 音節數和 word 字數相同。
+ */
+export function checkHandwriteItem(item) {
+  const errors = [];
+  const target = [...String(item.target ?? "")];
+  const ctx = item.context ?? {};
+  const word = ctx.word === undefined ? null : [...ctx.word];
+  if (ctx.positions !== undefined) {
+    if (!word) errors.push("context.positions 要搭配 context.word");
+    else if (ctx.positions.length !== target.length) errors.push(`context.positions 有 ${ctx.positions.length} 格，target 有 ${target.length} 個字，要一樣多`);
+    else ctx.positions.forEach((at, i) => {
+      if (at >= word.length) errors.push(`context.positions 第 ${i + 1} 格（${at}）超出語詞「${ctx.word}」`);
+      else if (word[at] !== target[i]) errors.push(`context.positions 第 ${i + 1} 格對到「${word[at]}」，不是 target 的「${target[i]}」`);
+    });
+  }
+  if (typeof ctx.zhuyin === "string") {
+    const n = ctx.zhuyin.trim().split(/\s+/).length;
+    const want = word ? word.length : target.length;
+    if (n !== want) errors.push(`context.zhuyin 有 ${n} 個音節，${word ? `語詞「${ctx.word}」` : `target「${item.target}」`}有 ${want} 個字`);
+  }
+  return errors;
+}
+
 /**
  * 同一次測驗的重複題判斷用的 key（#56、#58）：選擇題看題幹＋正解（干擾項與順序是亂數抽的，不算）；
  * 其他題型看題幹與內容、不看順序。
@@ -200,7 +244,7 @@ export function quizRepeatKey(q) {
 export function checkUnitActivities({ unit, cards, materials, pools, validators, readings, items = [], seed = "validate" }) {
   const errors = [];
   const warnings = [];
-  const plan = planSteps({ unit, cards, materials, items, readings });
+  const plan = planSteps({ unit, cards, materials, items, readings, pools });
   if (plan.ladder_status === "draft" && plan.steps.some((x) => x.generates && x.ladder_ids)) warnings.push(`年級活動設定的能力階梯對照還是草稿（ladder_status: draft），待 Cyclone 審`);
   const runs = [{ label: "", coreOnly: false }];
   if (coreCards(unit, cards)) runs.push({ label: "（只用核心卡）", coreOnly: true });
@@ -241,6 +285,8 @@ export function checkUnitActivities({ unit, cards, materials, pools, validators,
       if (!q.ladder_ids?.length) errors.push(`${where} 題目 ${q.id} 沒有 ladder_ids（年級設定 ladders、卡片或單元至少要有一處標能力階梯）`);
       const r = score(q, correctResponse(q));
       if (r.outcome !== "correct") errors.push(`${where} 題目 ${q.id}：正解沒有拿到滿分（${r.outcome}）`);
+      if (q.type === "handwrite") errors.push(...checkHandwriteItem(q).map((m) => `${where} 題目 ${q.id}: ${m}`));
+      errors.push(...checkSoundItem(q, { handwritten: false }).errors.map((m) => `${where} 題目 ${q.id}: ${m}`));
       // 卡片生的聽音題也做同音字檢查（#36），讀音表含卡片庫；錯誤類型只能用內建代碼（#49）。
       if (q.stem?.listen) errors.push(...checkListenItem(q, { readings: readings ?? readingsFromCards(Object.values(cards).flat()), pools }).map((m) => `${where} 題目 ${q.id}: ${m}`));
       // 手寫題（source: items）的代碼已在逐題檢查對過 pack.json，這裡只管自動生的題（#63）。
@@ -533,6 +579,12 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
         if (bins.size !== item.bins.length) errors.push(`${rel}: bins id 重複`);
         if (new Set(item.objects.map((o) => o.id)).size !== item.objects.length) errors.push(`${rel}: objects id 重複`);
         for (const o of item.objects) if (!bins.has(o.bin)) errors.push(`${rel}: object ${o.id} 的 bin ${o.bin} 不在 bins`);
+      }
+      if (item.kind === "fixed" && item.type === "handwrite") errors.push(...checkHandwriteItem(item).map((m) => `${rel}: ${m}`));
+      if (item.kind === "fixed") {
+        const s = checkSoundItem(item);
+        errors.push(...s.errors.map((m) => `${rel}: ${m}`));
+        warnings.push(...s.warnings.map((m) => `${rel}: ${m}`));
       }
       if (item.distractor_pool && !pools.has(item.distractor_pool.pool)) {
         errors.push(`${rel}: distractor_pool ${item.distractor_pool.pool} 不在 pack.json pools`);

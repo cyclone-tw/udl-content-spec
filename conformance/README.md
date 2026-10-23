@@ -26,6 +26,8 @@ pnpm test
 
 練習分類與測驗藍圖（#50）：生題檢查時把單元的手寫固定題一起交給活動層（課文練習 `reading-items`），這些手寫題的錯誤類型照 `pack.json` `misconceptions` 檢查，自動生的題才限內建代碼（#63）；`quiz` 有藍圖時照 `planSteps` 回傳的藍圖生題。藍圖某一類題庫不夠、出不滿時警告；某一類前面沒有練習步驟時警告；同一次測驗出現重複的題目報錯（用題目內容判斷：選擇題看題幹＋正解，不看亂數抽的干擾項與順序；其他題型看內容、不看順序，#56、#58）。活動設定寫錯（`planSteps` 標 `config` 的略過：非 quiz 寫 blueprint、不支援的 `count: "all"`、混合練習來源不合法）報錯；混合練習因條件不足略過的來源只警告。段落大意的意義段（#60）：`gist_span` 不得超出課文、意義段不得重疊、前言（`preface`）不得帶 `gist`。課文資料生題（段落大意、心智圖、修辭例句，#51）照同一套規則檢查：通過題型 schema、正解滿分、有能力階梯。沒有綁卡也沒有寫 `activities` 的單元照舊不做生題檢查。
 
+手寫題與讀音題（#78、#66）：`handwrite` 固定題與活動生的手寫題，`context.positions` 要搭配 `context.word`、和 `target` 一樣長、不超出語詞、對到的字就是 `target`；`context.zhuyin` 音節數要等於語詞（沒有語詞時是 `target`）字數（`checkHandwriteItem`）。標了 `sound: true` 的題 `read_aloud_scope` 不能是 `all`（省略也算 `all`），固定題與活動生的題都擋；手寫的固定題看起來考讀音（聽音題、選項或題幹有注音）卻沒標 `sound: true` 時提醒，標了卻沒有 `stem.say_text`、題幹也沒有「」時提醒（`checkSoundItem`）。`planSteps` 也拿到包的 `pools`，找一找（`char-lookalike`）才認得形近字池。
+
 錯誤類型（#43）：選擇題選項的 `misconception` 必須列在 `pack.json` 的 `misconceptions`，或是 `activities/` 的內建錯誤類型（#49；卡片生的題只能用內建代碼）；正解選項帶 `misconception` 報錯。逐選項 `feedback` 是一般 `spoken_text`，語音槽照既有規則檢查（路徑要在 `files`、`null` 警告）。
 
 `validate-events.mjs` 驗證作答事件檔（`udl-attempt-events/v1`）：schema、seq、outcome 與 score 一致、角色與代號、`--ladder-dir`；細節見 `events/README.md`。`validate-audio.mjs` 驗證音檔包清單（單音、語詞、整課）：schema、鍵與注音一致、檔名規則、相對路徑、重複、合成標示、同一版只新增；細節見 `audio/README.md`。內容 lint 待後續 issue。所有檢查在本機跑，不靠 GitHub Actions。

@@ -6,15 +6,40 @@
   "grades": [3, 4],
   "steps": [
     { "activity": "read", "label": "讀課文", "phase": "learn" },
-    { "activity": "char-cards", "label": "生字" },
-    { "activity": "word-match", "label": "語詞配對", "short": "配對" },
+    { "activity": "mindmap", "label": "心智圖", "phase": "learn", "optional": true },
+    { "activity": "char-cards", "label": "生字卡", "short": "生字" },
+    { "activity": "mix", "label": "寫字練習", "short": "寫字", "sources": ["char-trace", "char-write"], "count": "all" },
+    { "activity": "mix", "label": "識字練習", "short": "識字", "sources": ["listen-char", "char-pick", "tone-pick", "char-lookalike"], "count": "all" },
+    { "activity": "word-cards", "label": "語詞卡", "short": "語詞" },
+    { "activity": "mix", "label": "語詞練習", "short": "詞語", "sources": ["listen-word", "word-meaning", "word-match", "word-cloze"], "count": "all" },
     { "activity": "sentence-order", "label": "句型排序", "short": "排序", "optional": true },
-    { "activity": "quiz", "label": "小測驗", "short": "測驗", "count": 5 }
+    { "activity": "mix", "label": "課文練習", "short": "課文", "sources": ["para-gist", "para-order", "mindmap-pick", "mindmap-order", "reading-items"], "count": "all" },
+    {
+      "activity": "quiz",
+      "label": "小測驗",
+      "short": "測驗",
+      "blueprint": [
+        { "group": "char", "count": 2 },
+        { "group": "word", "count": 3 },
+        { "group": "reading", "count": 3 }
+      ]
+    }
   ],
   "ladders": {
     "char-pick": {"3": ["4-Ⅱ-1#a@3", "4-Ⅱ-4#a"], "4": ["4-Ⅱ-1#c@4", "4-Ⅱ-4#a"]},
+    "listen-char": {"3": ["4-Ⅱ-1#a@3"], "4": ["4-Ⅱ-1#c@4"]},
+    "tone-pick": {"3": ["4-Ⅱ-1#a@3"], "4": ["4-Ⅱ-1#c@4"]},
+    "char-lookalike": {"*": ["4-Ⅱ-4#a"]},
+    "char-trace": {"3": ["4-Ⅱ-1#b@3"], "4": ["4-Ⅱ-1#d@4"]},
+    "char-write": {"3": ["4-Ⅱ-1#b@3"], "4": ["4-Ⅱ-1#d@4"]},
+    "listen-word": {"3": ["4-Ⅱ-1#a@3"], "4": ["4-Ⅱ-1#c@4"]},
+    "word-meaning": {"*": ["3-Ⅱ-1#a"]},
     "word-match": {"*": ["3-Ⅱ-1#a"]},
-    "word-cloze": {"*": ["3-Ⅱ-1#a"]}
+    "word-cloze": {"*": ["3-Ⅱ-1#a"]},
+    "para-gist": {"*": ["5-Ⅱ-6#a"]},
+    "para-order": {"*": ["5-Ⅱ-6#b"]},
+    "mindmap-pick": {"*": ["5-Ⅱ-6#b"]},
+    "mindmap-order": {"*": ["5-Ⅱ-6#b"]}
   },
   "ladder_status": "draft"
 }

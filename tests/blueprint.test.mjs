@@ -34,8 +34,13 @@ async function loadHandItems() {
 test("planSteps：高年級設定的練習步驟帶分類；測驗藍圖只接前面的練習步驟，題數＝藍圖加總", async () => {
   const items = await loadHandItems();
   const plan = planSteps({ unit, cards, items });
-  const mix = (g) => plan.steps.find((s) => s.activity === "mix" && s.group === g);
-  assert.deepEqual(mix("char").sources, ["listen-char", "char-pick"]);
+  const mix = (g) => plan.steps.find((s) => s.activity === "mix" && s.group === g && s.label !== "寫字練習");
+  assert.deepEqual(mix("char").sources, ["listen-char", "char-pick", "tone-pick"], "沒有形近字時略過找一找");
+  assert.ok(mix("char").sources_skipped.some((x) => x.activity === "char-lookalike" && x.reason.includes("confusables")));
+  const writing = plan.steps.find((s) => s.label === "寫字練習");
+  assert.deepEqual(writing.sources, ["char-trace", "char-write"]);
+  assert.equal(writing.encounter, false);
+  assert.equal(writing.group, "char");
   assert.ok(mix("word").sources.includes("word-meaning"));
   assert.deepEqual(mix("reading").sources, ["reading-items"], "沒有課文資料時只剩手寫題");
   assert.ok(mix("reading").sources_skipped.some((x) => x.activity === "para-gist"));
@@ -43,7 +48,7 @@ test("planSteps：高年級設定的練習步驟帶分類；測驗藍圖只接�
   const quiz = plan.steps.find((s) => s.activity === "quiz");
   assert.equal(quiz.count, 10);
   assert.deepEqual(quiz.blueprint.map((b) => [b.group, b.count]), [["char", 2], ["word", 3], ["reading", 5]]);
-  assert.deepEqual(quiz.blueprint.find((b) => b.group === "char").sources.sort(), ["char-pick", "listen-char"]);
+  assert.deepEqual(quiz.blueprint.find((b) => b.group === "char").sources.sort(), ["char-pick", "listen-char", "tone-pick"], "手寫題不進測驗");
   assert.ok(quiz.blueprint.find((b) => b.group === "word").sources.includes("word-meaning"));
   assert.deepEqual(quiz.blueprint.find((b) => b.group === "reading").sources, ["reading-items"]);
   for (const b of quiz.blueprint) for (const s of b.sources) assert.ok(plan.steps.some((x) => (x.activity === s || x.sources?.includes(s)) && x.index < quiz.index), `${s} 要在測驗前的練習裡`);

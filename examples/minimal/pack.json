@@ -79,8 +79,12 @@
       "sha256": "8465a993db2097522762381298a2a34a4f1a10a26eda7c0f7d5f4b5cf2b820c3"
     },
     {
+      "path": "items/i-handwrite-01.json",
+      "sha256": "5db0ff20a04a84f946cf2df59cd59e7f5283234db0f0d140e887bd0a09664fb4"
+    },
+    {
       "path": "items/i-listen-01.json",
-      "sha256": "485b975db647f09a2ab63c9bf9c586e16e4b023fc272a71d349db6c159959d36"
+      "sha256": "2eca84fb6accb66d808e68674b18d393396e4b1137c01db9aaa3303baf670dc0"
     },
     {
       "path": "items/i-match-01.json",
@@ -132,7 +136,7 @@
     },
     {
       "path": "units/u01-stream-bridge.json",
-      "sha256": "b946280cc1c06526223187ccced0a4d6d1529243b631b6a4b8dc027723db9f4f"
+      "sha256": "f48324e17cd792f397034e5a083132ef99010b6ae709bfccc380d3bf3a3c5465"
     },
     {
       "path": "units/u02-add-2digit.json",

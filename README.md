@@ -15,10 +15,10 @@ UDL 教學家族（udl-learning、udl-math 等各教材 repo、udl-audio 的音�
 | 目錄 | 內容 | 狀態 |
 | --- | --- | --- |
 | `schema/` | `pack.json`、Unit／Material／Item／Pool／Scope 的 JSON Schema | v1（#3） |
-| `question-types/` | 題型登錄表：每題型一個資料夾（作答 schema、`score()` 純函式、renderer 契約、版本與升版轉換）；v1：choice、true-false、match、numeric、blanks、ordering、classify；路線圖：drawing、speaking（v3 保留） | v1（#6、#10、#15） |
+| `question-types/` | 題型登錄表：每題型一個資料夾（作答 schema、`score()` 純函式、renderer 契約、版本與升版轉換）；v1：choice、true-false、match、numeric、blanks、ordering、classify、handwrite（#78）；路線圖：drawing、speaking（v3 保留） | v1（#6、#10、#15） |
 | `generators/` | 數學參數化產生器（種子可重現、條件不符重抽、`{變數}` 提示置換）；內容包只帶參數；`profiles/` 能力指標條件檔決定產生題能出什麼（第一條 `n-I-2#a@2`）；v1：`math.add-sub`（依條件檔；直式多格填空或橫式）、`math.add-2digit-carry`／`no-carry`（保留） | v1（#9、#18） |
 | `events/` | 作答事件契約 `udl-attempt-events/v1`（檔案形狀、六種事件、處方欄位）、建構器、`udl-lesson-attempt/v1` 轉接器、支持代碼對照草案 | v1（#21） |
-| `activities/` | 「積木＋清單」活動層：依單元綁的卡與教材排步驟（`planSteps`）、為練習與測驗生題（選字、語詞配對、語詞填空、句型排序、技能練習、綜合小測驗）；年級活動設定 `profiles/` | v1（#31） |
+| `activities/` | 「積木＋清單」活動層：依單元綁的卡與教材排步驟（`planSteps`）、為練習與測驗生題（選字、聽音、認一認、找一找、描一描、寫一寫、語詞、課文、技能練習、測驗藍圖）、題目穩定身分 `practice_key` 與依 key 重產（#78）；年級活動設定 `profiles/` | v1（#31） |
 | `runner/` | 獨立執行器：載入內容包、出題、判定、提示、下載事件檔；無登入、無後端 | 待做 |
 | `audio/` | 音檔包格式：單音（注音音節，ASCII 鍵）、語詞（`詞\|注音`）、整課（連續音軌＋時間表、版本碼）三種清單 schema、鍵規則函式、只新增規則；決策正本在 udl-learning#102 | v1（#25） |
 | `conformance/` | 驗證器（schema＋引用＋hash＋產生題參數落在能力指標條件檔內，`--ladder-dir` 可對 kit 階梯資料）；事件檔驗證器（`validate:events`）；音檔包清單驗證器（`validate:audio`）；內容 lint 待補；本機執行 | 驗證器 v1（#3、#18、#21） |

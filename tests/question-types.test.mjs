@@ -58,8 +58,8 @@ const matchQ = {
 };
 const numQ = (extra = {}) => ({ type: "numeric", kind: "fixed", id: "i-n", answer: 42, ...extra });
 
-test("登錄表：七種 v1 題型、v2 候選、v3 保留", () => {
-  assert.deepEqual(Object.keys(types).sort(), ["blanks", "choice", "classify", "match", "numeric", "ordering", "true-false"]);
+test("登錄表：八種 v1 題型、v2 候選、v3 保留", () => {
+  assert.deepEqual(Object.keys(types).sort(), ["blanks", "choice", "classify", "handwrite", "match", "numeric", "ordering", "true-false"]);
   for (const t of Object.values(types)) {
     assert.equal(t.version, 1);
     assert.equal(typeof t.score, "function");
@@ -240,6 +240,10 @@ function canonical(item) {
       return { right: { blanks: Object.fromEntries(item.blanks.map((b) => [b.id, b.answer])) }, wrong: { blanks: {} } };
     case "numeric":
       return { right: { value: item.answer }, wrong: { value: item.answer + 1000 } };
+    case "handwrite": {
+      const chars = [...item.target].map((char) => ({ char, completed: true, mistakes: 0, helped: false }));
+      return { right: { chars }, wrong: { chars: chars.map((c) => ({ ...c, helped: true })) } };
+    }
     default:
       throw new Error(`測試未涵蓋題型 ${item.type}`);
   }
