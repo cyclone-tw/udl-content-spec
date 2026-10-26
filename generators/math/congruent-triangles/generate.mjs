@@ -14,6 +14,10 @@ export const MAX_ATTEMPTS_PER_ITEM = 1000;
 export const itemType = () => "choice";
 
 const CELL = 52; // 放大 1.3 倍的干擾項離重心最遠約 24 mm，格子要夠大，相鄰三角形不碰在一起
+// 找全等的圖有五個三角形，原尺寸約 150 × 100 mm，在平板上縮得很小，①–④ 與「甲」跟著變小（#77）。
+// 整張圖（三角形與格子）縮成 0.7 倍，標示字級不變（4 mm），畫面上的編號就大約大 1.4 倍。編號放在格子左上角往內 2.5 mm，離三角形的邊至少約 2 mm。
+const FIND_SCALE = 0.7;
+const BY_POSITION_MARGIN = 20;
 const MARKS = ["①", "②", "③", "④"];
 const NAMES_A = ["ㄅ", "ㄆ", "ㄇ"];
 const NAMES_B = ["ㄉ", "ㄊ", "ㄋ"];
@@ -51,19 +55,20 @@ function distractor(rng, kind, base) {
   return out;
 }
 
-/** 多個三角形放進一張圖：cells 是 [{ key, pts, at: [col,row], name, vertexNames? }]。 */
-function multiFigure(cells, { alt }) {
+/** 多個三角形放進一張圖：cells 是 [{ key, pts, at: [col,row], name, vertexNames? }]；scale 縮放三角形與格子，標示字級不變。 */
+function multiFigure(cells, { alt, scale = 1 }) {
   const points = {};
   const segments = [];
   const labels = [];
   const extent = [];
   for (const c of cells) {
-    const cx = c.at[0] * CELL + CELL / 2, cy = c.at[1] * CELL + CELL / 2;
-    const pts = c.pts.map((p) => [p[0] + cx, p[1] + cy]);
+    const cell = CELL * scale;
+    const cx = c.at[0] * cell + cell / 2, cy = c.at[1] * cell + cell / 2;
+    const pts = c.pts.map((p) => [p[0] * scale + cx, p[1] * scale + cy]);
     const g = centroid(pts);
     pts.forEach((p, i) => { points[`${c.key}${i}`] = p; extent.push(p); });
     [[0, 1], [1, 2], [2, 0]].forEach(([i, j]) => segments.push({ id: `${c.key}-s${i}${j}`, from: `${c.key}${i}`, to: `${c.key}${j}`, kind: "side" }));
-    const tag = [c.at[0] * CELL + 5, c.at[1] * CELL + 5];
+    const tag = [c.at[0] * cell + 2.5, c.at[1] * cell + 2.5];
     labels.push({ id: `${c.key}-name`, at: tag, text: c.name, say: c.say ?? c.name });
     extent.push(add(tag, [-3, -3]), add(tag, [3, 3]));
     (c.vertexNames ?? []).forEach((n, i) => {
@@ -107,7 +112,7 @@ function findQuestion(rng, def, profile, rotateOn) {
     ...(o.kind === "scaled" ? { misconception: "congruent-size-ignored" } : o.kind !== "congruent" ? { misconception: "congruent-shape-by-eye" } : {}),
   }));
   return {
-    figure: multiFigure(cells, { alt: profile.alt.find }),
+    figure: multiFigure(cells, { alt: profile.alt.find, scale: FIND_SCALE }),
     options, answer: `c${answerIndex + 1}`,
     vars: { answer_label: MARKS[answerIndex], flip: def.flip, distractors: order.map((o) => o.kind).join(",") },
     stem: profile.stems.find,
@@ -127,9 +132,10 @@ function correspondQuestion(rng, def, profile, rotateOn) {
     { key: "a", pts: place(base, 0, false), at: [0, 0], name: "甲", vertexNames: NAMES_A },
     { key: "b", pts: bPts, at: [1.25, 0], name: "乙", vertexNames: NAMES_B },
   ];
-  let options, answer, asked, answerText;
+  let options, answer, asked, answerText, askedSide, askedVertex;
   if (def.ask === "side") {
     const [i, j] = [[0, 1], [1, 2], [2, 0]][rng.int(0, 2)];
+    askedSide = [i, j];
     asked = `${NAMES_A[i]}${NAMES_A[j]}`;
     const target = new Set([nameOfB[i], nameOfB[j]]);
     const sides = [["ㄉ", "ㄊ"], ["ㄊ", "ㄋ"], ["ㄋ", "ㄉ"]];
@@ -139,13 +145,25 @@ function correspondQuestion(rng, def, profile, rotateOn) {
     answerText = `${sides[hit][0]}${sides[hit][1]}`;
   } else {
     const i = rng.int(0, 2);
+    askedVertex = i;
     asked = `∠${NAMES_A[i]}`;
     options = NAMES_B.map((n, k) => ({ id: `v${k + 1}`, text: { text: `∠${n}`, audio: null } }));
     answer = `v${NAMES_B.indexOf(nameOfB[i]) + 1}`;
     answerText = `∠${nameOfB[i]}`;
   }
-  // 照擺放位置對（同一個位置的名字）就是沒有轉一轉
-  options = options.map((o) => (o.id === answer ? o : { ...o, misconception: "correspondence-by-position" }));
+  // 照擺放位置對（沒有轉一轉）：乙在畫面上和甲問的那個角（邊）擺在同一個方位的那一個選項才標（#77）；
+  // 它剛好就是答案時不標，其他錯誤選項不標。方位是頂點（邊的中點）相對自己重心的方向；
+  // 最接近的兩個方位差不到 BY_POSITION_MARGIN 度時說不出「同一個位置」是哪個，也不標。
+  const aPts = cells[0].pts;
+  const heading = (pts, idx) => { const g = centroid(pts); const p = idx.length === 1 ? pts[idx[0]] : [(pts[idx[0]][0] + pts[idx[1]][0]) / 2, (pts[idx[0]][1] + pts[idx[1]][1]) / 2]; return Math.atan2(p[1] - g[1], p[0] - g[0]); };
+  const turn = (x, y) => { const d = Math.abs(x - y) % (2 * Math.PI); return Math.min(d, 2 * Math.PI - d); };
+  const askedIdx = def.ask === "side" ? askedSide : [askedVertex];
+  const optionIdx = def.ask === "side" ? [[0, 1], [1, 2], [2, 0]] : [[0], [1], [2]];
+  const want = heading(aPts, askedIdx);
+  const gaps = optionIdx.map((idx) => turn(heading(bPts, idx), want));
+  const byPos = gaps.indexOf(Math.min(...gaps));
+  const clear = gaps.every((d, n) => n === byPos || d - gaps[byPos] >= (BY_POSITION_MARGIN * Math.PI) / 180);
+  options = options.map((o, n) => (clear && n === byPos && o.id !== answer ? { ...o, misconception: "correspondence-by-position" } : o));
   return {
     figure: multiFigure(cells, { alt: profile.alt.correspond }),
     options, answer,

@@ -292,7 +292,7 @@
                   },
                   "ask": {
                     "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text",
-                    "description": "先想一想的提問：只顯示並唸這句，學生按「看答案」才顯示 text。提問不得含答案。"
+                    "description": "先想一想的提問：只顯示並唸這句，學生按「看答案」才顯示 text。提問不得含答案。只用在圖形講解：同一份教材的示範至少有一步帶 figure（外殼 12 起才先藏答案）；這一步要有 figure 或 expression，只有 image 的步驟不能提問（圖形講解不畫 image，#77）。"
                   }
                 },
                 "additionalProperties": false
