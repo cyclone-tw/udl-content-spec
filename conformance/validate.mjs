@@ -19,6 +19,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root_ = path.join(here, "..");
 const schemaDir = path.join(root_, "schema");
 // 講解動畫的一步（#80）：tools、focus 要對得到這一步的圖；先想一想（ask）的步驟要有圖或算式可以看。
+// ask 只有圖形講解會先藏答案（外殼 12：這份教材的示範有任一步帶 figure 才走圖形講解）；只有 image 的步驟在圖形講解裡不畫，不能提問（#77）。
+export function checkDemoAsk(material) {
+  const steps = (material.blocks ?? []).filter((b) => b.type === "math-demo").flatMap((b) => b.steps);
+  return steps.some((s) => s.ask) && !steps.some((s) => s.figure) ? ["示範有 ask 卻沒有任何一步帶 figure：只有圖形講解會先藏答案，其他示範會直接顯示說明"] : [];
+}
+
 export function checkDemoStep(step) {
   const out = [], fig = step.figure;
   if ((step.tools || step.focus) && !fig) out.push("有 tools 或 focus 卻沒有 figure");
@@ -651,6 +657,7 @@ export async function validatePack(dir, { strict = false, ladderDir = null, card
         if (b.type === "math-demo") for (const s of b.steps) if (typeof s.image === "string") requireListed(s.image, `${rel}/blocks/${i}`);
         if (b.type === "math-demo") for (const [k, s] of b.steps.entries()) errors.push(...checkDemoStep(s).map((m) => `${rel}/blocks/${i}/steps/${k}: ${m}`));
       }
+      errors.push(...checkDemoAsk(material).map((m) => `${rel}: ${m}`));
       materials.set(materialId, material);
     }
   }

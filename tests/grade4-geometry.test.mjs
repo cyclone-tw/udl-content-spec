@@ -184,6 +184,78 @@ test("對應：答案的邊一樣長、角一樣大，其他選項不一樣", as
   }
 });
 
+// #77：標示的方框（字級 4 mm；全形字約 4 mm 寬、數字約 2.3、度數符號約 1.6）。
+const labelBox = (l) => ({ hw: [...l.text].reduce((w, c) => w + (/[0-9]/.test(c) ? 2.3 : c === "°" ? 1.6 : 4), 0) / 2, hh: 2.2 });
+const gapToBox = (p, l) => { const { hw, hh } = labelBox(l); return Math.hypot(Math.max(Math.abs(p[0] - l.at[0]) - hw, 0), Math.max(Math.abs(p[1] - l.at[1]) - hh, 0)); };
+const along = (a, b, step = 0.1) => { const n = Math.ceil(len(a, b) / step); return Array.from({ length: n + 1 }, (_, k) => [a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]); };
+
+test("平角、周角：度數標示離邊、角弧與別的標示都至少 1.5 mm，而且在自己的角裡（#77）", () => {
+  for (let i = 0; i < 80; i++) {
+    for (const q of run("s-II-4#b@4", `lab${i}`).qs) {
+      const f = q.display.figure;
+      const v = pt(q, "v");
+      const ink = f.segments.flatMap((sg) => along(v, pt(q, sg.to)));
+      for (const ang of f.angles) {
+        const from = ccw(v, [v[0] + 1, v[1]], pt(q, ang.from));
+        const span = ccw(v, pt(q, ang.from), pt(q, ang.to)) || 360;
+        for (let t = 0; t <= span; t += 0.2) { const d = ((from + t) * Math.PI) / 180; ink.push([v[0] + Math.cos(d) * ang.radius, v[1] - Math.sin(d) * ang.radius]); }
+      }
+      f.labels.forEach((l, k) => {
+        const gap = Math.min(...ink.map((p) => gapToBox(p, l)));
+        assert.ok(gap >= 1.5, `${q.tier} 標示 ${l.text} 離邊或弧只有 ${gap.toFixed(3)} mm`);
+        const ang = f.angles[k];
+        const inside = ccw(v, pt(q, ang.from), l.at), span = ccw(v, pt(q, ang.from), pt(q, ang.to)) || 360;
+        assert.ok(inside > 0 && inside < span, `標示 ${l.text} 不在自己的角裡`);
+        for (const o of f.labels.slice(k + 1)) {
+          const [a, b] = [labelBox(l), labelBox(o)];
+          assert.ok(Math.abs(l.at[0] - o.at[0]) >= a.hw + b.hw + 1.5 || Math.abs(l.at[1] - o.at[1]) >= a.hh + b.hh + 1.5, `標示 ${l.text} 和 ${o.text} 隔不到 1.5 mm`);
+        }
+      });
+    }
+  }
+});
+
+test("找全等：整張圖縮小，編號在平板上夠大，也不壓到三角形（#77）", () => {
+  for (let i = 0; i < 40; i++) {
+    for (const q of run("s-II-2#a@4", `size${i}`).qs) {
+      const f = q.display.figure;
+      // 外殼的圖最寬 460 px：圖寬 ≤ 115 mm 時 4 mm 的編號至少約 16 px（原本約 150 mm、12 px）
+      assert.ok(f.width <= 115 && f.height <= 80, `圖 ${f.width} × ${f.height} mm`);
+      const ink = f.segments.flatMap((sg) => along(f.points[sg.from], f.points[sg.to]));
+      for (const l of f.labels) assert.ok(Math.min(...ink.map((p) => gapToBox(p, l))) >= 1.5, `編號 ${l.text} 太靠近三角形的邊`);
+    }
+  }
+});
+
+test("找對應：correspondence-by-position 只標在和問的角（邊）擺在同一方位的那個錯誤選項；分不出同一方位時不標（#77）", () => {
+  let tagged = 0;
+  for (let i = 0; i < 60; i++) {
+    for (const q of run("s-II-2#b@4", `pos${i}`).qs) {
+      const f = q.display.figure;
+      const named = (key, n) => pt(q, `${key}${f.labels.find((l) => l.id.startsWith(`${key}-v`) && l.text === n).id.slice(-1)}`);
+      const center = (key) => { const ps = [0, 1, 2].map((k) => pt(q, `${key}${k}`)); return [(ps[0][0] + ps[1][0] + ps[2][0]) / 3, (ps[0][1] + ps[1][1] + ps[2][1]) / 3]; };
+      const spot = (key, names) => { const ps = [...names].map((n) => named(key, n)); return [ps.reduce((x, p) => x + p[0], 0) / ps.length, ps.reduce((y, p) => y + p[1], 0) / ps.length]; };
+      const heading = (key, names) => { const g = center(key), p = spot(key, names); return Math.atan2(p[1] - g[1], p[0] - g[0]); };
+      const turn = (x, y) => { const d = Math.abs(x - y) % (2 * Math.PI); return Math.min(d, 2 * Math.PI - d); };
+      const asked = q.variables.asked.replace("∠", "");
+      const want = heading("a", asked);
+      const gaps = q.options.map((o) => (turn(heading("b", o.text.text.replace("∠", "")), want) * 180) / Math.PI);
+      const closest = gaps.indexOf(Math.min(...gaps));
+      const margin = Math.min(...gaps.filter((_, n) => n !== closest)) - gaps[closest];
+      const marks = q.options.filter((o) => o.misconception === "correspondence-by-position");
+      assert.ok(marks.length <= 1, "最多標一個");
+      assert.ok(!marks.some((o) => o.id === q.answer), "答案不標");
+      // 門檻 20 度；圖上座標四捨五入到 0.1 mm，所以只檢查明顯的兩邊
+      if (margin >= 25) {
+        const expect = q.options[closest].id === q.answer ? [] : [q.options[closest].id];
+        assert.deepEqual(marks.map((o) => o.id), expect, `${q.variables.asked}：該標 ${expect}`);
+      } else if (margin < 15) assert.deepEqual(marks, [], `${q.variables.asked}：方位只差 ${margin.toFixed(1)} 度，分不出來就不標`);
+      tagged += marks.length;
+    }
+  }
+  assert.ok(tagged > 0, "抽樣裡至少有標到的題目");
+});
+
 test("範圍不可能時丟可讀的 RangeError，不會卡住", () => {
   const profile = structuredClone(getProfile("s-II-3#b@4"));
   profile.tiers["sides-lengths"].cm = [3, 4];

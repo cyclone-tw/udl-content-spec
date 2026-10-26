@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
-import { validatePack, loadValidators, checkDemoStep } from "../conformance/validate.mjs";
+import { validatePack, loadValidators, checkDemoStep, checkDemoAsk } from "../conformance/validate.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const EXAMPLE = path.join(here, "..", "examples", "math-angle");
@@ -33,7 +33,7 @@ test("相鄰兩步畫布與頂點一樣，動畫只有點在動", async () => {
 
 test("提問不含答案（比直角大／小）", async () => {
   for (const s of (await demo()).blocks[0].steps.filter((s) => s.ask)) {
-    assert.doesNotMatch(s.ask.text, /比直角大[。，]|比直角小[。，]/);
+    assert.doesNotMatch(s.ask.text, /比直角(大|小)/);
     assert.match(s.text.text, /比直角大/);
   }
 });
@@ -64,6 +64,14 @@ test("checkDemoStep：工具、強調元素要對得到這一步的圖；提問�
   assert.deepEqual(checkDemoStep({ ...s0, focus: ["v", "l-vertex", "angle"] }), []);
   assert.match(checkDemoStep({ text: { text: "x" }, ask: { text: "想一想？" } }).join(), /ask 的步驟要有 figure 或 expression/);
   assert.match(checkDemoStep({ text: { text: "x" }, focus: ["v"] }).join(), /有 tools 或 focus 卻沒有 figure/);
+});
+
+test("checkDemoAsk：提問只用在圖形講解（同一份示範至少一步帶 figure），否則答案會直接顯示（#77）", async () => {
+  const m = await demo();
+  assert.deepEqual(checkDemoAsk(m), []);
+  const exprOnly = { blocks: [{ type: "math-demo", steps: [{ text: { text: "答案是 5" }, expression: "2+3", ask: { text: "2+3 是多少？" } }] }] };
+  assert.match(checkDemoAsk(exprOnly).join(), /沒有任何一步帶 figure/);
+  assert.deepEqual(checkDemoAsk({ blocks: [{ type: "math-demo", steps: [{ text: { text: "x" }, expression: "1+1" }] }] }), [], "沒有提問就不檢查");
 });
 
 test("驗證器在整包層級回報步驟錯誤", async () => {

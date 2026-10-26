@@ -69,6 +69,17 @@ export function vertexLabelAt(p, centroid, offset = 4.5) {
   return add(p, [d[0] / l, d[1] / l], offset);
 }
 
+/** 標示文字大約佔的半寬、半高（mm）：外殼與作業單的標示字級是 4 mm；全形字約 4 mm 寬、數字約 2.3、度數符號約 1.6。 */
+export function labelBox(text) {
+  const w = [...text].reduce((sum, ch) => sum + (/[0-9]/.test(ch) ? 2.3 : ch === "°" ? 1.6 : 4), 0);
+  return { hw: w / 2, hh: 2.2 };
+}
+
+/** 點到以 at 為中心、半寬 hw、半高 hh 的方框的距離（在框內是 0）。 */
+export function boxGap(p, at, { hw, hh }) {
+  return Math.hypot(Math.max(Math.abs(p[0] - at[0]) - hw, 0), Math.max(Math.abs(p[1] - at[1]) - hh, 0));
+}
+
 export const centroid = (pts) => [pts.reduce((s, p) => s + p[0], 0) / pts.length, pts.reduce((s, p) => s + p[1], 0) / pts.length];
 
 /**
