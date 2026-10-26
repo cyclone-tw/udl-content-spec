@@ -15,7 +15,8 @@ export const itemType = () => "numeric";
 const RAY_MM = 40;
 const SMALL_R = 8;
 const BIG_R = 16;
-const CLEAR = 1.5; // 標示方框和邊、弧、別的標示至少隔開的距離（mm，#77）
+// 標示方框和邊、弧、別的標示至少隔開 1.5 mm（#77）。找位置時多留一點（取樣間距與座標四捨五入到 0.1 mm 的誤差），輸出後仍有 1.5。
+const CLEAR = 2;
 const FRACTIONS = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8]; // 先放角的正中間，放不下再往兩側找，標示一定在自己的角裡
 const ROTATION_STEP = 15;
 
@@ -53,7 +54,8 @@ function placeLabel(text, { start, span, r }, ink, placed) {
   const size = labelBox(text);
   const clearOf = (at) => ink.every((p) => boxGap(p, at, size) >= CLEAR) &&
     placed.every((o) => Math.abs(o.at[0] - at[0]) >= o.hw + size.hw + CLEAR || Math.abs(o.at[1] - at[1]) >= o.hh + size.hh + CLEAR);
-  for (const limit of [RAY_MM - 2, RAY_MM + 10]) {
+  // 先在邊的長度內找；找不到就往外找到所有邊與弧外面（RAY_MM＋60 一定空得出來）。
+  for (const limit of [RAY_MM - 2, RAY_MM + 60]) {
     for (let d = r + 3; d <= limit; d += 0.5) {
       for (const f of FRACTIONS) {
         const at = add([0, 0], dir(start + span * f), d);
@@ -61,8 +63,7 @@ function placeLabel(text, { start, span, r }, ink, placed) {
       }
     }
   }
-  // 理論上找得到（RAY_MM＋10 已經在所有邊與弧外面）；萬一沒有，退回正中間弧外，不讓出題失敗。
-  return { at: add([0, 0], dir(start + span / 2), r + 5), ...size };
+  throw new RangeError(`${id}: 標示「${text}」在角裡找不到不壓線的位置`);
 }
 
 /** 圖形描述：從頂點畫出各條邊，已知角標度數、要求的角標「？」（半徑大一點，分得出來）。 */

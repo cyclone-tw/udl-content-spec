@@ -187,10 +187,10 @@ test("對應：答案的邊一樣長、角一樣大，其他選項不一樣", as
 // #77：標示的方框（字級 4 mm；全形字約 4 mm 寬、數字約 2.3、度數符號約 1.6）。
 const labelBox = (l) => ({ hw: [...l.text].reduce((w, c) => w + (/[0-9]/.test(c) ? 2.3 : c === "°" ? 1.6 : 4), 0) / 2, hh: 2.2 });
 const gapToBox = (p, l) => { const { hw, hh } = labelBox(l); return Math.hypot(Math.max(Math.abs(p[0] - l.at[0]) - hw, 0), Math.max(Math.abs(p[1] - l.at[1]) - hh, 0)); };
-const along = (a, b, step = 0.25) => { const n = Math.ceil(len(a, b) / step); return Array.from({ length: n + 1 }, (_, k) => [a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]); };
+const along = (a, b, step = 0.1) => { const n = Math.ceil(len(a, b) / step); return Array.from({ length: n + 1 }, (_, k) => [a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]); };
 
-test("平角、周角：度數標示不壓到任何邊與角弧、彼此不重疊，而且在自己的角裡（#77）", () => {
-  for (let i = 0; i < 60; i++) {
+test("平角、周角：度數標示離邊、角弧與別的標示都至少 1.5 mm，而且在自己的角裡（#77）", () => {
+  for (let i = 0; i < 80; i++) {
     for (const q of run("s-II-4#b@4", `lab${i}`).qs) {
       const f = q.display.figure;
       const v = pt(q, "v");
@@ -198,17 +198,17 @@ test("平角、周角：度數標示不壓到任何邊與角弧、彼此不重�
       for (const ang of f.angles) {
         const from = ccw(v, [v[0] + 1, v[1]], pt(q, ang.from));
         const span = ccw(v, pt(q, ang.from), pt(q, ang.to)) || 360;
-        for (let t = 0; t <= span; t += 0.5) { const d = ((from + t) * Math.PI) / 180; ink.push([v[0] + Math.cos(d) * ang.radius, v[1] - Math.sin(d) * ang.radius]); }
+        for (let t = 0; t <= span; t += 0.2) { const d = ((from + t) * Math.PI) / 180; ink.push([v[0] + Math.cos(d) * ang.radius, v[1] - Math.sin(d) * ang.radius]); }
       }
       f.labels.forEach((l, k) => {
         const gap = Math.min(...ink.map((p) => gapToBox(p, l)));
-        assert.ok(gap >= 1, `${q.tier} 標示 ${l.text} 離邊或弧只有 ${gap.toFixed(2)} mm`);
+        assert.ok(gap >= 1.5, `${q.tier} 標示 ${l.text} 離邊或弧只有 ${gap.toFixed(3)} mm`);
         const ang = f.angles[k];
         const inside = ccw(v, pt(q, ang.from), l.at), span = ccw(v, pt(q, ang.from), pt(q, ang.to)) || 360;
         assert.ok(inside > 0 && inside < span, `標示 ${l.text} 不在自己的角裡`);
         for (const o of f.labels.slice(k + 1)) {
           const [a, b] = [labelBox(l), labelBox(o)];
-          assert.ok(Math.abs(l.at[0] - o.at[0]) >= a.hw + b.hw || Math.abs(l.at[1] - o.at[1]) >= a.hh + b.hh, `標示 ${l.text} 和 ${o.text} 重疊`);
+          assert.ok(Math.abs(l.at[0] - o.at[0]) >= a.hw + b.hw + 1.5 || Math.abs(l.at[1] - o.at[1]) >= a.hh + b.hh + 1.5, `標示 ${l.text} 和 ${o.text} 隔不到 1.5 mm`);
         }
       });
     }
