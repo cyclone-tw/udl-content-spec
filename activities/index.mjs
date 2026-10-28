@@ -165,6 +165,98 @@ function writePairs(c) {
   }
   return out;
 }
+// 部首分類（udl-learning#481）：同一個字（不同讀音的卡）只算一次；有 2 個字以上的部首才能當一個框。
+// 框名只寫「某部」；部首在字裡換個樣子的，寫在第二層提示。只列幾乎都這樣寫的（心、火、刀這類在字裡位置不一定，不列，免得誤導）。
+const RADICAL_FORMS = Object.freeze({ 手: "扌", 水: "氵", 艸: "艹", 人: "亻", 犬: "犭", 示: "礻", 辵: "辶", 阜: "阝", 邑: "阝", 玉: "王" });
+const radicalLabel = (r) => `${r}部`;
+// 題庫事先分好幾組，和種子無關、組與組不重複（同 rhetoric-sort）：字最多的部首先挑，一組 2～3 個部首；
+// 每個部首放 2～3 個字，剩 4 個以內就全放（免得剩 1 個字落單），一組最多 12 個字（classify 上限）。
+function radicalSortSets(c) {
+  const seen = new Set();
+  const left = new Map();
+  for (const ch of c.chars) {
+    if (typeof ch.radical !== "string" || !ch.radical || seen.has(ch.char)) continue;
+    seen.add(ch.char);
+    left.set(ch.radical, [...(left.get(ch.radical) ?? []), ch]);
+  }
+  const sets = [];
+  for (;;) {
+    const avail = [...left].filter(([, l]) => l.length >= 2).sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)).map(([r]) => r);
+    if (avail.length < 2) break;
+    sets.push(avail.slice(0, 3).map((r) => {
+      const list = left.get(r);
+      return { radical: r, chars: list.splice(0, list.length <= 4 ? list.length : 3) };
+    }));
+  }
+  return sets;
+}
+
+// 字和語詞配對（udl-learning#481）：生字＋含這個字的語詞（生字卡 words 連到的優先，再用這課其他語詞），右邊把這個字挖成「○」。
+// 同一個字（不同讀音的卡）只出一組；語詞至少兩個字，不然挖完只剩「○」。
+function charWordPairs(c) {
+  const seen = new Set();
+  const out = [];
+  for (const ch of c.chars) {
+    if (seen.has(ch.char)) continue;
+    const w = wordsWithChar(ch, c).find((x) => [...x.word].length >= 2 && [...x.word].some((t) => t !== ch.char));
+    if (!w) continue;
+    seen.add(ch.char);
+    out.push({ ch, w, blank: w.word.replaceAll(ch.char, "○") });
+  }
+  return out;
+}
+// 兩組放在同一題會有兩個解就不並列：挖空後一樣，或把別組的字填進來也是這課的語詞。
+function charWordClash(a, b, known) {
+  return a.blank === b.blank || known.has(a.blank.replaceAll("○", b.ch.char)) || known.has(b.blank.replaceAll("○", a.ch.char));
+}
+// ---------- 配對題（match）：一套產生器，pair 選左右兩邊用卡片的哪個欄位（udl-learning#481） ----------
+// 三種配對共用：word-match 語詞↔解釋（#31 起，行為與 practice_key 不變）、word-zhuyin-match 語詞↔注音、char-word-match 生字↔挖空的語詞。
+// 每個活動 id 固定一種 pair，所以 practice_key（`<活動>|<卡 id 排序>`）分得開，舊錯題本的 key 照樣重產。
+// 題目資料只有內容（題幹、兩側文字、正解配對、提示、回饋、practice_key、ladder_ids），不帶版面或呈現端專用欄位，任何呈現端都能用。
+const MATCH_KINDS = {
+  "word-match": {
+    pair: ["word", "meaning"],
+    group: "words",
+    entries: (c) => c.words.map((w) => ({ card: w, left: spoken(w.word), right: structuredClone(w.meaning), answer: w.meaning.text })),
+    skill: "詞語理解",
+    stem: "點一個語詞，再點它的意思。",
+    hint2: "可以按「聽」聽語詞和意思。",
+    hint3: (e) => `「${e.card.word}」的意思是「${e.answer}」。`,
+    retry: "有一組還沒對，再試一次。",
+  },
+  "word-zhuyin-match": {
+    pair: ["word", "zhuyin"],
+    group: "words",
+    // 同一個語詞或同音的語詞不並列（兩個解）；注音照規格的寫法（normalizeZhuyin）。
+    entries: (c) => c.words.filter((w) => [...w.word].length === normalizeZhuyin(w.zhuyin).split(" ").length).map((w) => ({ card: w, left: spoken(w.word), right: spoken(normalizeZhuyin(w.zhuyin)), answer: normalizeZhuyin(w.zhuyin) })),
+    clash: (a, b) => a.card.word === b.card.word || a.answer === b.answer,
+    skill: "識字",
+    stem: "點一個語詞，再點它的注音。",
+    hint2: "一個字一個字小聲唸，比一比每個注音的聲調。",
+    hint3: (e) => `「${e.card.word}」的注音是「${e.answer}」。`,
+    retry: "有一組還沒對，一個字一個字再唸一次。",
+    // 考讀音：語詞那一側不能帶注音（題目就有答案了）。
+    hideZhuyin: true,
+  },
+  "char-word-match": {
+    pair: ["char", "word"],
+    group: "chars",
+    entries: (c) => charWordPairs(c).map((p) => ({ card: p.ch, left: spoken(p.ch.char), right: spoken(p.blank), answer: p.w.word, blank: p.blank, word: p.w.word })),
+    clash: (a, b, c) => charWordClash({ ch: a.card, blank: a.blank }, { ch: b.card, blank: b.blank }, new Set(c.words.map((w) => w.word))),
+    skill: "識字",
+    stem: "點一個字，再點它可以補完整的語詞。",
+    hint2: "把字放進○裡唸唸看，是不是學過的語詞？",
+    hint3: (e) => `「${e.card.char}」放進「${e.blank}」，就是「${e.word}」。`,
+    retry: "有一組還沒對，把字放進語詞裡唸唸看。",
+  },
+};
+// 有兩組湊得出來（而且不互相衝突）才能出題。
+function matchReady(kind, c) {
+  const spec = MATCH_KINDS[kind];
+  const list = spec.entries(c);
+  return list.some((a, i) => list.slice(i + 1).some((b) => !spec.clash?.(a, b, c)));
+}
+const matchPool = (kind, c) => Math.ceil(MATCH_KINDS[kind].entries(c).length / 4);
 // 課文資料（#51）：lesson 教材的段落（text 區塊依序是第 1、2…段）與段落大意 gist；心智圖節點。
 const plainText = (t) => String(t ?? "").replace(/【([^|】]+)\|[^】]*】/g, "$1");
 const materialsOf = (ctx) => (Array.isArray(ctx?.materials) ? ctx.materials : []);
@@ -344,12 +436,15 @@ const REGISTRY = {
   "word-cards": { phase: "practice", group: "word", needs: (c) => (c.words.length ? null : "沒有綁語詞卡") },
   manipulate: { phase: "practice", group: "skill", needs: (c) => (c.skills.some((s) => s.manipulative) ? null : "綁的技能卡沒有教具設定") },
   "char-pick": { phase: "practice", group: "char", count: 4, readAloud: "stem", sound: true, pool: (c) => c.chars.length, generate: genCharPick, needs: (c) => (charPickable(c) ? null : "生字卡少於 2 張，而且卡上沒有易混淆字，湊不出選項") },
-  "word-match": { phase: "practice", group: "word", heavy: true, count: 1, readAloud: "stem", pool: (c) => Math.ceil(c.words.length / 4), generate: genWordMatch, needs: (c) => (c.words.length >= 2 ? null : "綁的語詞卡少於 2 張") },
+  "word-match": { phase: "practice", group: "word", heavy: true, count: 1, readAloud: "stem", pool: (c) => matchPool("word-match", c), generate: genPairMatch("word-match"), needs: (c) => (c.words.length >= 2 ? null : "綁的語詞卡少於 2 張") },
+  "word-zhuyin-match": { phase: "practice", group: "word", heavy: true, count: 1, readAloud: "stem", sound: true, pool: (c) => matchPool("word-zhuyin-match", c), generate: genPairMatch("word-zhuyin-match"), needs: (c) => (matchReady("word-zhuyin-match", c) ? null : "湊不出 2 個不同音的語詞（語詞卡的注音要和字數對得上）") },
   "word-cloze": { phase: "practice", group: "word", count: 4, readAloud: "stem", pool: (c) => wordsWithExample(c).length, generate: genWordCloze, needs: (c) => (wordsWithExample(c).length && c.words.length >= 2 ? null : "沒有含例句的語詞卡，或語詞卡少於 2 張") },
   "listen-char": { phase: "practice", group: "char", count: 4, readAloud: "stem", sound: true, pool: (c, ctx) => listenCharPool(c, ctx).length, generate: genListenChar, needs: (c, m, ctx) => (c.chars.some((ch) => listenCharReady(ch, c, mergeReadings(readingsFromCards(allBound(c)), ctx?.readings))) ? null : "湊不出和生字不同音的干擾字（易混淆字要填 zhuyin，或多綁幾張生字卡）") },
   "listen-word": { phase: "practice", group: "word", count: 4, readAloud: "stem", sound: true, pool: (c, ctx) => listenWordPool(c, ctx).length, generate: genListenWord, needs: (c) => (listenWordReady(c) ? null : "綁的語詞卡少於 2 張，或語詞全都同音") },
   "tone-pick": { phase: "practice", group: "char", count: 4, readAloud: "stem", sound: true, pool: (c) => tonePickPool(c).length, generate: genTonePick, needs: (c) => (!c.words.length ? "沒有綁語詞卡" : tonePickPool(c).length ? null : "語詞卡的注音和字數對不上，或全是輕聲，做不出聲調陷阱（回語詞卡補正 zhuyin）") },
   "char-lookalike": { phase: "practice", group: "char", count: 4, readAloud: "stem", sound: true, pool: (c, ctx) => lookalikePool(c, ctx).length, generate: genCharLookalike, needs: (c, m, ctx) => (lookalikePool(c, ctx).length ? null : "沒有生字湊得出 2 個形近字，或這課沒有含這個字的語詞卡（回生字卡 confusables 補 why: 形近 的字，或在 pack pools/ 加 kind「形近字」的池；語詞卡補 example）") },
+  "char-word-match": { phase: "practice", group: "char", heavy: true, count: 1, readAloud: "stem", pool: (c) => matchPool("char-word-match", c), generate: genPairMatch("char-word-match"), needs: (c) => (matchReady("char-word-match", c) ? null : "湊不出 2 個字和含這個字的語詞（語詞要兩個字以上，而且兩組不能互換）") },
+  "radical-sort": { phase: "practice", group: "char", heavy: true, count: 1, readAloud: "all", pool: (c) => radicalSortSets(c).length, generate: genRadicalSort, needs: (c) => (radicalSortSets(c).length ? null : "生字卡湊不出 2 個各有 2 個字以上的部首（回生字卡補 radical）") },
   "char-trace": { phase: "practice", group: "char", count: "all", readAloud: "all", encounter: false, pool: (c) => c.chars.length, generate: genCharTrace, needs: (c) => (c.chars.length ? null : "沒有綁生字卡") },
   "char-write": { phase: "practice", group: "char", count: "all", readAloud: "all", encounter: false, pool: (c) => writePairs(c).length, generate: genCharWrite, needs: (c) => (writePairs(c).length ? null : "語詞卡裡沒有這課的生字（回單元 bindings 綁含生字的語詞卡）") },
   "word-meaning": { phase: "practice", group: "word", count: 4, readAloud: "all", pool: (c) => wordMeaningPool(c).length, generate: genWordMeaning, needs: (c) => (wordMeaningReady(c) ? null : "綁的語詞卡少於 2 張，或解釋全都相同") },
@@ -393,6 +488,7 @@ export const activityMeta = Object.freeze(Object.fromEntries(Object.entries(REGI
   ...(d.readAloud ? { read_aloud_scope: d.readAloud } : {}),
   sound: Boolean(d.sound),
   encounter: d.encounter !== false,
+  ...(MATCH_KINDS[id] ? { pair: [...MATCH_KINDS[id].pair] } : {}),
 })])));
 
 /**
@@ -555,13 +651,15 @@ function resolveBlueprint(entries, steps, wanted) {
  *   audio：有預錄音檔的單音鍵、語詞鍵；給了就只對有音檔的卡出聽音題，不給視為都有。
  *   items：單元的手寫題（課文練習）；materials：單元的教材（段落大意、心智圖、修辭例句）。
  *   blueprint：quiz 用，照 planSteps 的 step.blueprint；sources：mix 用，照 planSteps 的 step.sources。
+ *   focus：卡片 id 陣列，只出以這些卡為目標的題（udl-learning#481）；對不到題回空陣列，見 generateFocused。
  *   重現一批題目要同樣的 unit、cards、seed、count，以及 blueprint／sources／items／materials（#58）。
  * @returns {object[]} 題目實例（kind: "instance"）。
  */
-export function generate(activity, { unit, cards: allCards, seed, count, pools, ladders = {}, readAloud, coreOnly = false, readings, audio, items, blueprint, materials, sources } = {}) {
+export function generate(activity, { unit, cards: allCards, seed, count, pools, ladders = {}, readAloud, coreOnly = false, readings, audio, items, blueprint, materials, sources, focus } = {}) {
   const def = REGISTRY[activity];
   if (!def?.generate) throw new TypeError(`generate: ${JSON.stringify(activity)} 不是會生題的活動`);
   if (seed === undefined || seed === null || seed === "") throw new TypeError("generate: 需要 seed，作答事件才能重現這批題目");
+  if (focus !== undefined) return generateFocused(activity, def, { unit, cards: allCards, seed, count, pools, ladders, readAloud, coreOnly, readings, audio, items, materials, focus });
   let cards = allCards;
   if (coreOnly) {
     cards = coreCards(unit, allCards);
@@ -584,6 +682,36 @@ export function generate(activity, { unit, cards: allCards, seed, count, pools, 
   if (!Number.isInteger(n) || n < 1) throw new TypeError("generate: count 必須是 ≥ 1 的整數或 \"all\"");
   const rng = createRng(`${unit.id}|${activity}|${seed}`);
   const parts = def.generate({ unit, cards, rng, count: n, seed: String(seed), pools, readings, audio, items, blueprint, materials, sources });
+  return parts.map((part, index) => finish(part, { unit, activity, seed: String(seed), index, ladders, readAloud }));
+}
+
+// 只出以指定卡為目標的題（udl-learning#481，字卡上的「練這個字」）：題目的 cards 和 focus 有交集才留；
+// 干擾項照舊從同課其他卡與易混淆字取。語詞配對、字和語詞配對每題放一張指定的卡，其他照常隨機補。
+// 先把整個題庫生一次（每筆一題，和 generateByKeys 同一份），再照 focus 篩；count 不給＝篩出來的全部，給數字就循環取。
+// 對不到題回空陣列，不丟錯（例如這張卡沒有預錄單音，就沒有聽音選字）。
+const FOCUS_ANCHORED = new Set(Object.keys(MATCH_KINDS));
+function generateFocused(activity, def, { unit, cards: allCards, seed, count, pools, ladders, readAloud, coreOnly, readings, audio, items, materials, focus }) {
+  if (!Array.isArray(focus) || !focus.length || !focus.every((id) => typeof id === "string" && id)) throw new TypeError(`generate(${activity}): focus 要是非空的卡片 id 陣列`);
+  if (!def.pool || activity === "mix" || activity === "quiz") throw new TypeError(`generate(${activity}): 這個活動不收 focus（只有可以算題庫的練習活動）`);
+  if (count !== undefined && (!Number.isInteger(count) || count < 1)) throw new TypeError("generate: focus 時 count 要是 ≥ 1 的整數，或不給");
+  let cards = allCards;
+  if (coreOnly) {
+    cards = coreCards(unit, allCards);
+    if (!cards) throw new TypeError(`generate(${activity}): 單元 ${unit.id} 沒有標核心卡（core）`);
+  }
+  const ctx = { readings, audio, items, materials, pools };
+  if (def.needs(cards, materials ?? [], ctx)) return [];
+  const wanted = new Set(focus);
+  const args = { unit, cards, seed: String(seed), pools, readings, audio, items, materials };
+  let parts;
+  if (FOCUS_ANCHORED.has(activity)) {
+    parts = def.generate({ ...args, rng: createRng(`${unit.id}|${activity}|${seed}|focus`), count: count ?? 1, focus: wanted });
+  } else {
+    const all = def.generate({ ...args, rng: createRng(`${unit.id}|${activity}|${seed}`), count: def.pool(cards, ctx) });
+    const seen = new Set();
+    const hit = all.filter((p) => (p.cards ?? []).some((id) => wanted.has(id)) && !seen.has(practiceKey(p, activity)) && seen.add(practiceKey(p, activity)));
+    parts = count === undefined || !hit.length ? hit : cycle(hit, count, createRng(`${unit.id}|${activity}|${seed}|focus`));
+  }
   return parts.map((part, index) => finish(part, { unit, activity, seed: String(seed), index, ladders, readAloud }));
 }
 
@@ -615,7 +743,10 @@ export function generateByKeys(keys, { unit, cards, seed, pools, ladders = {}, r
   const instances = [];
   const missing = [];
   // 語詞配對的卡片 id 不論順序（產生的 key 一律排序過）。
-  const canonical = (k) => (String(k).startsWith("word-match|") ? `word-match|${String(k).slice(11).split(",").sort().join(",")}` : String(k));
+  const canonical = (k) => {
+    const [a, ids = ""] = String(k).split("|");
+    return SET_KEYED.has(a) ? `${a}|${ids.split(",").sort().join(",")}` : String(k);
+  };
   for (const key of [...new Set(keys.map(canonical))]) {
     const [activity, ids = ""] = key.split("|");
     const def = REGISTRY[activity];
@@ -624,11 +755,11 @@ export function generateByKeys(keys, { unit, cards, seed, pools, ladders = {}, r
       missing.push({ key, reason: `${activity} 不是可以重產單題的活動` });
       continue;
     }
-    if (activity === "word-match" || activity === "skill-practice") {
-      // 這兩種沒有逐筆的題庫：用 key 裡的卡直接出一題。
-      const group = activity === "word-match" ? "words" : "skills";
+    if (MATCH_KINDS[activity] || activity === "skill-practice") {
+      // 配對題與技能練習沒有逐筆的題庫：用 key 裡的卡直接出一題。
+      const group = MATCH_KINDS[activity]?.group ?? "skills";
       const picked = ids.split(",").map((id) => cards[group].find((c) => c.id === id));
-      if (picked.every(Boolean) && picked.length >= (activity === "word-match" ? 2 : 1) && picked.length <= 4) {
+      if (picked.every(Boolean) && picked.length >= (activity === "skill-practice" ? 1 : 2) && picked.length <= 4) {
         part = def.generate({ ...args, cards: { ...cards, [group]: picked }, rng: createRng(`${unit.id}|${key}|${seed}`), count: 1 })[0];
       }
     } else {
@@ -671,11 +802,12 @@ function checkBlueprint(blueprint) {
  * 題目的穩定身分（#78）：`<活動>|<來源 id>|<變體>`，不隨種子變；平台用它組錯題本，再用 generateByKeys 重產同一題。
  * 來源 id：卡片 id（多張用逗號接）、課文題的教材 id、手寫課文題的題目 id；變體只在同一組來源出得了不同題時才有。
  */
+const SET_KEYED = new Set(Object.keys(MATCH_KINDS));
 function practiceKey(part, source) {
   if (part.kind === "fixed") return `${source}|${part.id}`;
   if (part.material) return `${source}|${part.material}|${part.anchor}`;
-  // 語詞配對每次抽的幾張卡不同，排序後才穩定。
-  const ids = source === "word-match" ? [...part.cards].sort() : part.cards;
+  // 配對題每次抽的幾張卡不同，排序後才穩定。
+  const ids = SET_KEYED.has(source) ? [...part.cards].sort() : part.cards;
   return [source, ids.join(","), ...(part.__variant !== undefined ? [part.__variant] : [])].join("|");
 }
 
@@ -953,24 +1085,68 @@ function genCharPick({ cards, rng, count }) {
   }).filter((q) => q.options.length >= 2);
 }
 
-function genWordMatch({ cards, rng, count }) {
-  const out = [];
-  for (let n = 0; n < count; n++) {
-    const picked = take(cards.words, Math.min(4, cards.words.length), rng);
-    out.push({
-      type: "match",
-      cards: picked.map((w) => w.id),
-      ladder_ids: ladderOf(...picked),
-      skill: "詞語理解",
-      difficulty: 1,
-      stem: { text: spoken("點一個語詞，再點它的意思。") },
-      pairs: picked.map((w, i) => ({ id: `p${i + 1}`, left: spoken(w.word), right: structuredClone(w.meaning) })),
-      shuffle: true,
-      hints: [spoken("先找你最有把握的一組。"), spoken("可以按「聽」聽語詞和意思。"), spoken(`「${picked[0].word}」的意思是「${picked[0].meaning.text}」。`)],
-      feedback: { correct: spoken("全部配對完成！"), retry: spoken("有一組還沒對，再試一次。") },
-    });
-  }
-  return out;
+// focus（generate 的 focus）：每題一定放一張指定的卡，其他組隨機補。
+// 沒有衝突規則的（語詞↔解釋）照舊直接隨機抽 4 張，亂數用法和以前一樣，同種子出同一題。
+// 登錄表比 MATCH_KINDS 先建好，所以呼叫時才查。
+function genPairMatch(kind) {
+  return ({ cards, rng, count, focus }) => {
+    const spec = MATCH_KINDS[kind];
+    const list = spec.entries(cards);
+    const anchors = focus ? list.filter((e) => focus.has(e.card.id)) : null;
+    if (anchors && !anchors.length) return [];
+    const out = [];
+    for (let n = 0; n < count; n++) {
+      const first = anchors ? [anchors[n % anchors.length]] : [];
+      let picked;
+      if (!spec.clash) picked = [...first, ...take(list.filter((e) => !first.includes(e)), Math.min(4, list.length) - first.length, rng)];
+      else {
+        picked = [...first];
+        for (const e of shuffle(list.filter((x) => !first.includes(x)), rng)) {
+          if (picked.length >= 4) break;
+          if (picked.every((q) => !spec.clash(e, q, cards))) picked.push(e);
+        }
+      }
+      if (picked.length < 2) continue;
+      out.push({
+        type: "match",
+        cards: picked.map((e) => e.card.id),
+        ladder_ids: ladderOf(...picked.map((e) => e.card)),
+        skill: spec.skill,
+        difficulty: 1,
+        stem: { text: spoken(spec.stem) },
+        pairs: picked.map((e, i) => ({ id: `p${i + 1}`, left: e.left, right: e.right })),
+        shuffle: true,
+        ...(spec.hideZhuyin ? { hide_zhuyin: true } : {}),
+        hints: [spoken("先找你最有把握的一組。"), spoken(spec.hint2), spoken(spec.hint3(picked[0]))],
+        feedback: { correct: spoken("全部配對完成！"), retry: spoken(spec.retry) },
+      });
+    }
+    return out;
+  };
+}
+
+// 部首分類（udl-learning#481）：題庫是 radicalSortSets 分好的組；種子只決定出題順序與字的排列（classify）。
+function genRadicalSort({ cards, rng, count }) {
+  return cycle(radicalSortSets(cards), count, rng).map((set) => {
+    const picked = set.flatMap(({ radical, chars }, b) => chars.map((ch) => ({ ch, radical, bin: `r${b + 1}` })));
+    const forms = set.filter(({ radical }) => RADICAL_FORMS[radical]).map(({ radical }) => `${radical}部常寫成「${RADICAL_FORMS[radical]}」`);
+    return {
+      type: "classify",
+      cards: picked.map((x) => x.ch.id),
+      ladder_ids: ladderOf(...picked.map((x) => x.ch)),
+      skill: "識字",
+      difficulty: 2,
+      stem: { text: spoken("把每個字放到它的部首。") },
+      bins: set.map(({ radical }, b) => ({ id: `r${b + 1}`, label: spoken(radicalLabel(radical)) })),
+      objects: shuffle(picked, rng).map((x, i) => ({ id: `o${i + 1}`, text: spoken(x.ch.char), bin: x.bin })),
+      hints: [
+        spoken("先放你最有把握的字：看看字的左邊、上面或下面。"),
+        spoken(forms.length ? `部首在字裡常換個樣子：${forms.join("，")}。` : "同一個部首的字，都有一樣的那一部分。"),
+        spoken(`「${picked[0].ch.char}」的部首是「${picked[0].radical}」。`),
+      ],
+      feedback: { correct: spoken("全部分對了！"), retry: spoken("有字放錯了，找一找每個字和部首一樣的那一部分。") },
+    };
+  });
 }
 
 function genWordCloze({ cards, rng, count }) {

@@ -35,7 +35,8 @@ test("planSteps：高年級設定的練習步驟帶分類；測驗藍圖只接�
   const items = await loadHandItems();
   const plan = planSteps({ unit, cards, items });
   const mix = (g) => plan.steps.find((s) => s.activity === "mix" && s.group === g && s.label !== "寫字練習");
-  assert.deepEqual(mix("char").sources, ["listen-char", "char-pick", "tone-pick"], "沒有形近字時略過找一找");
+  assert.deepEqual(mix("char").sources, ["listen-char", "char-pick", "tone-pick", "char-word-match"], "沒有形近字時略過找一找；部首都不同時略過部首分類");
+  assert.ok(mix("char").sources_skipped.some((x) => x.activity === "radical-sort"));
   assert.ok(mix("char").sources_skipped.some((x) => x.activity === "char-lookalike" && x.reason.includes("confusables")));
   const writing = plan.steps.find((s) => s.label === "寫字練習");
   assert.deepEqual(writing.sources, ["char-trace", "char-write"]);

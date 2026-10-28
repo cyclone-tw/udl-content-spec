@@ -252,7 +252,7 @@ test("practice_key：不隨種子變；混合練習與測驗的題用來源活�
 test("generateByKeys：每個會生題的練習活動都能依 key 重產同一題，順序照清單；出不來的寫進 missing", async () => {
   const v = await loadValidators();
   const { unit: u, cards, materials } = await loadDemo();
-  const skip = new Set(["mix", "quiz", "skill-practice", "reading-items", "para-gist", "para-order", "mindmap-pick", "mindmap-order", "rhetoric-pick", "rhetoric-sort"]);
+  const skip = new Set(["mix", "quiz", "skill-practice", "reading-items", "para-gist", "para-order", "mindmap-pick", "mindmap-order", "rhetoric-pick", "rhetoric-sort", "radical-sort"]);
   const wanted = [];
   for (const a of generatingActivities.filter((x) => !skip.has(x))) wanted.push(...generate(a, { unit: u, cards, seed: "first", count: 2, materials }).map((q) => q.practice_key));
   const keys = [...new Set(wanted)].reverse();

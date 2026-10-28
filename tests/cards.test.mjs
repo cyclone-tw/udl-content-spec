@@ -109,6 +109,8 @@ test("生題：每個生題活動都產出合格題目，正解拿滿分", async
   for (const activity of generatingActivities) {
     // 課文類不從卡片生，混合練習要 sources：見 tests/blueprint.test.mjs、tests/reading-data.test.mjs
     if (["reading-items", "para-gist", "para-order", "mindmap-pick", "mindmap-order", "rhetoric-pick", "rhetoric-sort", "mix"].includes(activity)) continue;
+    // 示範卡片的三個生字部首都不同，部首分類見 tests/card-activities.test.mjs（udl-learning#481）
+    if (activity === "radical-sort") continue;
     const ctx = activity === "skill-practice" ? math : activity === "quiz" ? zh : zh;
     const list = generate(activity, { unit: ctx.unit, cards: ctx.cards, seed: "t1" });
     assert.ok(list.length > 0, activity);
