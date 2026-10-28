@@ -90,6 +90,10 @@
       "type": "boolean",
       "description": "考讀音或字形的題（#66）：報讀唸出來就洩漏答案。true 時選項與卡片一律不唸，題幹唸 stem.say_text（沒有就把「」裡的目標字換成「這個字」「這個語詞」再唸），殼也不在題幹加注音；read_aloud_scope 不能是 all（省略也算 all）。手寫題的目標字要放在「」裡。"
     },
+    "hide_zhuyin": {
+      "type": "boolean",
+      "description": "題目本身在考注音（例如語詞↔注音配對，udl-learning#481）：呈現端不要替題目的任何文字（題幹、選項、配對兩側、分類物件）加注音，不然題目就有答案了。省略＝照呈現端自己的注音規則。"
+    },
     "meta": {
       "type": "object",
       "properties": {

@@ -71,7 +71,7 @@
     },
     "activity_id": {
       "type": "string",
-      "enum": ["read", "mindmap", "demo", "char-cards", "word-cards", "manipulate", "char-pick", "word-match", "word-cloze", "listen-char", "listen-word", "tone-pick", "char-lookalike", "char-trace", "char-write", "word-meaning", "reading-items", "para-gist", "para-order", "mindmap-pick", "mindmap-order", "rhetoric-pick", "rhetoric-sort", "mix", "sentence-order", "skill-practice", "quiz"],
+      "enum": ["read", "mindmap", "demo", "char-cards", "word-cards", "manipulate", "char-pick", "word-match", "word-cloze", "listen-char", "listen-word", "tone-pick", "char-lookalike", "char-word-match", "radical-sort", "word-zhuyin-match", "char-trace", "char-write", "word-meaning", "reading-items", "para-gist", "para-order", "mindmap-pick", "mindmap-order", "rhetoric-pick", "rhetoric-sort", "mix", "sentence-order", "skill-practice", "quiz"],
       "description": "活動 id，對應 activities/index.mjs 的登錄表。"
     }
   }
