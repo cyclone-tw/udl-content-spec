@@ -8,10 +8,10 @@
     { "activity": "read", "label": "讀課文", "phase": "learn" },
     { "activity": "mindmap", "label": "心智圖", "phase": "learn", "optional": true },
     { "activity": "char-cards", "label": "生字卡", "short": "生字" },
-    { "activity": "mix", "label": "寫字練習", "short": "寫字", "sources": ["char-trace", "char-write"], "count": "all" },
-    { "activity": "mix", "label": "識字練習", "short": "識字", "sources": ["listen-char", "char-pick", "tone-pick", "char-lookalike", "char-word-match", "radical-sort"], "count": "all" },
     { "activity": "word-cards", "label": "語詞卡", "short": "語詞" },
+    { "activity": "mix", "label": "識字練習", "short": "識字", "sources": ["listen-char", "char-pick", "tone-pick", "char-lookalike", "char-word-match", "radical-sort"], "count": "all" },
     { "activity": "mix", "label": "語詞練習", "short": "詞語", "sources": ["listen-word", "word-meaning", "word-match", "word-zhuyin-match", "word-cloze"], "count": "all" },
+    { "activity": "mix", "label": "寫字練習", "short": "寫字", "sources": ["char-trace", "char-write"], "count": "all" },
     { "activity": "sentence-order", "label": "句型排序", "short": "排序", "optional": true },
     { "activity": "mix", "label": "課文練習", "short": "課文", "sources": ["para-gist", "para-order", "mindmap-pick", "mindmap-order", "reading-items"], "count": "all" },
     {

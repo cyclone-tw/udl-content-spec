@@ -207,18 +207,20 @@ test("activityMeta：讀音題與不進遭遇的活動", () => {
   assert.ok(misconceptions["tone-mixup"].label);
 });
 
-test("年級設定：寫字練習在生字卡後；識字練習加認一認、找一找；低年級不放修辭", () => {
-  for (const id of ["zh-low", "zh-high"]) {
+test("年級設定：關卡順序固定（寫字練習在語詞練習後，udl-learning#555）；識字練習加認一認、找一找；低年級不放修辭", () => {
+  for (const id of ["zh-low", "zh-mid", "zh-high"]) {
     const steps = profiles[id].steps;
     const at = (label) => steps.findIndex((s) => s.label === label);
-    assert.equal(at("寫字練習"), at("生字卡") + 1, id);
+    const order = ["讀課文", "心智圖", "生字卡", "語詞卡", "識字練習", "語詞練習", "寫字練習"];
+    assert.deepEqual(order.map(at), order.map((_, i) => i), id);
+    assert.ok(at("課文練習") > at("寫字練習") && steps.at(-1).activity === "quiz", id);
     assert.deepEqual(steps[at("寫字練習")].sources, ["char-trace", "char-write"]);
     for (const a of ["tone-pick", "char-lookalike"]) assert.ok(steps[at("識字練習")].sources.includes(a), `${id} ${a}`);
     for (const a of ["listen-word", "word-cloze"]) assert.ok(steps[at("語詞練習")].sources.includes(a), `${id} ${a}`);
     assert.equal(profiles[id].ladder_status, "draft");
   }
   const low = profiles["zh-low"];
-  assert.deepEqual(low.steps.map((s) => s.label), ["讀課文", "心智圖", "生字卡", "寫字練習", "識字練習", "語詞卡", "語詞練習", "課文練習", "小測驗"]);
+  assert.deepEqual(low.steps.map((s) => s.label), ["讀課文", "心智圖", "生字卡", "語詞卡", "識字練習", "語詞練習", "寫字練習", "課文練習", "小測驗"]);
   assert.deepEqual(low.steps.find((s) => s.label === "課文練習").sources, ["para-gist", "para-order", "mindmap-pick", "reading-items"]);
   assert.deepEqual(low.steps.find((s) => s.activity === "quiz").blueprint, [{ group: "char", count: 2 }, { group: "word", count: 2 }, { group: "reading", count: 1 }]);
 });

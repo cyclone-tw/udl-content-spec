@@ -73,13 +73,14 @@ test("planSteps：同一課依年級設定排出不同關卡；心智圖只在�
   const mid = planSteps({ unit, cards, materials });
   assert.equal(mid.profile, "zh-mid");
   // 中年級改成和高、低年級同一套範本（#78）；這課沒有段落大意與手寫課文題，課文練習略過。
-  assert.deepEqual(mid.steps.map((s) => s.label), ["讀課文", "心智圖", "生字卡", "寫字練習", "識字練習", "語詞卡", "語詞練習", "句型排序", "小測驗"]);
+  // 關卡順序（udl-learning#555，Cyclone 2026-10-29）：生字卡、語詞卡先看完，再識字、語詞練習，寫字練習在語詞練習後。
+  assert.deepEqual(mid.steps.map((s) => s.label), ["讀課文", "心智圖", "生字卡", "語詞卡", "識字練習", "語詞練習", "寫字練習", "句型排序", "小測驗"]);
   assert.deepEqual(mid.steps.map((s) => s.phase), ["learn", "learn", "practice", "practice", "practice", "practice", "practice", "practice", "battle"]);
   const high = planSteps({ unit, cards, materials, profile: profiles["zh-high"] });
   assert.ok(high.steps.some((s) => s.activity === "mindmap"));
   const low = planSteps({ unit, cards, materials, profile: profiles["zh-low"] });
   // 低年級和中高年級同一套範本、依年級減題型（#78）；這課沒有段落大意與手寫課文題，課文練習略過。
-  assert.deepEqual(low.steps.map((s) => s.label), ["讀課文", "心智圖", "生字卡", "寫字練習", "識字練習", "語詞卡", "語詞練習", "小測驗"]);
+  assert.deepEqual(low.steps.map((s) => s.label), ["讀課文", "心智圖", "生字卡", "語詞卡", "識字練習", "語詞練習", "寫字練習", "小測驗"]);
   assert.ok(!low.steps.flatMap((s) => s.sources ?? []).some((a) => a.startsWith("rhetoric")), "低年級不放修辭");
 });
 
