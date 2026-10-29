@@ -92,7 +92,7 @@ test("高年級設定：識字、語詞、課文三個混合練習步驟；課�
   assert.deepEqual(reading.sources, ["para-gist", "para-order", "mindmap-pick", "mindmap-order"]);
   assert.ok(reading.sources_skipped.some((x) => x.activity === "reading-items"));
   assert.ok(profiles["zh-high"].steps.length <= 12);
-  assert.deepEqual(profiles["zh-high"].steps.filter((s) => s.activity === "mix").map((s) => s.label), ["寫字練習", "識字練習", "語詞練習", "課文練習"]);
+  assert.deepEqual(profiles["zh-high"].steps.filter((s) => s.activity === "mix").map((s) => s.label), ["識字練習", "語詞練習", "寫字練習", "課文練習"]);
   const quiz = plan.steps.find((s) => s.activity === "quiz");
   assert.deepEqual(quiz.blueprint.map((b) => b.group), ["reading"]);
   assert.deepEqual(quiz.blueprint[0].sources, reading.sources);
