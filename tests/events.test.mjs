@@ -175,3 +175,31 @@ test("轉接器：朗讀器 udl-lesson-attempt/v1 → 粒度 unit 的事件檔",
   got.generated_at = expected.generated_at;
   assert.deepEqual(got, expected);
 });
+
+test("context.presentation_order：照順序可以不帶種子，隨機一定要帶種子，不認得的值擋（udl-learning#553）", async () => {
+  const base = await readJson(path.join(EX, "runner-session.json"));
+  let f = clone(base);
+  f.context.presentation_order = { mode: "sequential" };
+  let r = await validateEvents(f);
+  assert.deepEqual(r.errors, []);
+
+  f = clone(base);
+  f.context.presentation_order = { mode: "random", seed: "k3x9q2" };
+  r = await validateEvents(f);
+  assert.deepEqual(r.errors, []);
+
+  f = clone(base);
+  f.context.presentation_order = { mode: "random" };
+  r = await validateEvents(f);
+  assert.ok(!r.ok && has(r.errors, "seed"));
+
+  f = clone(base);
+  f.context.presentation_order = { mode: "shuffled", seed: "x" };
+  r = await validateEvents(f);
+  assert.ok(!r.ok);
+
+  f = clone(base);
+  f.context.presentation_order = { mode: "random", seed: "x", by: "teacher" };
+  r = await validateEvents(f);
+  assert.ok(!r.ok);
+});

@@ -11,7 +11,7 @@
   format_version: 1, format: "udl-attempt-events", generated_at,
   producer: { shell, shell_version, granularity: "item" | "unit" },
   actor:    { role: "student" | "teacher" | "guest", student_code? },   // 只有 student 帶代號；沒有別的欄位
-  context:  { session_id, mode: "learn" | "practice" | "test", assignment_id?, pack: {id, version}, unit_id?, prescription? },
+  context:  { session_id, mode: "learn" | "practice" | "test", assignment_id?, pack: {id, version}, unit_id?, prescription?, presentation_order? },
   events:   [ { seq, type, time, ...依種類 } ]
 }
 ```
@@ -28,6 +28,8 @@
 `answered` 必帶：`item_id`、`ladder_ids`（至少一條）、`question_type`／`type_version`、`outcome`／`score`（照 `question-types/result.schema.json`）、`attempt_no`、`response_ms`、`hint_tier`（0–3，送出前用到的最高層）、`read_aloud`（true／false；殼不知道就 `null`，不要猜）、`guess_flag`（`none`／`possible-guessing`／`flagged`）。可帶：`curriculum_codes`、`response`（原始作答）、`detail`（score 的 detail；選擇題答錯且選項有標錯誤類型時含 `misconception`，#43）、`generated`（產生題追溯：`generator`、`generator_version`、`seed`、`index`、`tier`、`hint_variant`、`variables`，有這些就能重現同一題）、`practice_key`（活動生的題的穩定身分，不隨種子變；平台用它組錯題本，再用 `activities/` 的 `generateByKeys` 重產同一題，#78）。
 
 `context.prescription` 記這次實際套用的調整：`font_scale`、`zhuyin`、`read_aloud`（off／on／student-choice）、`option_count`、`untimed`、`motion`、`scaffold`（none／partial／full）、`adjustment`（simplify／reduce／decompose／substitute／not_applicable，與條件檔同名）。缺的欄位表示用殼預設。
+
+`context.presentation_order` 記以卡片為單位的練習（生字卡、語詞卡、寫字、識字、語詞練習）這次怎麼排（udl-learning#553）：`mode` 是 `sequential`（照課本順序）或 `random`（隨機）；隨機時必帶 `seed`，是殼排這一份清單用的種子，同一個種子排出同一個順序，錯題本與回放用它對上。只改呈現順序，題目內容、評分與事件都不變。缺這個欄位表示殼沒有記。
 
 完整定義：[`schema/attempt-events.schema.json`](schema/attempt-events.schema.json)。範例：[`examples/runner-session.json`](examples/runner-session.json)（獨立執行器，粒度 item，含產生題與部分正確）。
 

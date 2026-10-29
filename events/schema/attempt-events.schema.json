@@ -149,6 +149,9 @@
         },
         "prescription": {
           "$ref": "#/$defs/prescription"
+        },
+        "presentation_order": {
+          "$ref": "#/$defs/presentation_order"
         }
       },
       "additionalProperties": false
@@ -232,6 +235,40 @@
           ],
           "description": "課程調整預設，與條件檔 adjustments 同名。"
         }
+      },
+      "additionalProperties": false
+    },
+    "presentation_order": {
+      "type": "object",
+      "description": "以卡片為單位的練習（生字卡、語詞卡、寫字、識字、語詞練習）這次怎麼排：sequential 照課本順序、random 隨機。隨機時 seed 是殼排這一份清單用的種子，同一個種子排出同一個順序（錯題本與回放用它對上）。只改呈現順序，題目內容、評分與事件不變。缺這個欄位表示殼沒有記（舊紀錄或不適用的活動）。",
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "sequential",
+            "random"
+          ]
+        },
+        "seed": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "random"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "seed"
+        ]
       },
       "additionalProperties": false
     },
