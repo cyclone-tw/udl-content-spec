@@ -1386,6 +1386,7 @@ function chunkStarts(ex) {
   }
   return at;
 }
+// 沒有 tags 的卡算「複句類型不明」：只靠連接詞不共用來排除，可能放進意思相近的干擾項，建議句型卡都標 tags。
 function unrelatedPattern(p, q) {
   if (p.id === q.id) return false;
   const tags = new Set(p.tags ?? []);
@@ -1437,7 +1438,8 @@ function genPatternConnective({ cards, rng, count }) {
       difficulty: 2,
       stem: { text: spoken(`選出可以填進空格的連接詞：${blankedSentence(ex)}`) },
       ...choiceOptions(answer, take(distractors, 2, rng), rng),
-      hints: [spoken("把整句讀一遍，想想前後兩部分是什麼關係。"), spoken(kind ? `這是「${kind}」的句子。` : "前後兩部分是怎麼連起來的？"), spoken(`句型是「${p.title.text}」。`)],
+      // 最後一層提示說句型在做什麼（卡片 explain），不直接唸出句型名稱：名稱就是正解（#91 review）。
+      hints: [spoken("把整句讀一遍，想想前後兩部分是什麼關係。"), spoken(kind ? `這是「${kind}」的句子。` : "前後兩部分是怎麼連起來的？"), spoken(p.explain?.text ? `這個句型：${p.explain.text}` : "試著把每個選項放回句子裡讀讀看。")],
       feedback: { correct: spoken(`答對了：${exSentence(ex)}`), retry: spoken("把選的連接詞放回句子裡讀讀看，聽聽通不通順。") },
     };
   });
@@ -1460,10 +1462,12 @@ function joinSplit(ex) {
 function joinTargets(c) {
   const all = markedExamples(c).map((t) => ({ ...t, split: joinSplit(t.ex) })).filter((t) => t.split);
   return all.map((t) => {
+    const words = new Set(connectiveWords(t.ex));
     const seen = new Set([t.split.end]);
     const ends = [];
     for (const o of all) {
-      if (!unrelatedPattern(t.p, o.p) || seen.has(o.split.end)) continue;
+      // 和選連接詞一樣：共用連接詞的卡（「雖然……卻……」與「……卻……」）後半句可能也接得上，不當干擾項。
+      if (!unrelatedPattern(t.p, o.p) || connectiveWords(o.ex).some((w) => words.has(w)) || seen.has(o.split.end)) continue;
       seen.add(o.split.end);
       ends.push({ text: o.split.end, byConnective: o.split.byConnective });
     }
