@@ -719,10 +719,12 @@ export async function validateScopeFile(file) {
   return { ok, errors: ok ? [] : formatAjvErrors(path.basename(file), v.scope.errors) };
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isMain) {
+// 命令列：回傳結束碼（0 通過、1 未通過、2 用法或讀檔錯誤），不直接呼叫 process.exit()。
+// stdout 是 pipe 時，process.exit() 會把還沒寫進 pipe 的輸出丟掉，只剩前 64 KB（udl-content-spec#88）；
+// 設 process.exitCode 讓 Node 把輸出寫完再結束。
+async function main(argv) {
   // 接受 --ladder-dir <dir> 與 --ladder-dir=<dir> 兩種寫法。
-  const args = process.argv.slice(2).flatMap((a) => {
+  const args = argv.flatMap((a) => {
     for (const flag of ["--ladder-dir", "--cards-from"]) if (a.startsWith(`${flag}=`)) return [flag, a.slice(flag.length + 1)];
     return [a];
   });
@@ -740,16 +742,16 @@ if (isMain) {
   const strict = args.includes("--strict");
   if (!dir || (ladderIdx >= 0 && !ladderDir)) {
     console.error("用法：node conformance/validate.mjs <pack-dir> [--json] [--strict] [--ladder-dir <kit data/ladder>] [--cards-from <卡片庫包目錄>]…");
-    process.exit(2);
+    return 2;
   }
   const st = await stat(dir).catch(() => null);
   if (!st?.isDirectory()) {
     console.error(`${dir} 不是目錄`);
-    process.exit(2);
+    return 2;
   }
   if (ladderDir && !(await stat(ladderDir).catch(() => null))?.isDirectory()) {
     console.error(`${ladderDir} 不是目錄`);
-    process.exit(2);
+    return 2;
   }
   let result;
   try {
@@ -757,7 +759,7 @@ if (isMain) {
   } catch (err) {
     // 只有 --ladder-dir 或 --cards-from 的資料讀不到或壞掉會走到這裡；內容包本身的問題都已是 result.errors。
     console.error(`無法讀取階梯資料或卡片庫：${err.message}`);
-    process.exit(2);
+    return 2;
   }
   if (json) console.log(JSON.stringify(result, null, 2));
   else {
@@ -766,5 +768,8 @@ if (isMain) {
     const c = result.counts;
     console.log(`${result.ok ? "通過" : "未通過"}：${c.units} 單元、${c.materials} 教材、${c.items} 題、${c.pools} 池、${c.cards} 卡；${result.errors.length} 錯誤、${result.warnings.length} 警告`);
   }
-  process.exit(result.ok ? 0 : 1);
+  return result.ok ? 0 : 1;
 }
+
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) process.exitCode = await main(process.argv.slice(2));

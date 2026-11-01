@@ -94,11 +94,12 @@ function parseArgs(argv) {
   return { files, opts };
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const { files, opts } = parseArgs(process.argv.slice(2));
+// 命令列：回傳結束碼，不直接呼叫 process.exit()（stdout 是 pipe 時會截斷輸出，udl-content-spec#88）。
+async function main(argv) {
+  const { files, opts } = parseArgs(argv);
   if (files.length === 0) {
     console.error("用法：node conformance/validate-events.mjs <file.json>... [--json] [--strict] [--ladder-dir <dir>]");
-    process.exit(2);
+    return 2;
   }
   let allOk = true;
   const results = {};
@@ -113,5 +114,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }
   }
   if (opts.json) console.log(JSON.stringify(results, null, 2));
-  process.exit(allOk ? 0 : 1);
+  return allOk ? 0 : 1;
 }
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exitCode = await main(process.argv.slice(2));
