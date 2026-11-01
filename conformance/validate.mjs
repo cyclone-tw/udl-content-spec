@@ -152,6 +152,18 @@ export function checkCard(card, { validateParams } = {}) {
     if (c.why === "音同" && !same) errors.push(`confusables「${c.char}」標音同，但讀音 ${c.zhuyin} 和「${card.char}」${card.zhuyin} 不同`);
     if (c.why && c.why !== "音同" && same) errors.push(`confusables「${c.char}」讀音和「${card.char}」相同（${c.zhuyin}），why 應標音同`);
   }
+  // 句型例句的連接詞索引（#90）：要落在詞塊範圍內；有 sentence 時詞塊要依序出現在整句裡，接句子才切得準。
+  if (card.kind === "pattern") (card.examples ?? []).forEach((ex, n) => {
+    for (const k of ex.connectives ?? []) if (k >= ex.chunks.length) errors.push(`examples[${n}].connectives 的 ${k} 超出詞塊範圍（只有 ${ex.chunks.length} 個詞塊）`);
+    if (ex.connectives?.length && ex.sentence) {
+      let from = 0;
+      for (const c of ex.chunks) {
+        const at = ex.sentence.text.indexOf(c.text, from);
+        if (at < 0) { errors.push(`examples[${n}] 的詞塊「${c.text}」沒有依序出現在 sentence 裡（接句子會切錯）`); break; }
+        from = at + c.text.length;
+      }
+    }
+  });
   if (card.kind === "skill") {
     const item = { id: card.id, ladder_ids: card.ladder_ids, generator: card.generator, generator_version: card.generator_version, params: card.params };
     errors.push(...checkGeneratedItem(item, { validateParams }).errors);

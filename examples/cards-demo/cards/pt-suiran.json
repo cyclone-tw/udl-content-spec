@@ -1,0 +1,80 @@
+{
+  "format_version": 1,
+  "id": "pt-suiran",
+  "kind": "pattern",
+  "key": "雖然……卻……",
+  "grade_min": 3,
+  "tags": [
+    "轉折複句"
+  ],
+  "title": {
+    "text": "雖然……卻……",
+    "audio": null
+  },
+  "explain": {
+    "text": "前面說一件事，後面說出和想的不一樣的結果。",
+    "audio": null
+  },
+  "examples": [
+    {
+      "chunks": [
+        {
+          "text": "雖然",
+          "audio": null
+        },
+        {
+          "text": "公園的路還有點溼",
+          "audio": null
+        },
+        {
+          "text": "卻",
+          "audio": null
+        },
+        {
+          "text": "已經有人在散步了",
+          "audio": null
+        }
+      ],
+      "sentence": {
+        "text": "雖然公園的路還有點溼，卻已經有人在散步了。",
+        "audio": null
+      },
+      "connectives": [
+        0,
+        2
+      ]
+    },
+    {
+      "chunks": [
+        {
+          "text": "弟弟",
+          "audio": null
+        },
+        {
+          "text": "雖然",
+          "audio": null
+        },
+        {
+          "text": "個子小",
+          "audio": null
+        },
+        {
+          "text": "卻",
+          "audio": null
+        },
+        {
+          "text": "跑得很快",
+          "audio": null
+        }
+      ],
+      "sentence": {
+        "text": "弟弟雖然個子小，卻跑得很快。",
+        "audio": null
+      },
+      "connectives": [
+        1,
+        3
+      ]
+    }
+  ]
+}

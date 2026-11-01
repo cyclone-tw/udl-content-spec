@@ -24,6 +24,8 @@
     "c-ting2",
     "c-yuan2",
     "pt-kaiman",
+    "pt-suiran",
+    "pt-yinwei",
     "sk-add-sub-2digit",
     "w-caihong",
     "w-dashu",
@@ -47,6 +49,14 @@
     {
       "path": "cards/pt-kaiman.json",
       "sha256": "f93e9dda874a2070210941f34741fe1c7a24d237047475b2846f41d28efc7235"
+    },
+    {
+      "path": "cards/pt-suiran.json",
+      "sha256": "ad407c4bcb9481321ef36d73362199df02622f648ef533c8fbbc4f356df673eb"
+    },
+    {
+      "path": "cards/pt-yinwei.json",
+      "sha256": "ecb70578d35c539b3138d8ac9c2af95fbeab4aab6e25202623e8ba4823ffd001"
     },
     {
       "path": "cards/sk-add-sub-2digit.json",
@@ -94,7 +104,7 @@
     },
     {
       "path": "units/u-rain-park.json",
-      "sha256": "88a4cb91382b3922b6a8ea115d978a0a50aec21d9d52f3540342891b8b600d3f"
+      "sha256": "ff199bcb9169e2ead975f95de49ec5144baa9b6a713b557e3c0abeebaa0e7687"
     }
   ]
 }

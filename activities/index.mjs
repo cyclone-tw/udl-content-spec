@@ -449,6 +449,8 @@ const REGISTRY = {
   "char-write": { phase: "practice", group: "char", count: "all", readAloud: "all", encounter: false, pool: (c) => writePairs(c).length, generate: genCharWrite, needs: (c) => (writePairs(c).length ? null : "語詞卡裡沒有這課的生字（回單元 bindings 綁含生字的語詞卡）") },
   "word-meaning": { phase: "practice", group: "word", count: 4, readAloud: "all", pool: (c) => wordMeaningPool(c).length, generate: genWordMeaning, needs: (c) => (wordMeaningReady(c) ? null : "綁的語詞卡少於 2 張，或解釋全都相同") },
   "sentence-order": { phase: "practice", group: "word", count: 2, readAloud: "all", pool: (c) => c.patterns.reduce((n, p) => n + p.examples.length, 0), generate: genSentenceOrder, needs: (c) => (c.patterns.length ? null : "沒有綁句型卡") },
+  "pattern-connective": { phase: "practice", group: "word", count: 2, readAloud: "all", pool: (c) => connectiveTargets(c).length, generate: genPatternConnective, needs: (c) => (connectiveTargets(c).length ? null : "句型卡例句沒有標 connectives，或湊不出連接詞不同、複句類型不同的另一張句型卡當干擾項") },
+  "pattern-join": { phase: "practice", group: "word", count: 2, readAloud: "all", pool: (c) => joinTargets(c).length, generate: genPatternJoin, needs: (c) => (joinTargets(c).length ? null : "句型卡例句沒有標 connectives，或湊不出別張、複句類型不同的句型卡後半句當干擾項") },
   "skill-practice": { phase: "practice", group: "skill", count: 5, readAloud: "stem", generate: genSkillPractice, needs: (c) => (c.skills.length ? null : "沒有綁技能卡") },
   "para-gist": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => gistedParagraphs(ctx).length, generate: genParaGist, needs: (c, m, ctx) => (gistedParagraphs({ ...ctx, materials: ctx?.materials ?? m }).length >= 2 ? null : "課文教材（lesson）填了段落大意 gist 的段落少於 2 段") },
   "para-order": { phase: "practice", group: "reading", count: "all", readAloud: "all", pool: (c, ctx) => paraOrderChunks(ctx).length, generate: genParaOrder, needs: (c, m, ctx) => (paraOrderChunks({ ...ctx, materials: ctx?.materials ?? m }).length ? null : "課文教材（lesson）填了段落大意 gist 的段落少於 3 段") },
@@ -1360,6 +1362,132 @@ function genSentenceOrder({ cards, rng, count }) {
     hints: [spoken("先找誰或什麼開頭。"), spoken(`想想句型「${p.title.text}」。`), spoken(`第一張是「${ex.chunks[0].text}」。`)],
     feedback: { correct: spoken(`排對了：${ex.sentence?.text ?? ex.chunks.map((c) => c.text).join("")}`), retry: spoken("排好後讀一遍，聽聽看順不順。") },
   }));
+}
+
+// ---------- 句型：選連接詞、接句子（#90，udl-learning#712） ----------
+// 句型卡例句的 connectives 是「哪幾個詞塊是連接詞（關聯詞）」的詞塊索引；沒標的例句不出這兩種題。
+// 干擾項只用別張句型卡：連接詞一個字都不能和正解共用（「雖然……卻……」和「雖然……但……」都說得通），
+// 卡片 tags（複句類型，例如「因果複句」）有交集的也不用（「因為……所以……」和「既然……就……」可能都通）。
+const exSentence = (ex) => ex.sentence?.text ?? ex.chunks.map((c) => c.text).join("");
+const sortedConnectives = (ex) => [...new Set(ex.connectives ?? [])].filter((k) => Number.isInteger(k) && k >= 0 && k < ex.chunks.length).sort((a, b) => a - b);
+const connectiveWords = (ex) => sortedConnectives(ex).map((k) => ex.chunks[k].text);
+// 選項長得像句型名稱：「因為……所以……」「如果……」（連接詞後面都接著內容，所以結尾一律加「……」）。
+const connectiveText = (ex) => `${connectiveWords(ex).join("……")}……`;
+// 每個詞塊在整句裡的起點（依序找）；整句和詞塊對不上時回 null。
+function chunkStarts(ex) {
+  const s = exSentence(ex);
+  const at = [];
+  let from = 0;
+  for (const c of ex.chunks) {
+    const k = s.indexOf(c.text, from);
+    if (k < 0) return null;
+    at.push(k);
+    from = k + c.text.length;
+  }
+  return at;
+}
+function unrelatedPattern(p, q) {
+  if (p.id === q.id) return false;
+  const tags = new Set(p.tags ?? []);
+  return !(q.tags ?? []).some((x) => tags.has(x));
+}
+const markedExamples = (c) => c.patterns.flatMap((p) => p.examples.map((ex, i) => ({ p, ex, i }))).filter(({ ex }) => sortedConnectives(ex).length);
+
+function connectiveTargets(c) {
+  const all = markedExamples(c);
+  return all.map((t) => {
+    const words = new Set(connectiveWords(t.ex));
+    const n = words.size;
+    const seen = new Set([connectiveText(t.ex)]);
+    const distractors = [];
+    for (const o of all) {
+      const text = connectiveText(o.ex);
+      const ow = connectiveWords(o.ex);
+      if (!unrelatedPattern(t.p, o.p) || new Set(ow).size !== n || ow.some((w) => words.has(w)) || seen.has(text)) continue;
+      seen.add(text);
+      distractors.push(text);
+    }
+    return { ...t, distractors };
+  }).filter((t) => t.distractors.length);
+}
+function blankedSentence(ex) {
+  const set = new Set(sortedConnectives(ex));
+  const at = chunkStarts(ex);
+  if (!at) return ex.chunks.map((c, k) => (set.has(k) ? "＿＿" : c.text)).join("");
+  const s = exSentence(ex);
+  let out = "";
+  let from = 0;
+  ex.chunks.forEach((c, k) => {
+    if (!set.has(k)) return;
+    out += s.slice(from, at[k]) + "＿＿";
+    from = at[k] + c.text.length;
+  });
+  return out + s.slice(from);
+}
+function genPatternConnective({ cards, rng, count }) {
+  return cycle(connectiveTargets(cards), count, rng).map(({ p, ex, i, distractors }) => {
+    const answer = connectiveText(ex);
+    const kind = (p.tags ?? [])[0];
+    return {
+      type: "choice",
+      cards: [p.id],
+      __variant: String(i),
+      ladder_ids: ladderOf(p),
+      skill: "句型",
+      difficulty: 2,
+      stem: { text: spoken(`選出可以填進空格的連接詞：${blankedSentence(ex)}`) },
+      ...choiceOptions(answer, take(distractors, 2, rng), rng),
+      hints: [spoken("把整句讀一遍，想想前後兩部分是什麼關係。"), spoken(kind ? `這是「${kind}」的句子。` : "前後兩部分是怎麼連起來的？"), spoken(`句型是「${p.title.text}」。`)],
+      feedback: { correct: spoken(`答對了：${exSentence(ex)}`), retry: spoken("把選的連接詞放回句子裡讀讀看，聽聽通不通順。") },
+    };
+  });
+}
+
+// 接句子：切在最後一個連接詞前（「因為下雨了，｜所以比賽延期了。」）；只有開頭一個連接詞時切在第二個詞塊後
+// （「因為下雨了，｜比賽延期了。」）。前半句、後半句都照整句原文切，標點跟著走。
+function joinSplit(ex) {
+  const at = chunkStarts(ex);
+  const conn = sortedConnectives(ex);
+  if (!at || !conn.length) return null;
+  const last = conn[conn.length - 1];
+  const k = last > 0 ? last : 2;
+  if (k < 1 || k >= ex.chunks.length) return null;
+  const s = exSentence(ex);
+  const front = s.slice(0, at[k]);
+  const end = s.slice(at[k]);
+  return front.trim() && end.trim() ? { k, front, end, byConnective: conn.includes(k) } : null;
+}
+function joinTargets(c) {
+  const all = markedExamples(c).map((t) => ({ ...t, split: joinSplit(t.ex) })).filter((t) => t.split);
+  return all.map((t) => {
+    const seen = new Set([t.split.end]);
+    const ends = [];
+    for (const o of all) {
+      if (!unrelatedPattern(t.p, o.p) || seen.has(o.split.end)) continue;
+      seen.add(o.split.end);
+      ends.push({ text: o.split.end, byConnective: o.split.byConnective });
+    }
+    // 後半句也是連接詞開頭的優先（和正解長得像，才要真的看懂前後關係）。
+    return { ...t, ends };
+  }).filter((t) => t.ends.length);
+}
+function genPatternJoin({ cards, rng, count }) {
+  return cycle(joinTargets(cards), count, rng).map(({ p, ex, i, split, ends }) => {
+    const pref = shuffle(ends, rng).sort((a, b) => Number(b.byConnective === split.byConnective) - Number(a.byConnective === split.byConnective));
+    const lead = ex.chunks[split.k].text;
+    return {
+      type: "choice",
+      cards: [p.id],
+      __variant: String(i),
+      ladder_ids: ladderOf(p),
+      skill: "句型",
+      difficulty: 2,
+      stem: { text: spoken(`接句子：「${split.front}」後面接哪一句最通順？`) },
+      ...choiceOptions(split.end, pref.slice(0, 2).map((e) => e.text), rng),
+      hints: [spoken("先讀前半句，注意裡面的連接詞。"), spoken(`句型是「${p.title.text}」。`), spoken(split.byConnective ? `後半句會用「${lead}」接下去。` : `後半句從「${lead}」開始。`)],
+      feedback: { correct: spoken(`接對了：${exSentence(ex)}`), retry: spoken("把前後兩句連起來讀一遍，聽聽意思通不通。") },
+    };
+  });
 }
 
 function genSkillPractice({ unit, cards, rng, count, seed, pools }) {
