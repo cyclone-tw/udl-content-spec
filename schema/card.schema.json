@@ -58,7 +58,8 @@
         "required": ["chunks"],
         "properties": {
           "chunks": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" } },
-          "sentence": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" }
+          "sentence": { "$ref": "urn:udl-content-spec:v1:common#/$defs/spoken_text" },
+          "connectives": { "type": "array", "minItems": 1, "maxItems": 4, "uniqueItems": true, "items": { "type": "integer", "minimum": 0 }, "description": "哪幾個詞塊是連接詞（關聯詞，例如「因為」「所以」）的詞塊索引，從 0 起算；選連接詞（pattern-connective）、接句子（pattern-join）只用標了的例句（#90）。" }
         },
         "additionalProperties": false
       }

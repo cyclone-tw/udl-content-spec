@@ -1,0 +1,76 @@
+{
+  "format_version": 1,
+  "id": "pt-yinwei",
+  "kind": "pattern",
+  "key": "因為……所以……",
+  "grade_min": 3,
+  "tags": [
+    "因果複句"
+  ],
+  "title": {
+    "text": "因為……所以……",
+    "audio": null
+  },
+  "explain": {
+    "text": "前面說原因，後面說結果。",
+    "audio": null
+  },
+  "examples": [
+    {
+      "chunks": [
+        {
+          "text": "因為",
+          "audio": null
+        },
+        {
+          "text": "下了一整天的雨",
+          "audio": null
+        },
+        {
+          "text": "所以",
+          "audio": null
+        },
+        {
+          "text": "操場積了好多水",
+          "audio": null
+        }
+      ],
+      "sentence": {
+        "text": "因為下了一整天的雨，所以操場積了好多水。",
+        "audio": null
+      },
+      "connectives": [
+        0,
+        2
+      ]
+    },
+    {
+      "chunks": [
+        {
+          "text": "因為",
+          "audio": null
+        },
+        {
+          "text": "小狗很想出門",
+          "audio": null
+        },
+        {
+          "text": "所以",
+          "audio": null
+        },
+        {
+          "text": "一直在門口轉圈圈",
+          "audio": null
+        }
+      ],
+      "sentence": {
+        "text": "因為小狗很想出門，所以一直在門口轉圈圈。",
+        "audio": null
+      },
+      "connectives": [
+        0,
+        2
+      ]
+    }
+  ]
+}

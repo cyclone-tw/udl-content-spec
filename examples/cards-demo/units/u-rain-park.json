@@ -34,7 +34,9 @@
       "w-yuting"
     ],
     "patterns": [
-      "pt-kaiman"
+      "pt-kaiman",
+      "pt-yinwei",
+      "pt-suiran"
     ]
   },
   "core": [

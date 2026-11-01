@@ -60,11 +60,11 @@ test("年級活動設定：四份內建設定都通過 schema，活動 id 都已
   assert.equal(profileFor("chinese", 9), null);
 });
 
-test("範例卡片包：驗證通過、9 張卡、0 錯誤", async () => {
+test("範例卡片包：驗證通過、11 張卡、0 錯誤", async () => {
   const r = await validatePack(EXAMPLE);
   assert.deepEqual(r.errors, []);
   assert.equal(r.ok, true);
-  assert.equal(r.counts.cards, 9);
+  assert.equal(r.counts.cards, 11);
   assert.equal(r.counts.units, 2);
 });
 

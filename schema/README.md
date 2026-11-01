@@ -12,7 +12,7 @@
 | `pool.schema.json` | 干擾項池 |
 | `figure.schema.json` | 幾何圖形描述（#69）：mm、y 向下；有名字的點、線段（邊或射線、等長記號）、角記號（角弧、直角記號）、標示文字（邊長、度數、甲乙丙、ㄅㄆㄇ，renderer 畫成可報讀的文字層，不燒進圖檔）、疊圖工具（直角板；量角器可帶 `toward`，半圓開在角那一側，底線可以沿一個沒畫出來的點）、必填 `alt`（不洩漏答案）；每個元素有 id；`steps` 欄位不使用，講解動畫的逐步狀態寫在示範教材 math-demo 的 steps（每一步一張 figure，#80）。產生器實例放在 `display.figure` |
 | `scope.schema.json` | 範圍選擇器：`include`／`exclude` 的 pack＋version＋units／materials／items／標籤 |
-| `card.schema.json` | 卡片（#31）：`char` 生字（鍵 `字|注音`；易混淆字 `confusables[]` 可填 `zhuyin`，聽音選字才能避開同音字，#49）、`word` 語詞（鍵 `詞|注音`，與音檔語詞庫同鍵）、`pattern` 句型（例句切詞塊）、`skill` 數學技能（引用產生器與參數）；同一個字或詞只有一張卡 |
+| `card.schema.json` | 卡片（#31）：`char` 生字（鍵 `字|注音`；易混淆字 `confusables[]` 可填 `zhuyin`，聽音選字才能避開同音字，#49）、`word` 語詞（鍵 `詞|注音`，與音檔語詞庫同鍵）、`pattern` 句型（例句切詞塊；選填 `connectives` 標哪幾個詞塊是連接詞，選連接詞、接句子用，#90；`tags` 可放複句類型）、`skill` 數學技能（引用產生器與參數）；同一個字或詞只有一張卡 |
 | `activity-profile.schema.json` | 年級活動設定（#31）：某科某些年級一課預設有哪些步驟、屬讀委託／修練／討伐哪一段、報讀範圍；`ladders` 活動 × 年級 → 能力階梯（#33）；步驟 `count` 可寫 `"all"`（題庫有幾筆出幾題）、`quiz` 的 `blueprint` 測驗藍圖（各練習分類抽幾題，#50）、`mix` 的 `sources` 混合練習（#51）；內建設定在 `activities/profiles/` |
 
 ## 約定
