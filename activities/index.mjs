@@ -1398,13 +1398,13 @@ function connectiveTargets(c) {
   const all = markedExamples(c);
   return all.map((t) => {
     const words = new Set(connectiveWords(t.ex));
-    const n = words.size;
+    const n = sortedConnectives(t.ex).length; // 空格數（「一邊……一邊……」是兩格，不是一個字）
     const seen = new Set([connectiveText(t.ex)]);
     const distractors = [];
     for (const o of all) {
       const text = connectiveText(o.ex);
       const ow = connectiveWords(o.ex);
-      if (!unrelatedPattern(t.p, o.p) || new Set(ow).size !== n || ow.some((w) => words.has(w)) || seen.has(text)) continue;
+      if (!unrelatedPattern(t.p, o.p) || ow.length !== n || ow.some((w) => words.has(w)) || seen.has(text)) continue;
       seen.add(text);
       distractors.push(text);
     }
@@ -1438,8 +1438,9 @@ function genPatternConnective({ cards, rng, count }) {
       difficulty: 2,
       stem: { text: spoken(`選出可以填進空格的連接詞：${blankedSentence(ex)}`) },
       ...choiceOptions(answer, take(distractors, 2, rng), rng),
-      // 最後一層提示說句型在做什麼（卡片 explain），不直接唸出句型名稱：名稱就是正解（#91 review）。
-      hints: [spoken("把整句讀一遍，想想前後兩部分是什麼關係。"), spoken(kind ? `這是「${kind}」的句子。` : "前後兩部分是怎麼連起來的？"), spoken(p.explain?.text ? `這個句型：${p.explain.text}` : "試著把每個選項放回句子裡讀讀看。")],
+      // 最後一層提示說句型在做什麼（卡片 explain），不直接唸出句型名稱：名稱就是正解（#91 review）；
+      // explain 裡出現這句的連接詞（「用「因為」說原因」）也會洩漏答案，改用通用提示（#92 review）。
+      hints: [spoken("把整句讀一遍，想想前後兩部分是什麼關係。"), spoken(kind ? `這是「${kind}」的句子。` : "前後兩部分是怎麼連起來的？"), spoken(p.explain?.text && !connectiveWords(ex).some((w) => p.explain.text.includes(w)) ? `這個句型：${p.explain.text}` : "試著把每個選項放回句子裡讀讀看。")],
       feedback: { correct: spoken(`答對了：${exSentence(ex)}`), retry: spoken("把選的連接詞放回句子裡讀讀看，聽聽通不通順。") },
     };
   });
