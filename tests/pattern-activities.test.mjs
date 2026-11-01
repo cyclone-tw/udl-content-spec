@@ -97,3 +97,36 @@ test("驗證器：connectives 超出詞塊範圍、詞塊沒有依序出現在 s
   order.examples[0].sentence = sp("所以比賽延期了，因為下大雨。");
   assert.ok(checkCard(order).some((e) => /沒有依序出現/.test(e)));
 });
+
+test("follow-up：接句子不用共用連接詞的卡當干擾項；最後一層提示不唸出句型名稱", () => {
+  const QUE = pattern("pt-que", "……卻……", ["轉折複句2"], [ex(["他很累", "卻", "還是笑著"], "他很累，卻還是笑著。", [1])]);
+  const cards = cardsOf({ ...SUI, explain: sp("先說一件事，再說出和想的不一樣的結果。") }, QUE, YIN, RU);
+  for (const q of generate("pattern-join", { unit, cards, seed: "f", count: 12 })) {
+    const opts = q.options.map((o) => o.text.text);
+    if (q.cards[0] === "pt-sui") assert.ok(!opts.includes("卻還是笑著。"), "共用「卻」的後半句也接得上，不能當干擾項");
+    if (q.cards[0] === "pt-que") assert.ok(!opts.includes("卻跑得很快。"));
+  }
+  for (const q of generate("pattern-connective", { unit, cards, seed: "f", count: 12 })) {
+    const last = q.hints.at(-1).text;
+    assert.ok(!last.includes(optionText(q, q.answer)), `${q.cards[0]}：${last}`);
+  }
+  const [s] = generate("pattern-connective", { unit, cards, seed: "f", count: 12 }).filter((q) => q.cards[0] === "pt-sui");
+  assert.equal(s.hints.at(-1).text, "這個句型：先說一件事，再說出和想的不一樣的結果。");
+});
+
+test("follow-up：整句和詞塊對不上時，選連接詞改用詞塊接起來挖空，接句子略過那句", () => {
+  const odd = pattern("pt-odd", "因為……所以……", ["因果複句"], [ex(["因為", "下大雨", "所以", "比賽延期了"], "比賽延期了，因為下大雨。", [0, 2])]);
+  const cards = cardsOf(odd, SUI, RU);
+  const q = generate("pattern-connective", { unit, cards, seed: "o", count: 2 }).find((x) => x.cards[0] === "pt-odd");
+  assert.equal(q.stem.text.text, "選出可以填進空格的連接詞：＿＿下大雨＿＿比賽延期了");
+  assert.ok(generate("pattern-join", { unit, cards, seed: "o", count: 2 }).every((x) => x.cards[0] !== "pt-odd"));
+});
+
+test("follow-up：一個連接詞的句型只和一個連接詞的組比；沒有同個數的組就不出題", () => {
+  const cards = cardsOf(RU, YIN, SUI);
+  assert.ok(generate("pattern-connective", { unit, cards, seed: "s", count: 6 }).every((q) => q.cards[0] !== "pt-ru"));
+  const withWei = cardsOf(RU, WEI, YIN);
+  const ru = generate("pattern-connective", { unit, cards: withWei, seed: "s", count: 6 }).filter((q) => q.cards[0] === "pt-ru");
+  assert.ok(ru.length);
+  for (const q of ru) assert.deepEqual(q.options.map((o) => o.text.text).sort(), ["如果……", "為了……"]);
+});
