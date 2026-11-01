@@ -101,7 +101,9 @@ test("驗證器：connectives 超出詞塊範圍、詞塊沒有依序出現在 s
 test("follow-up：接句子不用共用連接詞的卡當干擾項；最後一層提示不唸出句型名稱", () => {
   const QUE = pattern("pt-que", "……卻……", ["轉折複句2"], [ex(["他很累", "卻", "還是笑著"], "他很累，卻還是笑著。", [1])]);
   const cards = cardsOf({ ...SUI, explain: sp("先說一件事，再說出和想的不一樣的結果。") }, QUE, YIN, RU);
-  for (const q of generate("pattern-join", { unit, cards, seed: "f", count: 12 })) {
+  const joins = generate("pattern-join", { unit, cards, seed: "f", count: 12 });
+  assert.ok(joins.some((q) => q.cards[0] === "pt-sui") && joins.some((q) => q.cards[0] === "pt-que"), "兩張都要真的出到題");
+  for (const q of joins) {
     const opts = q.options.map((o) => o.text.text);
     if (q.cards[0] === "pt-sui") assert.ok(!opts.includes("卻還是笑著。"), "共用「卻」的後半句也接得上，不能當干擾項");
     if (q.cards[0] === "pt-que") assert.ok(!opts.includes("卻跑得很快。"));
@@ -116,10 +118,12 @@ test("follow-up：接句子不用共用連接詞的卡當干擾項；最後一�
 
 test("follow-up：整句和詞塊對不上時，選連接詞改用詞塊接起來挖空，接句子略過那句", () => {
   const odd = pattern("pt-odd", "因為……所以……", ["因果複句"], [ex(["因為", "下大雨", "所以", "比賽延期了"], "比賽延期了，因為下大雨。", [0, 2])]);
-  const cards = cardsOf(odd, SUI, RU);
-  const q = generate("pattern-connective", { unit, cards, seed: "o", count: 2 }).find((x) => x.cards[0] === "pt-odd");
+  const cards = cardsOf(odd, SUI, RU, WEI);
+  const q = generate("pattern-connective", { unit, cards, seed: "o", count: 4 }).find((x) => x.cards[0] === "pt-odd");
   assert.equal(q.stem.text.text, "選出可以填進空格的連接詞：＿＿下大雨＿＿比賽延期了");
-  assert.ok(generate("pattern-join", { unit, cards, seed: "o", count: 2 }).every((x) => x.cards[0] !== "pt-odd"));
+  const joins = generate("pattern-join", { unit, cards, seed: "o", count: 6 });
+  assert.ok(joins.length && joins.some((x) => x.cards[0] === "pt-sui"), "其他句子照常出題（對照組）");
+  assert.ok(joins.every((x) => x.cards[0] !== "pt-odd"));
 });
 
 test("follow-up：一個連接詞的句型只和一個連接詞的組比；沒有同個數的組就不出題", () => {
@@ -129,4 +133,17 @@ test("follow-up：一個連接詞的句型只和一個連接詞的組比；沒�
   const ru = generate("pattern-connective", { unit, cards: withWei, seed: "s", count: 6 }).filter((q) => q.cards[0] === "pt-ru");
   assert.ok(ru.length);
   for (const q of ru) assert.deepEqual(q.options.map((o) => o.text.text).sort(), ["如果……", "為了……"]);
+});
+
+test("follow-up 2：連接詞個數照空格數算（「一邊……一邊……」是兩格）；explain 說出連接詞時不當提示", () => {
+  const BIAN = pattern("pt-bian", "一邊……一邊……", ["並列複句"], [ex(["爺爺", "一邊", "澆花", "一邊", "哼歌"], "爺爺一邊澆花，一邊哼歌。", [1, 3])]);
+  const YIN2 = { ...YIN, explain: sp("用「因為」說原因，用「所以」說結果。") };
+  const cards = cardsOf(BIAN, YIN2, RU, WEI);
+  const qs = generate("pattern-connective", { unit, cards, seed: "b", count: 8 });
+  const bian = qs.filter((q) => q.cards[0] === "pt-bian");
+  assert.ok(bian.length);
+  for (const q of bian) assert.deepEqual(q.options.map((o) => o.text.text).sort(), ["一邊……一邊……", "因為……所以……"], "兩格只和兩格比，不放「如果……」");
+  const yin = qs.filter((q) => q.cards[0] === "pt-yin");
+  assert.ok(yin.length);
+  for (const q of yin) assert.equal(q.hints.at(-1).text, "試著把每個選項放回句子裡讀讀看。");
 });
