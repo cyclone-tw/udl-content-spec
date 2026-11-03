@@ -287,7 +287,7 @@ export function checkUnitActivities({ unit, cards, materials, pools, validators,
     const where = `活動 ${step.activity}${run.label}`;
     let list;
     try {
-      list = generate(step.activity, { unit, cards, seed, count: step.blueprint ? undefined : step.count, pools, ladders: plan.ladders, readAloud: step.read_aloud_scope, coreOnly: run.coreOnly, readings, items, blueprint: step.blueprint, materials, sources: step.sources });
+      list = generate(step.activity, { unit, cards, seed, count: step.blueprint ? undefined : step.count, pools, ladders: plan.ladders, readAloud: step.read_aloud_scope, coreOnly: run.coreOnly, readings, items, blueprint: step.blueprint, materials, sources: step.sources, item_tier: "all" });
     } catch (err) {
       // 核心卡太少湊不出某種題，只提醒：老師開「只用核心卡」時這一步會略過。
       (run.coreOnly ? warnings : errors).push(`${where} 生題失敗：${err.message}`);

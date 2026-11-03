@@ -1,5 +1,6 @@
 // 作答事件契約 udl-attempt-events/v1 的常數與最小建構器。
 // 殼（獨立執行器、朗讀器轉接、RPG、平台）用這裡組事件檔，不各自手寫欄位名。
+import { itemClassification } from "../lib/item-tiers.mjs";
 export const FORMAT = "udl-attempt-events";
 export const FORMAT_VERSION = 1;
 export const SCHEMA_PATH = "events/schema/attempt-events.schema.json";
@@ -44,6 +45,7 @@ export function pushEvent(file, type, fields = {}, time = new Date().toISOString
 export function answeredFields(question, result, { attempt_no, response_ms, hint_tier = 0, read_aloud = null, guess_flag = "none", response } = {}) {
   const isInstance = question.kind === "instance";
   const fields = {
+    ...itemClassification(question),
     item_id: isInstance ? question.source_item : question.id,
     ladder_ids: [...(question.ladder_ids ?? [])],
     question_type: result.type,

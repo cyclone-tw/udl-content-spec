@@ -24,3 +24,13 @@
 - 卡片庫包：`units` 可以是空陣列，此時 `cards` 至少一張；課包用 `pack@version#id` 跨包綁卡，驗證時用 `--cards-from <卡片庫包目錄>` 解析。
 - 課文插圖：lesson 教材的 `image` 區塊可以插在任何段落之間；先不放圖的課，之後補圖只要加 `image` 區塊，段落順序（第幾段）只算 `text` 區塊，不受影響。
 - 破壞相容升 `format_version` 並附轉換程式。
+## 閱讀層次與出題層級
+
+0.2.0 新增的兩個選填欄位（格式仍是 v1）：
+
+- `level`：`retrieve` 找資訊、`infer` 推論、`interpret` 詮釋。省略代表未分類，不能自動當找資訊。
+- `item_tier`：`regular` 一般題、`advanced` 進階題；省略代表一般。advanced 必須同時有 infer 或 interpret 的 level；`all` 不是題目屬性值。
+
+item、generator instance、answered 事件均接受這兩欄。原有 generator `tier`／事件 `generated.tier` 繼續表示條件檔檔位，`hint_tier` 繼續表示提示層，不能與 item_tier 混用。能力階梯、difficulty、題型與計分規則不變。
+
+合成例子：一題找花園資訊的題可標 `"level": "retrieve", "item_tier": "regular"`；根據兩段線索推想人物用意的題可標 `"level": "infer", "item_tier": "advanced"`。層次標籤不等於能力診斷；一般題也可由作者明確標 level infer。

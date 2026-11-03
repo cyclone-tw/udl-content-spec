@@ -182,3 +182,10 @@ Cyclone 2026-10-23：進修部三上的練習做成通用模組，題目由卡�
 所有活動生的題都另帶 `practice_key`（#78）與 `sound`（#66），見上。
 
 卡片生的題：`kind: "instance"`、`source: "cards"`、`activity`、`activity_version`、`seed`、`index`、`unit`、`cards`（用到的卡 id）、`quiz_source`（小測驗裡這題來自哪個活動）；其餘欄位與固定題相同，可直接丟給 `score()`。技能練習沿用數學產生器的實例，另加 `activity`、`activity_version`、`cards`。作答事件記 `activity`＋`seed` 就能重現整批題目。
+## 題目層級篩選
+
+`generate()` 與 `generateByKeys()` 新增選填 `item_tier: "regular" | "advanced" | "all"`，預設 regular。公開共用函式 `itemTierEligible(question, scope)` 使用同一判斷，`itemTierScope(scope)` 驗證選項；未知值（含 null）拋錯，不能退回 all。
+
+先按 metadata 過濾固定題候選，才做洗牌、抽題與補足題數。沒有標記的卡片／教材生成題都屬一般，advanced 不會拿它們補題。mix、測驗藍圖及依 practice_key 重產同樣遵守；進階 quiz 無藍圖時只從合法進階固定題取，不重複出超過題庫的題。範圍內沒有題就回空陣列，不改抽一般題。原有一般 reading-items 數字 count 的循環行為不變。
+
+`level`、`item_tier` 會通過固定題複製、toItemShape／toInstanceShape、generator instantiate；不改題目 id 或 practice_key。一般學生入口維持預設，教師題組依每列保存的選項明確傳 advanced／all；UI 的授權由 owning platform 檢查，這份純函式不讀使用者身分。conformance 刻意用 all 核對全部內容，避免進階題未被驗證。

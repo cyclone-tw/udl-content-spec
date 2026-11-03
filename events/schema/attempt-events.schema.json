@@ -527,6 +527,8 @@
             "minLength": 1
           }
         },
+        "level": {"type": "string", "enum": ["retrieve", "infer", "interpret"], "description": "閱讀層次：找資訊、推論、詮釋；缺少時未分類。"},
+        "item_tier": {"type": "string", "enum": ["regular", "advanced"], "description": "出題層級；省略視為 regular，與產生器 tier 無關。"},
         "question_type": {
           "type": "string",
           "minLength": 1,
@@ -601,6 +603,7 @@
           "description": "活動生的題目的穩定身分（activities/ 的 practice_key，#78），不隨種子變；平台用它組錯題本，再用 generateByKeys 重產同一題。"
         }
       },
+      "allOf": [{"if": {"properties": {"item_tier": {"const": "advanced"}}, "required": ["item_tier"]}, "then": {"required": ["level"], "properties": {"level": {"enum": ["infer", "interpret"]}}}}],
       "additionalProperties": false
     }
   }
