@@ -106,3 +106,8 @@ kit 的 IEP 評量要記支持代碼（I 獨立、V 口語提示、G 手勢提�
 ## 版本
 
 破壞相容（改必填欄位、改 enum 意義）升 `udl-attempt-events/v2` 並附轉換程式；加可選欄位不升版。D1 事件表的欄位（總規劃 §7.3）照本契約的 `answered` 正規化，P3 開票時引用這裡。
+## 閱讀層次快照
+
+0.2.0 的 answered 事件可選填 `level`（retrieve／infer／interpret）與 `item_tier`（regular／advanced）。advanced 必須有 infer 或 interpret；缺欄仍符合 udl-attempt-events/v1。`answeredFields()` 從題目原樣帶入，不從 difficulty、ladder_ids 或提示層猜測，讓彙總使用作答當時的分類。
+
+`generated.tier` 仍是產生器檔位，與新的 item_tier 分開。舊題未分類，不回填成 retrieve，也不把提示後答對稱為獨立精熟。活動生成的非 generator instance 依外殼原流程先正規化為固定題再呼叫 answeredFields；這次不改 item_id 或計分語意。

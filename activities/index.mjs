@@ -3,6 +3,8 @@
 // 所以可以直接丟給 question-types 的 score()。實例不是內容檔，不存進內容包。
 import { createRng } from "../generators/_prng.mjs";
 import { instantiate, getGenerator } from "../generators/index.mjs";
+import { itemTierEligible, itemTierScope } from "../lib/item-tiers.mjs";
+export { itemTierEligible, itemTierScope } from "../lib/item-tiers.mjs";
 import { normalizeZhuyin, syllableKey, wordKey } from "../audio/index.mjs";
 import zhLow from "./profiles/zh-low.json" with { type: "json" };
 import zhMid from "./profiles/zh-mid.json" with { type: "json" };
@@ -657,33 +659,49 @@ function resolveBlueprint(entries, steps, wanted) {
  *   重現一批題目要同樣的 unit、cards、seed、count，以及 blueprint／sources／items／materials（#58）。
  * @returns {object[]} 題目實例（kind: "instance"）。
  */
-export function generate(activity, { unit, cards: allCards, seed, count, pools, ladders = {}, readAloud, coreOnly = false, readings, audio, items, blueprint, materials, sources, focus } = {}) {
+export function generate(activity, { unit, cards: allCards, seed, count, pools, ladders = {}, readAloud, coreOnly = false, readings, audio, items, blueprint, materials, sources, focus, item_tier = "regular" } = {}) {
+  itemTierScope(item_tier);
   const def = REGISTRY[activity];
   if (!def?.generate) throw new TypeError(`generate: ${JSON.stringify(activity)} 不是會生題的活動`);
   if (seed === undefined || seed === null || seed === "") throw new TypeError("generate: 需要 seed，作答事件才能重現這批題目");
+  if (count !== undefined && count !== "all" && (!Number.isInteger(count) || count < 1)) throw new TypeError("generate: count 必須是 ≥ 1 的整數或 \"all\"");
+  const rawItems = items ?? [];
+  items = rawItems.filter((q) => itemTierEligible(q, item_tier));
+  const tierFiltered = item_tier === "advanced" || items.length !== rawItems.length;
+  // Card/material-generated questions have no advanced classification. Remove those
+  // candidate sources before allocation, rather than filtering an already sampled quiz.
+  if (item_tier === "advanced") {
+    allCards = { ...allCards, chars: [], words: [], patterns: [], skills: [] };
+    materials = [];
+  }
   if (focus !== undefined) return generateFocused(activity, def, { unit, cards: allCards, seed, count, pools, ladders, readAloud, coreOnly, readings, audio, items, materials, focus });
   let cards = allCards;
   if (coreOnly) {
     cards = coreCards(unit, allCards);
     if (!cards) throw new TypeError(`generate(${activity}): 單元 ${unit.id} 沒有標核心卡（core）`);
   }
-  const ctx = { readings, audio, items, materials, pools };
+  const ctx = { readings, audio, items, materials, pools, tierFiltered };
   if (blueprint !== undefined && activity !== "quiz") throw new TypeError(`generate(${activity}): 只有 quiz 收 blueprint`);
   if (blueprint !== undefined) checkBlueprint(blueprint);
   else if (activity === "mix") sources = usableMixSources(sources, cards, ctx);
   else {
     const reason = def.needs(cards, [], ctx);
-    if (reason) throw new TypeError(`generate(${activity}): ${reason}`);
+    if (reason && !(activity === "quiz" && item_tier === "advanced" && readingItems(ctx).length)) {
+      if (tierFiltered) return [];
+      throw new TypeError(`generate(${activity}): ${reason}`);
+    }
   }
   let n = blueprint ? blueprint.reduce((t, b) => t + b.count, 0) : count ?? def.count;
   if (n === "all") {
     if (activity === "mix") n = sources.reduce((t, s) => t + REGISTRY[s].pool(cards, ctx), 0);
+    else if (activity === "quiz" && item_tier === "advanced") n = readingItems(ctx).length;
     else if (!def.pool) throw new TypeError(`generate(${activity}): 不支援 count "all"`);
     else n = def.pool(cards, ctx);
   }
+  if (n === 0 && tierFiltered) return [];
   if (!Number.isInteger(n) || n < 1) throw new TypeError("generate: count 必須是 ≥ 1 的整數或 \"all\"");
   const rng = createRng(`${unit.id}|${activity}|${seed}`);
-  const parts = def.generate({ unit, cards, rng, count: n, seed: String(seed), pools, readings, audio, items, blueprint, materials, sources });
+  const parts = def.generate({ unit, cards, rng, count: n, seed: String(seed), pools, readings, audio, items, blueprint, materials, sources, item_tier, tierFiltered });
   return parts.map((part, index) => finish(part, { unit, activity, seed: String(seed), index, ladders, readAloud }));
 }
 
@@ -725,9 +743,15 @@ function generateFocused(activity, def, { unit, cards: allCards, seed, count, po
  * @param {object} ctx 同 generate()：unit、cards、seed（必填），以及 pools、ladders、readAloud、readings、audio、items、materials。
  * @returns {{ instances: object[], missing: { key: string, reason: string }[] }}
  */
-export function generateByKeys(keys, { unit, cards, seed, pools, ladders = {}, readAloud, readings, audio, items, materials } = {}) {
+export function generateByKeys(keys, { unit, cards, seed, pools, ladders = {}, readAloud, readings, audio, items, materials, item_tier = "regular" } = {}) {
+  itemTierScope(item_tier);
   if (!Array.isArray(keys)) throw new TypeError("generateByKeys: keys 要是 practice_key 陣列");
   if (seed === undefined || seed === null || seed === "") throw new TypeError("generateByKeys: 需要 seed，作答事件才能重現這批題目");
+  items = (items ?? []).filter((q) => itemTierEligible(q, item_tier));
+  if (item_tier === "advanced") {
+    cards = { ...cards, chars: [], words: [], patterns: [], skills: [] };
+    materials = [];
+  }
   const ctx = { readings, audio, items, materials, pools };
   const args = { unit, cards, seed: String(seed), pools, readings, audio, items, materials };
   const built = new Map();
@@ -787,7 +811,7 @@ function usableMixSources(sources, cards, ctx) {
     else usable.push(s);
   }
   if (groups.size > 1) throw new TypeError("generate(mix): sources 要是同一分類");
-  if (!usable.length) throw new TypeError(`generate(mix): 來源都湊不出題（${reasons.join("；")}）`);
+  if (!usable.length && !ctx.tierFiltered) throw new TypeError(`generate(mix): 來源都湊不出題（${reasons.join("；")}）`);
   return usable;
 }
 
@@ -1541,13 +1565,14 @@ function allocate(sources, count, cap, rng) {
   return tally;
 }
 
-function genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, readings, audio, materials }) {
+function genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, readings, audio, materials, tierFiltered }) {
   const ctx = { items, readings, audio, materials, pools };
   const made = [];
   for (const { group, count, sources } of blueprint) {
     // 條件不足的來源（例如只用核心卡時語詞只剩一張，湊不出語詞填空）題庫算 0。
     const cap = Object.fromEntries(sources.map((s) => [s, REGISTRY[s].needs(cards, materials ?? [], ctx) ? 0 : REGISTRY[s].pool(cards, ctx)]));
     if (Object.values(cap).every((n) => n === 0)) {
+      if (tierFiltered) continue;
       const reasons = sources.map((s) => [s, REGISTRY[s].needs(cards, materials ?? [], ctx)]).filter(([, r]) => r);
       throw new TypeError(`generate(quiz): 藍圖「${group}」的來源題庫都是 0（${reasons.map(([s, r]) => `${s}：${r}；`).join("")}是不是漏傳 materials 或 items？）`);
     }
@@ -1562,8 +1587,9 @@ function genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, rea
 }
 
 // 綜合小測驗：在可用的生題活動之間輪流抽，一題一個來源，順序再洗牌。
-function genQuiz({ unit, cards, rng, count, seed, pools, blueprint, items, readings, audio, materials }) {
-  if (blueprint) return genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, readings, audio, materials });
+function genQuiz({ unit, cards, rng, count, seed, pools, blueprint, items, readings, audio, materials, item_tier, tierFiltered }) {
+  if (blueprint) return genBlueprintQuiz({ unit, cards, rng, seed, pools, blueprint, items, readings, audio, materials, tierFiltered });
+  if (item_tier === "advanced") return genReadingItems({ rng, count: Math.min(count, readingItems({ items }).length), items }).map((q) => ({ ...q, quiz_source: "reading-items" }));
   const sources = quizSources(cards);
   const plan = cycle(sources, count, rng);
   const tally = Object.fromEntries(sources.map((s) => [s, plan.filter((p) => p === s).length]));

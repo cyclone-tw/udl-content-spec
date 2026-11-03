@@ -43,7 +43,7 @@ export function getGenerator(id) {
 }
 
 // 從 item 原樣帶到每個實例的共用欄位（面向報表與 kit 對接）。
-const COPIED_FIELDS = ["unit", "skill", "difficulty", "ladder_ids", "curriculum_codes", "strategy", "meta"];
+const COPIED_FIELDS = ["unit", "skill", "difficulty", "ladder_ids", "curriculum_codes", "strategy", "meta", "level", "item_tier"];
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 
 /**

@@ -1,6 +1,6 @@
 {
   "name": "udl-content-spec",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Content spec for the UDL learning family: pack manifest, content JSON Schema, validator.",
   "type": "module",
   "private": true,

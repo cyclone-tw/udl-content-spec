@@ -15,6 +15,8 @@
     "difficulty": { "$ref": "urn:udl-content-spec:v1:common#/$defs/difficulty" },
     "ladder_ids": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/ladder_id" } },
     "curriculum_codes": { "type": "array", "items": { "$ref": "urn:udl-content-spec:v1:common#/$defs/curriculum_code" } },
+    "level": {"type": "string", "enum": ["retrieve", "infer", "interpret"], "description": "閱讀層次：找資訊、推論、詮釋；缺少時未分類。"},
+    "item_tier": {"type": "string", "enum": ["regular", "advanced"], "description": "出題層級；省略視為 regular，與產生器 tier 無關。"},
     "strategy": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "generator": { "type": "string", "minLength": 1 },
     "generator_version": { "type": "integer", "minimum": 1 },
@@ -110,6 +112,7 @@
     "meta": { "type": "object" }
   },
   "allOf": [
+    {"if": {"properties": {"item_tier": {"const": "advanced"}}, "required": ["item_tier"]}, "then": {"required": ["level"], "properties": {"level": {"enum": ["infer", "interpret"]}}}},
     {
       "if": { "properties": { "type": { "const": "numeric" } } },
       "then": { "required": ["answer"], "properties": { "answer": { "type": "number" }, "blanks": false, "options": false, "shuffle": false } }

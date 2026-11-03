@@ -6,6 +6,8 @@ UDL 教學家族（udl-learning、udl-math 等各教材 repo、udl-audio 的音�
 
 ## 授權
 
+目前套件為 **0.2.0**（MAPS 分層；udl-learning#794、規格 #96）。這次新增向下相容的選填 `level`、`item_tier`，內容與事件格式仍是 v1；詳見 [題目欄位](schema/README.md#閱讀層次與出題層級)、[抽題規則](activities/README.md#題目層級篩選)、[事件快照](events/README.md#閱讀層次快照)。舊包缺欄仍有效，舊數據不推定為找資訊。
+
 - 程式、schema、測試：**MIT**（見 `LICENSE`）。
 - `examples/` 的合成課文與題目：**CC-BY 4.0**（見 `LICENSE-CONTENT.md`），引用時標「udl-content-spec examples, cyclone-tw, CC BY 4.0」。
 - 本 repo 只借用前例（H5P、Perseus、Oppia、Numbas、Moodle、CASE、ink）的設計邏輯，不引入它們的程式碼或素材。
